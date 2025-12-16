@@ -1,6 +1,14 @@
 import { useState } from "react";
 import { Upload, Music } from "lucide-react";
 import type { AudioFile } from "../App";
+import Select, { type MultiValue, type SingleValue } from "react-select";
+import {
+  hymn_options,
+  language_options,
+  service_options,
+  season_options,
+} from "../options.data";
+import type { SelectOption } from "../options.data";
 
 interface UploadFormProps {
   onUpload: (file: Omit<AudioFile, "id" | "uploadedAt">) => void;
@@ -11,12 +19,24 @@ export function UploadForm({ onUpload }: UploadFormProps) {
   const [artist, setArtist] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedService, setSelectedService] = useState<SelectOption | null>(
+    null
+  );
+  const [selectedSeason, setSelectedSeason] = useState<SelectOption | null>(
+    null
+  );
+  const [selectedHymn, setSelectedHymn] = useState<SelectOption | null>(null);
+  const [selectedLanguage, setSelectedLanguage] = useState<
+    readonly SelectOption[]
+  >([]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!title || !artist || !file) {
-      alert("Please fill in all fields and select a file");
+    if (!title || selectedLanguage.length === 0 || !file) {
+      alert(
+        "Please select a hymn title, at least one language, and an audio file"
+      );
       return;
     }
 
@@ -33,6 +53,10 @@ export function UploadForm({ onUpload }: UploadFormProps) {
       // Reset form
       setTitle("");
       setArtist("");
+      setSelectedService(null);
+      setSelectedSeason(null);
+      setSelectedHymn(null);
+      setSelectedLanguage([]);
       setFile(null);
       setIsSubmitting(false);
 
@@ -80,34 +104,70 @@ export function UploadForm({ onUpload }: UploadFormProps) {
           onSubmit={handleSubmit}
           className="bg-gray-50 rounded-xl p-8 border border-gray-200"
         >
-          <div className="mb-6">
-            <label htmlFor="title" className="block mb-2 text-gray-700">
-              Track Title *
-            </label>
-            <input
-              type="text"
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
-              placeholder="Enter track title"
-              required
-            />
+          <div className="mb-6 flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <label htmlFor="service" className="block mb-2 text-gray-700">
+                Service *
+              </label>
+              <Select<SelectOption>
+                options={service_options}
+                value={selectedService}
+                onChange={(option: SingleValue<SelectOption>) => {
+                  setSelectedService(option);
+                }}
+                placeholder="Select service"
+                isClearable
+              />
+            </div>
+
+            <div className="flex-1">
+              <label htmlFor="season" className="block mb-2 text-gray-700">
+                Season *
+              </label>
+              <Select<SelectOption>
+                options={season_options}
+                value={selectedSeason}
+                onChange={(option: SingleValue<SelectOption>) => {
+                  setSelectedSeason(option);
+                }}
+                placeholder="Select season"
+                isClearable
+              />
+            </div>
           </div>
 
-          <div className="mb-6">
-            <label htmlFor="artist" className="block mb-2 text-gray-700">
-              Artist Name *
-            </label>
-            <input
-              type="text"
-              id="artist"
-              value={artist}
-              onChange={(e) => setArtist(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
-              placeholder="Your name or artist name"
-              required
-            />
+          <div className="mb-6 flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <label htmlFor="title" className="block mb-2 text-gray-700">
+                Hymn/Response Title *
+              </label>
+              <Select<SelectOption>
+                options={hymn_options}
+                value={selectedHymn}
+                onChange={(option: SingleValue<SelectOption>) => {
+                  setSelectedHymn(option);
+                  setTitle(option?.label ?? "");
+                }}
+                placeholder="Select the hymn/response"
+                isClearable
+              />
+            </div>
+
+            <div className="flex-1">
+              <label htmlFor="language" className="block mb-2 text-gray-700">
+                Language *
+              </label>
+              <Select<SelectOption, true>
+                options={language_options}
+                value={selectedLanguage}
+                onChange={(option: MultiValue<SelectOption>) => {
+                  setSelectedLanguage(option ?? []);
+                }}
+                placeholder="Select audio language(s)"
+                isClearable
+                isMulti
+              />
+            </div>
           </div>
 
           <div className="mb-6">
