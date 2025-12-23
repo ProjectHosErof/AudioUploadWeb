@@ -29,6 +29,9 @@ export function UploadForm({ onUpload }: UploadFormProps) {
   const [selectedLanguage, setSelectedLanguage] = useState<
     readonly SelectOption[]
   >([]);
+  const [checked, setChecked] = useState(false);
+  const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,6 +42,12 @@ export function UploadForm({ onUpload }: UploadFormProps) {
       );
       return;
     }
+
+    if (checked && (!email || !isValidEmail(email))) {
+      setEmailError("Please enter a valid email address");
+      return;
+    }
+    setEmailError(""); // Clear error if validation passes
 
     setIsSubmitting(true);
 
@@ -58,11 +67,24 @@ export function UploadForm({ onUpload }: UploadFormProps) {
       setSelectedHymn(null);
       setSelectedLanguage([]);
       setFile(null);
+      setChecked(false);
+      setEmail("");
+      setEmailError("");
       setIsSubmitting(false);
 
       alert("Thank you for your submission!");
     }, 1000);
   };
+
+  function isValidEmail(email: string): boolean {
+    const MAX_EMAIL_LENGTH = 254;
+    if (!email || email.length === 0 || email.length > MAX_EMAIL_LENGTH) {
+      return false;
+    }
+    const regexEmailCheck =
+      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    return regexEmailCheck.test(email);
+  }
 
   return (
     <section id="upload" className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
@@ -96,7 +118,8 @@ export function UploadForm({ onUpload }: UploadFormProps) {
             season/tune of the audio file you are uploading. If you’re not sure,
             feel free to ask a servant, deacon, or clergy member for
             help—they’re always happy to guide you. And if it’s still unclear,
-            you can choose “Unknown” or reach out to us!
+            you can choose “Unknown” or reach out to us! Please do NOT submit
+            entire liturgies or service recordings.
           </p>
         </div>
 
@@ -191,11 +214,75 @@ export function UploadForm({ onUpload }: UploadFormProps) {
               </div>
             )}
           </div>
+          <div className="mb-6">
+            <label
+              style={{
+                display: "flex",
+                gap: "15px",
+                cursor: "pointer",
+                marginBottom: checked ? "10px" : "0",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={checked}
+                onChange={(e) => setChecked(e.target.checked)}
+                style={{ marginTop: "4px", marginBottom: "4px" }}
+              />
+              <div>
+                <p style={{ margin: 0, fontWeight: 500 }}>
+                  Get Updates and Become a Tester
+                </p>
+                <p style={{ margin: 0, fontSize: "14px", color: "#666" }}>
+                  Receive emails about project updates and sign up to become a
+                  future tester!
+                </p>
+                <p style={{ margin: 0, fontSize: "12px", color: "#666" }}>
+                  * If already signed up, there is no need to re-enter email *
+                </p>
+              </div>
+            </label>
+            {checked && (
+              <div className="mt-4">
+                <label htmlFor="email" className="block mb-2 text-gray-700">
+                  Email Address *
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    // Clear error when user starts typing
+                    if (emailError) {
+                      setEmailError("");
+                    }
+                  }}
+                  onBlur={() => {
+                    // Validate on blur if email is entered
+                    if (email && !isValidEmail(email)) {
+                      setEmailError("Please enter a valid email address");
+                    }
+                  }}
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                    emailError
+                      ? "border-red-500 focus:ring-red-500"
+                      : "border-gray-300 focus:ring-amber-500"
+                  }`}
+                  placeholder="your.email@example.com"
+                  required={checked}
+                />
+                {emailError && (
+                  <p className="mt-2 text-sm text-red-600">{emailError}</p>
+                )}
+              </div>
+            )}
+          </div>
 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-amber-600 text-white py-3 rounded-lg hover:bg-amber-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full bg-[#7A1C27] text-white py-3 rounded-lg hover:bg-[#D4AF37] hover:text-[#4A2E1E] transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             <Upload className="w-5 h-5" />
             {isSubmitting ? "Uploading..." : "Upload Track"}
