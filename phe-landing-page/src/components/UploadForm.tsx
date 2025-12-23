@@ -33,12 +33,22 @@ export function UploadForm({ onUpload }: UploadFormProps) {
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState("");
 
+  // Compute disabled state based on service and season selections
+  const isHymnDisabled = !selectedService || !selectedSeason;
+  const isLanguageDisabled = !selectedService || !selectedSeason;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!title || selectedLanguage.length === 0 || !file) {
+    if (
+      !title ||
+      !selectedService ||
+      !selectedSeason ||
+      selectedLanguage.length === 0 ||
+      !file
+    ) {
       alert(
-        "Please select a hymn title, at least one language, and an audio file"
+        "Please select a service, season, hymn title, at least one language, and an audio file"
       );
       return;
     }
@@ -137,6 +147,12 @@ export function UploadForm({ onUpload }: UploadFormProps) {
                 value={selectedService}
                 onChange={(option: SingleValue<SelectOption>) => {
                   setSelectedService(option);
+                  // Reset dependent fields if service is cleared
+                  if (!option) {
+                    setSelectedHymn(null);
+                    setSelectedLanguage([]);
+                    setTitle("");
+                  }
                 }}
                 placeholder="Select service"
                 isClearable
@@ -152,6 +168,12 @@ export function UploadForm({ onUpload }: UploadFormProps) {
                 value={selectedSeason}
                 onChange={(option: SingleValue<SelectOption>) => {
                   setSelectedSeason(option);
+                  // Reset dependent fields if season is cleared
+                  if (!option) {
+                    setSelectedHymn(null);
+                    setSelectedLanguage([]);
+                    setTitle("");
+                  }
                 }}
                 placeholder="Select season"
                 isClearable
@@ -173,6 +195,7 @@ export function UploadForm({ onUpload }: UploadFormProps) {
                 }}
                 placeholder="Select the hymn/response"
                 isClearable
+                isDisabled={isHymnDisabled}
               />
             </div>
 
@@ -189,20 +212,21 @@ export function UploadForm({ onUpload }: UploadFormProps) {
                 placeholder="Select audio language(s)"
                 isClearable
                 isMulti
+                isDisabled={isLanguageDisabled}
               />
             </div>
           </div>
 
           <div className="mb-6">
             <label htmlFor="file" className="block mb-2 text-gray-700">
-              Audio File (Accepted Formats: WAV, MP3, AIFF, FLAC, ALAC) *
+              Audio File (Accepted Formats: WAV, MP3, FLAC, AIFF, OGG) *
             </label>
             <div className="relative">
               <input
                 type="file"
                 id="file"
                 onChange={(e) => setFile(e.target.files?.[0] || null)}
-                accept="audio/*"
+                accept=".wav,.mp3,.aiff,.flac,.ogg,audio/wav,audio/wave,audio/x-wav,audio/mpeg,audio/mp3,audio/x-aiff,audio/aiff,audio/flac,audio/x-flac,audio/ogg,audio/vorbis,application/ogg"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-amber-50 file:text-amber-800 hover:file:bg-amber-100"
                 required
               />
