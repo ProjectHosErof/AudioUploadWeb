@@ -131,6 +131,32 @@ export function UploadForm({ onUpload }: UploadFormProps) {
             you can choose “Unknown” or reach out to us! Please do NOT submit
             entire liturgies or service recordings.
           </p>
+          <div className="mt-6 p-6 bg-amber-50 rounded-lg border border-amber-200">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              Steps to Upload:
+            </h3>
+            <ol className="list-decimal list-inside space-y-3 text-gray-700">
+              <li className="pl-2">
+                Select the type of service and the season the hymn/response is
+                said
+              </li>
+              <li className="pl-2">
+                Select the hymn/response and the language(s) used in the audio
+                file
+              </li>
+              <li className="pl-2">
+                Select your hymn audio file
+                <span className="text-sm text-gray-600 italic block mt-1">
+                  (Note: Accepted formats are WAV, MP3, FLAC, AIFF, OGG)
+                </span>
+              </li>
+              <li className="pl-2">
+                Check the box and enter your email if you would like to receive
+                updates on the project and become a potential tester
+              </li>
+              <li className="pl-2">Click the Upload Track button</li>
+            </ol>
+          </div>
         </div>
 
         <form
