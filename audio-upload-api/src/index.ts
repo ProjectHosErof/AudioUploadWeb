@@ -19,11 +19,6 @@ interface CreateAudioUpload {
   status: string;
 }
 
-// app.get("/", (c) => {
-//   // return c.text("Hello Hono!");
-//   const sb_url = c.env.SUPABASE_URL
-// });
-
 app.post("/create-submission", async (c) => {
   const body = await c.req.json<CreateAudioUpload>();
   const sb_url = c.env.SUPABASE_URL;
@@ -32,10 +27,22 @@ app.post("/create-submission", async (c) => {
   if (!supabase) {
     return c.json({ error: "Failed to initialize Supabase client" }, 500);
   }
-  const { data, error } = await supabase
-    .from("audio_uploads")
-    .insert(body)
-    .select();
+  try {
+    const { data, error } = await supabase
+      .from("audio_uploads")
+      .insert(body)
+      .select();
+    if (error) {
+      return c.json({ error: error.message }, 500);
+    }
+    return c.json({ message: "Uploaded Successfully" }, 200);
+  } catch (error) {
+    console.error(
+      "An error occurred while uploading record to database:",
+      error
+    );
+    return c.json({ error: "Upload Failed" }, 500);
+  }
 });
 
 function initSupabase(sb_url: string, sb_key: string) {
@@ -43,7 +50,10 @@ function initSupabase(sb_url: string, sb_key: string) {
     const supabase = createClient(sb_url, sb_key);
     return supabase;
   } catch (error) {
-    console.error("An error occurred while connecting to Supabase:", error);
+    console.error(
+      "An error occurred while establishing database connection:",
+      error
+    );
   }
 }
 export default app;
