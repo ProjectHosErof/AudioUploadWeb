@@ -1,3 +1,344 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ─── Design Tokens ───────────────────────────────────────── */
+
+:root {
+  --ink:            #1A0E08;
+  --ink-soft:       #221408;
+  --ink-mid:        #382218;
+  --parchment:      #F0E8D0;
+  --parchment-dim:  #C4B490;
+  --gold:           #C8922A;
+  --gold-muted:     #8C6820;
+  --gold-light:     #E8C97A;
+  --crimson:        #8B1A2A;
+  --crimson-label:  #C83545;
+  --crimson-deep:   #5C0F1A;
+  --text-muted:     #9A8B6E;
+
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-ui:      'Jost', system-ui, sans-serif;
+}
+
+/* ─── Base ────────────────────────────────────────────────── */
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--ink); }
+::-webkit-scrollbar-thumb { background: var(--gold-muted); border-radius: 0; }
+
+html { scroll-behavior: smooth; scroll-padding-top: 56px; }
+
+body {
+  background-color: var(--ink);
+  color: var(--parchment);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Entry Animations ────────────────────────────────────── */
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.anim-1 { animation: fadeUp 0.85s 0.05s ease both; }
+.anim-2 { animation: fadeUp 0.85s 0.22s ease both; }
+.anim-3 { animation: fadeUp 0.85s 0.38s ease both; }
+.anim-4 { animation: fadeUp 0.85s 0.52s ease both; }
+.anim-5 { animation: fadeUp 0.85s 0.66s ease both; }
+
+/* ─── Hero CTA Button ─────────────────────────────────────── */
+
+.hero-cta {
+  display: inline-block;
+  font-family: var(--font-ui);
+  font-size: 0.8125rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--parchment);
+  border: 1px solid var(--gold-muted);
+  padding: 0.9rem 2.75rem;
+  text-decoration: none;
+  transition: background-color 0.25s, color 0.25s, border-color 0.25s;
+  background-color: transparent;
+}
+
+.hero-cta:hover {
+  background-color: var(--gold-muted);
+  color: var(--ink);
+  border-color: var(--gold);
+}
+
+/* ─── Notify CTA Button ───────────────────────────────────── */
+
+.notify-cta {
+  font-family: var(--font-ui);
+  font-size: 0.625rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--parchment);
+  background-color: transparent;
+  border: 1px solid var(--gold-muted);
+  padding: 0 1.75rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.25s, color 0.25s, border-color 0.25s;
+}
+
+.notify-cta:hover {
+  background-color: var(--gold-muted);
+  color: var(--ink);
+  border-color: var(--gold);
+}
+
+/* ─── Codex Frame Corner Accents ──────────────────────────── */
+
+.codex-corner {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+  display: block;
+}
+
+.codex-corner--tl { top: -1px;  left: -1px;  border-top: 2px solid var(--crimson); border-left: 2px solid var(--crimson); }
+.codex-corner--tr { top: -1px;  right: -1px; border-top: 2px solid var(--crimson); border-right: 2px solid var(--crimson); }
+.codex-corner--bl { bottom: -1px; left: -1px;  border-bottom: 2px solid var(--crimson); border-left: 2px solid var(--crimson); }
+.codex-corner--br { bottom: -1px; right: -1px; border-bottom: 2px solid var(--crimson); border-right: 2px solid var(--crimson); }
+
+/* ─── Form Labels ─────────────────────────────────────────── */
+
+.codex-label {
+  display: block;
+  font-family: var(--font-ui);
+  font-size: 0.625rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 0.5rem;
+}
+
+/* ─── Text Inputs ─────────────────────────────────────────── */
+
+.codex-input {
+  width: 100%;
+  background-color: var(--ink-soft);
+  border: 1px solid var(--ink-mid);
+  color: var(--parchment);
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  padding: 0.625rem 0.875rem;
+  outline: none;
+  transition: border-color 0.2s;
+  border-radius: 0;
+  box-sizing: border-box;
+}
+
+.codex-input::placeholder { color: var(--text-muted); }
+.codex-input:focus { border-color: var(--gold-muted); }
+.codex-input--error { border-color: var(--crimson); }
+
+/* ─── File Drop Zone ──────────────────────────────────────── */
+
+.file-zone {
+  border: 1px dashed var(--ink-mid);
+  padding: 2.5rem 2rem;
+  text-align: center;
+  cursor: pointer;
+  background-color: var(--ink-soft);
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.file-zone:hover,
+.file-zone--active {
+  border-color: var(--gold-muted);
+  background-color: rgba(200, 146, 42, 0.04);
+}
+
+/* ─── Custom Checkbox ─────────────────────────────────────── */
+
+.codex-checkbox-row {
+  display: flex;
+  gap: 1rem;
+  cursor: pointer;
+  padding: 1.25rem;
+  border: 1px solid var(--ink-mid);
+  background-color: var(--ink-soft);
+  transition: border-color 0.2s;
+}
+
+.codex-checkbox-row:hover { border-color: var(--gold-muted); }
+
+.codex-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  border: 1px solid var(--gold-muted);
+  background-color: transparent;
+  margin-top: 3px;
+  cursor: pointer;
+  position: relative;
+  transition: background-color 0.2s;
+  flex-shrink: 0;
+}
+
+.codex-checkbox:checked { background-color: var(--gold-muted); }
+
+.codex-checkbox:checked::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  width: 4px;
+  height: 7px;
+  border: 2px solid var(--ink);
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg);
+}
+
+/* ─── Submit Button ───────────────────────────────────────── */
+
+.codex-submit {
+  width: 100%;
+  background-color: var(--crimson-deep);
+  border: 1px solid var(--crimson);
+  color: var(--parchment);
+  font-family: var(--font-ui);
+  font-size: 0.6875rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: 500;
+  padding: 1rem;
+  cursor: pointer;
+  transition: background-color 0.25s, border-color 0.25s, color 0.25s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  border-radius: 0;
+}
+
+.codex-submit:hover:not(:disabled) {
+  background-color: var(--gold-muted);
+  border-color: var(--gold);
+  color: var(--ink);
+}
+
+.codex-submit:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ─── React-Select Dark Theme ─────────────────────────────── */
+
+.rs-dark .react-select__control {
+  background-color: var(--ink-soft);
+  border: 1px solid var(--ink-mid) !important;
+  border-radius: 0;
+  box-shadow: none !important;
+  min-height: 42px;
+  transition: border-color 0.2s;
+  cursor: pointer;
+}
+
+.rs-dark .react-select__control:hover { border-color: var(--gold-muted) !important; }
+.rs-dark .react-select__control--is-focused { border-color: var(--gold-muted) !important; }
+
+.rs-dark .react-select__value-container { padding: 0 0.75rem; }
+
+.rs-dark .react-select__input-container {
+  color: var(--parchment);
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  margin: 0;
+  padding: 0;
+}
+
+.rs-dark .react-select__placeholder {
+  color: var(--text-muted);
+  font-family: var(--font-ui);
+  font-size: 1rem;
+}
+
+.rs-dark .react-select__single-value {
+  color: var(--parchment);
+  font-family: var(--font-ui);
+  font-size: 1rem;
+}
+
+.rs-dark .react-select__menu {
+  background-color: var(--ink-soft);
+  border: 1px solid var(--ink-mid);
+  border-radius: 0;
+  margin-top: 2px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  z-index: 20;
+}
+
+.rs-dark .react-select__menu-list { padding: 0; }
+
+.rs-dark .react-select__option {
+  background-color: transparent;
+  color: var(--parchment-dim);
+  font-family: var(--font-ui);
+  font-size: 0.9375rem;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+}
+
+.rs-dark .react-select__option:hover,
+.rs-dark .react-select__option--is-focused {
+  background-color: var(--ink-mid);
+  color: var(--parchment);
+}
+
+.rs-dark .react-select__option--is-selected {
+  background-color: rgba(140, 104, 32, 0.45);
+  color: var(--gold-light);
+}
+
+.rs-dark .react-select__indicator-separator { background-color: var(--ink-mid); }
+
+.rs-dark .react-select__dropdown-indicator,
+.rs-dark .react-select__clear-indicator {
+  color: var(--text-muted);
+  padding: 0 0.5rem;
+}
+
+.rs-dark .react-select__dropdown-indicator:hover,
+.rs-dark .react-select__clear-indicator:hover { color: var(--gold); }
+
+.rs-dark .react-select__multi-value {
+  background-color: rgba(140, 104, 32, 0.5);
+  border-radius: 0;
+  margin: 2px;
+}
+
+.rs-dark .react-select__multi-value__label {
+  color: var(--parchment);
+  font-family: var(--font-ui);
+  font-size: 0.8125rem;
+  padding: 2px 6px;
+}
+
+.rs-dark .react-select__multi-value__remove { color: var(--parchment-dim); }
+
+.rs-dark .react-select__multi-value__remove:hover {
+  background-color: var(--crimson);
+  color: var(--parchment);
+  border-radius: 0;
+}
+
+.rs-dark .react-select__control--is-disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}

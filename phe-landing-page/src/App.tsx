@@ -1,7 +1,10 @@
 import { useState } from "react";
+import { Nav } from "./components/Nav";
 import { Hero } from "./components/Hero";
 import { About } from "./components/About";
+import { NotifySection } from "./components/NotifySection";
 import { UploadForm } from "./components/UploadForm";
+import { Footer } from "./components/Footer";
 // import { AudioGallery } from "./components/AudioGallery";
 // import { Contact } from "./components/Contact";
 
@@ -48,12 +51,15 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--ink)' }}>
+      <Nav />
       <Hero />
       <About />
+      <NotifySection />
       <UploadForm onUpload={handleUpload} />
       {/* <AudioGallery audioFiles={audioFiles} /> */}
       {/* <Contact /> */}
+      <Footer />
     </div>
   );
 }

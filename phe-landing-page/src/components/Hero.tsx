@@ -1,38 +1,114 @@
-import { Music } from "lucide-react";
-
 export function Hero() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-[#F6F2E9] via-white to-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
-        <div className="text-center">
-          <div className="flex justify-center mb-6">
-            <span className="inline-flex items-center px-4 py-1.5 rounded-full bg-[#F6F2E9] text-[#7A1C27] text-sm border border-[#D4AF37]">
-              Coming Soon
-            </span>
-          </div>
-          <div className="flex justify-center mb-8">
-            <div className="relative">
-              <div className="absolute inset-0 bg-[#D4AF37] rounded-full blur-2xl opacity-20"></div>
-              <div className="relative flex items-center justify-center w-24 h-24 bg-[#4A2E1E] rounded-full shadow-lg">
-                <Music className="w-12 h-12 text-[#D4AF37]" />
-              </div>
-            </div>
-          </div>
-          <h1 className="mb-6 text-[#4A2E1E] text-5xl sm:text-6xl lg:text-7xl">
+    <section
+      style={{
+        backgroundColor: 'var(--ink)',
+        background: 'radial-gradient(ellipse at 50% -5%, rgba(200, 146, 42, 0.07) 0%, transparent 62%), var(--ink)',
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        position: 'relative',
+        overflow: 'hidden',
+        paddingTop: '56px',
+      }}
+    >
+      {/* Top accent rule */}
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0,
+        height: '2px',
+        background: 'linear-gradient(90deg, transparent 0%, var(--gold) 30%, var(--gold) 70%, transparent 100%)',
+      }} />
+
+      <div style={{
+        maxWidth: '1000px',
+        margin: '0 auto',
+        padding: 'clamp(5rem, 10vh, 8rem) 2rem',
+        width: '100%',
+        position: 'relative',
+      }}>
+
+        {/* Coming Soon label */}
+        <div className="anim-1" style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
+          <span style={{
+            display: 'inline-block',
+            fontFamily: 'var(--font-ui)',
+            fontSize: '0.5875rem',
+            letterSpacing: '0.28em',
+            textTransform: 'uppercase',
+            color: 'var(--gold)',
+            border: '1px solid var(--gold-muted)',
+            padding: '0.4rem 1.25rem',
+          }}>
+            Coming Soon
+          </span>
+        </div>
+
+        {/* Title block */}
+        <div className="anim-2" style={{ textAlign: 'center' }}>
+          <div style={{
+            height: '1px',
+            background: 'linear-gradient(90deg, transparent 0%, var(--ink-mid) 15%, var(--gold-muted) 50%, var(--ink-mid) 85%, transparent 100%)',
+            marginBottom: '2.5rem',
+          }} />
+
+          <h1 style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: 'clamp(3rem, 7.5vw, 6.25rem)',
+            fontWeight: 300,
+            letterSpacing: '-0.01em',
+            lineHeight: 1.05,
+            color: 'var(--parchment)',
+            margin: 0,
+          }}>
             Project Hos Erof
           </h1>
-          <p className="text-lg sm:text-xl mb-10 text-gray-600 max-w-3xl mx-auto">
+
+          <div style={{
+            height: '1px',
+            background: 'linear-gradient(90deg, transparent 0%, var(--ink-mid) 15%, var(--crimson) 50%, var(--ink-mid) 85%, transparent 100%)',
+            marginTop: '2.5rem',
+          }} />
+        </div>
+
+        {/* Ornament */}
+        <div className="anim-3" style={{ textAlign: 'center', margin: '1.75rem 0' }}>
+          <span style={{
+            color: 'var(--gold)',
+            fontSize: '0.8125rem',
+            letterSpacing: '0.5em',
+          }}>◆ ◆ ◆</span>
+        </div>
+
+        {/* Subtitle */}
+        <div className="anim-4" style={{ textAlign: 'center', marginBottom: '3.75rem' }}>
+          <p style={{
+            fontFamily: 'var(--font-ui)',
+            fontSize: '0.9375rem',
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase',
+            color: 'var(--text-muted)',
+            margin: 0,
+          }}>
             Paving the future of Coptic Orthodox hymnology
           </p>
-          <a
-            href="#upload"
-            className="inline-block bg-[#7A1C27] text-white px-8 py-3 rounded-lg hover:bg-[#D4AF37] hover:text-[#4A2E1E] transition-colors shadow-md hover:shadow-lg"
-          >
+        </div>
+
+        {/* CTA */}
+        <div className="anim-5" style={{ textAlign: 'center' }}>
+          <a href="#upload" className="hero-cta">
             Upload Your Hymn Recording
           </a>
         </div>
+
       </div>
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent"></div>
+
+      {/* Bottom accent rule */}
+      <div style={{
+        position: 'absolute', bottom: 0, left: 0, right: 0,
+        height: '1px',
+        background: 'linear-gradient(90deg, transparent, var(--ink-mid), transparent)',
+      }} />
     </section>
   );
 }
