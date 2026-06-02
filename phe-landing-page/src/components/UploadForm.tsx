@@ -102,7 +102,7 @@ export function UploadForm({ onUpload }: UploadFormProps) {
   };
 
   return (
-    <section id="upload" style={{ backgroundColor: 'var(--ink-soft)', padding: 'clamp(4rem, 8vw, 6.5rem) 2rem' }}>
+    <section id="upload" style={{ backgroundColor: 'var(--ink)', padding: 'clamp(4rem, 8vw, 6.5rem) 2rem' }}>
       <div style={{ maxWidth: '760px', margin: '0 auto' }}>
 
         {/* Section header — h2 size intentionally unchanged */}

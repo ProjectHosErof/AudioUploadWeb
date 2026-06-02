@@ -21,7 +21,7 @@ export function NotifySection() {
 
   return (
     <section id="notify" style={{
-      backgroundColor: 'var(--ink)',
+      backgroundColor: 'var(--ink-soft)',
       borderTop: '1px solid var(--ink-mid)',
       borderBottom: '1px solid var(--ink-mid)',
       padding: 'clamp(4rem, 8vw, 6rem) 2rem',

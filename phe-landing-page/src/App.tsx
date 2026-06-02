@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Nav } from "./components/Nav";
 import { Hero } from "./components/Hero";
 import { About } from "./components/About";
+import { CounterSection } from "./components/CounterSection";
 import { NotifySection } from "./components/NotifySection";
 import { UploadForm } from "./components/UploadForm";
 import { Footer } from "./components/Footer";
@@ -55,6 +56,7 @@ export default function App() {
       <Nav />
       <Hero />
       <About />
+      <CounterSection />
       <NotifySection />
       <UploadForm onUpload={handleUpload} />
       {/* <AudioGallery audioFiles={audioFiles} /> */}

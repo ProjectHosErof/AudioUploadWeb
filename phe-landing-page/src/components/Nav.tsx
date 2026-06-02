@@ -36,8 +36,8 @@ export function Nav() {
             href={href}
             style={{
               fontFamily: 'var(--font-ui)',
-              fontSize: '0.625rem',
-              letterSpacing: '0.22em',
+              fontSize: '0.8125rem',
+              letterSpacing: '0.15em',
               textTransform: 'uppercase' as const,
               color: 'var(--text-muted)',
               textDecoration: 'none',
