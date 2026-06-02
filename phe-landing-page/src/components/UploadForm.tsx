@@ -28,7 +28,7 @@ const serviceTypes = [
 const faqs = [
   {
     q: 'What happens to my recording?',
-    a: 'Your recording will be used to help build the Project Hos Erof hymnology archive. Contributions are credited to the community and used solely for the preservation of Coptic Orthodox tradition.',
+    a: 'Your recording becomes part of a curated dataset used to train and develop the technology behind a future Coptic Orthodox platform currently in development. This is Phase 1 of that larger initiative — contributions made here are foundational to what the community will eventually access.',
   },
   {
     q: 'Is contributing free?',
@@ -152,6 +152,15 @@ export function UploadForm({ onUpload }: UploadFormProps) {
             fontSize: '1.0625rem',
             lineHeight: 1.8,
             color: 'var(--text-muted)',
+            marginBottom: '0.75rem',
+          }}>
+            These recordings will form a training dataset for a future platform currently in development for the Coptic Orthodox community.
+          </p>
+          <p style={{
+            fontFamily: 'var(--font-ui)',
+            fontSize: '1.0625rem',
+            lineHeight: 1.8,
+            color: 'var(--text-muted)',
             marginBottom: '1.5rem',
           }}>
             We are looking for hymns and responses across different feasts,
@@ -163,7 +172,7 @@ export function UploadForm({ onUpload }: UploadFormProps) {
             {serviceTypes.map((s, i) => (
               <p key={i} style={{
                 fontFamily: 'var(--font-ui)',
-                fontSize: '1rem',
+                fontSize: '1.0625rem',
                 color: s === '...and more' ? 'var(--gold-muted)' : 'var(--text-muted)',
                 fontStyle: s === '...and more' ? 'italic' : 'normal',
                 margin: '0 0 0.5rem',
@@ -207,7 +216,7 @@ export function UploadForm({ onUpload }: UploadFormProps) {
               </p>
               <p style={{
                 fontFamily: 'var(--font-ui)',
-                fontSize: '1rem',
+                fontSize: '1.0625rem',
                 lineHeight: 1.75,
                 color: 'var(--text-muted)',
                 margin: 0,
@@ -466,7 +475,7 @@ export function UploadForm({ onUpload }: UploadFormProps) {
                   </p>
                   <p style={{
                     fontFamily: 'var(--font-ui)',
-                    fontSize: '1rem',
+                    fontSize: '1.0625rem',
                     color: 'var(--text-muted)',
                     margin: '0 0 0.25rem',
                   }}>

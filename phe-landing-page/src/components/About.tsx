@@ -68,9 +68,18 @@ export function About() {
               fontSize: '1.1875rem',
               lineHeight: 1.85,
               color: 'var(--text-muted)',
-              margin: 0,
+              margin: '0 0 0.75em',
             }}>
               We are building something special, and we need your support — and your recordings.
+            </p>
+            <p style={{
+              fontFamily: 'var(--font-ui)',
+              fontSize: '1.1875rem',
+              lineHeight: 1.85,
+              color: 'var(--text-muted)',
+              margin: 0,
+            }}>
+              This is Phase 1 of a larger initiative — your recordings are building the dataset that will power what comes next.
             </p>
           </div>
 

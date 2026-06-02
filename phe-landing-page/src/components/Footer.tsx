@@ -28,7 +28,7 @@ export function Footer() {
             </p>
             <p style={{
               fontFamily: 'var(--font-ui)',
-              fontSize: '1rem',
+              fontSize: '1.0625rem',
               lineHeight: 1.75,
               color: 'var(--text-muted)',
               margin: 0,

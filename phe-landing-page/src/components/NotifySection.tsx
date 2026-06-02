@@ -65,7 +65,7 @@ export function NotifySection() {
             </p>
             <p style={{
               fontFamily: 'var(--font-ui)',
-              fontSize: '1rem',
+              fontSize: '1.0625rem',
               color: 'var(--text-muted)',
               margin: 0,
             }}>
