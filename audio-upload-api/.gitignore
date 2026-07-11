@@ -1,0 +1,10 @@
+# Wrangler local dev secrets - never commit
+.dev.vars
+.dev.vars.*
+*.vars
+
+# macOS
+.DS_Store
+
+# Wrangler
+.wrangler/
