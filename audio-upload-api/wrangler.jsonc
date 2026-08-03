@@ -1,0 +1,29 @@
+/**
+ * Wrangler config for the audio-upload-api Worker.
+ * https://developers.cloudflare.com/workers/wrangler/configuration/
+ *
+ * Secrets (SUPABASE_*, R2_*, TURNSTILE_SECRET) come from `.dev.vars` locally
+ * and `wrangler secret put` in production. Non-secret config lives in `vars`.
+ *
+ * Note: R2 is accessed via its S3-compatible API (aws4fetch) using the R2_*
+ * credentials, NOT a native r2_buckets binding. This keeps `wrangler dev`
+ * (local) and production identical — both the presigned PUT and the
+ * completion HEAD go to the real bucket over HTTPS.
+ */
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "audio-upload-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-12-10",
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    // Comma-separated list of allowed browser origins for CORS.
+    "ALLOWED_ORIGINS": "http://localhost:5173,http://localhost:4173",
+    // Hard ceiling enforced at initiate time and in the presigned content-length range. 200 MB.
+    "MAX_UPLOAD_BYTES": "209715200",
+    // Presigned URL lifetime.
+    "PRESIGN_TTL_SECONDS": "900"
+  }
+}
