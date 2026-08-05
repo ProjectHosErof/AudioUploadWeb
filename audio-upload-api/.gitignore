@@ -8,3 +8,8 @@
 
 # Wrangler
 .wrangler/
+
+# Python (enrichment/ Phase 2 job)
+.venv/
+__pycache__/
+*.pyc

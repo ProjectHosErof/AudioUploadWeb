@@ -1,0 +1,6 @@
+# Phase 2 offline enrichment/dedup job dependencies.
+# Install into a venv: python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt
+boto3>=1.34,<2          # R2 access over the S3-compatible API
+blake3>=0.4             # content hashing for dedup
+psycopg2-binary>=2.9    # direct Postgres (Supabase DIRECT_URL) for transactional updates
+python-dotenv>=1.0      # load ../.env (DIRECT_URL + R2_* creds)
