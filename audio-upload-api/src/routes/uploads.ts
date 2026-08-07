@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { getSupabase } from '../lib/supabase';
+import { optionalUser } from '../lib/auth';
 import { getVocab } from '../lib/vocab';
 import { CONTENT_TYPE_TO_EXT, initiateSchema } from '../lib/validation';
 import { verifyTurnstile } from '../middleware/turnstile';
@@ -61,6 +62,24 @@ uploads.post('/initiate', rateLimit(), async (c) => {
   const ext = CONTENT_TYPE_TO_EXT[body.content_type];
   const r2Key = buildObjectKey(recordingId, ext);
 
+  // Uploads stay anonymous (ADR-004). If the contributor happens to be signed
+  // in, attribute the submission to them; a bad token just falls back to
+  // anonymous rather than failing the upload.
+  let contributorId: string | null = null;
+  const user = await optionalUser(c.env, c.req.header('authorization'));
+  if (user) {
+    const { data: contributor, error: contributorErr } = await supabase
+      .from('contributors')
+      .select('id')
+      .eq('auth_user_id', user.id)
+      .maybeSingle();
+    if (contributorErr) {
+      console.error('contributor lookup failed during initiate', contributorErr);
+    } else {
+      contributorId = (contributor?.id as string | undefined) ?? null;
+    }
+  }
+
   const { error: insertErr } = await supabase.from('recordings').insert({
     id: recordingId,
     r2_key: r2Key,
@@ -74,6 +93,7 @@ uploads.post('/initiate', rateLimit(), async (c) => {
     submitter_email: body.email ?? null,
     wants_updates: body.wants_updates,
     upload_status: 'pending',
+    contributor_id: contributorId,
   });
   if (insertErr) {
     console.error('recordings insert failed', insertErr);

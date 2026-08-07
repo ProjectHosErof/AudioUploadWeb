@@ -54,13 +54,20 @@ const body = {
   ],
 };
 
+/** Shape of a Cloudflare API envelope (only the fields we read). */
+interface CloudflareResponse {
+  success?: boolean;
+  errors?: unknown;
+  result?: unknown;
+}
+
 async function main() {
   const put = await fetch(endpoint, {
     method: 'PUT',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
-  const putJson = await put.json();
+  const putJson = (await put.json()) as CloudflareResponse;
   if (!put.ok || !putJson.success) {
     console.error('Failed to set CORS:', JSON.stringify(putJson.errors ?? putJson, null, 2));
     process.exit(1);
@@ -68,7 +75,7 @@ async function main() {
   console.log(`CORS set on ${bucket} for origins:`, origins);
 
   const get = await fetch(endpoint, { headers: { Authorization: `Bearer ${token}` } });
-  const getJson = await get.json();
+  const getJson = (await get.json()) as CloudflareResponse;
   console.log('Verified policy:', JSON.stringify(getJson.result, null, 2));
 }
 
