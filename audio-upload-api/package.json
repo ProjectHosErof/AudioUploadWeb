@@ -11,7 +11,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "seed": "tsx scripts/seed-reference.ts",
-    "check:vocab": "tsx scripts/check-vocab.ts"
+    "check:vocab": "tsx scripts/check-vocab.ts",
+    "cors:set": "tsx scripts/set-r2-cors.ts"
   },
   "keywords": [],
   "author": "",
