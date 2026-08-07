@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Upload, Music } from "lucide-react";
+import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import type { AudioFile } from "../App";
 import Select, { type MultiValue, type SingleValue } from "react-select";
 import {
@@ -9,6 +10,8 @@ import {
   season_options,
 } from "../options.data";
 import type { SelectOption } from "../options.data";
+import { TURNSTILE_SITE_KEY } from "../config";
+import { resolveContentType, uploadRecording, UploadError } from "../services/uploadApi";
 
 interface UploadFormProps {
   onUpload: (file: Omit<AudioFile, "id" | "uploadedAt">) => void;
@@ -61,6 +64,10 @@ export function UploadForm({ onUpload }: UploadFormProps) {
   const [checked, setChecked] = useState(false);
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [submitError, setSubmitError] = useState("");
+  const turnstileRef = useRef<TurnstileInstance>(null);
 
   const isHymnDisabled = !selectedService || !selectedSeason;
   const isLanguageDisabled = !selectedService || !selectedSeason;
@@ -72,9 +79,10 @@ export function UploadForm({ onUpload }: UploadFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitError("");
 
-    if (!title || !selectedService || !selectedSeason || selectedLanguage.length === 0 || !file) {
-      alert("Please select a service, season, hymn title, at least one language, and an audio file");
+    if (!selectedService || !selectedSeason || !selectedHymn || selectedLanguage.length === 0 || !file) {
+      setSubmitError("Please select a service, season, hymn, at least one language, and an audio file.");
       return;
     }
 
@@ -83,10 +91,44 @@ export function UploadForm({ onUpload }: UploadFormProps) {
       return;
     }
     setEmailError("");
-    setIsSubmitting(true);
 
-    setTimeout(() => {
+    const contentType = resolveContentType(file);
+    if (!contentType) {
+      setSubmitError("Unsupported file type. Please use WAV, MP3, FLAC, AIFF, or OGG.");
+      return;
+    }
+    if (!TURNSTILE_SITE_KEY) {
+      setSubmitError("Verification isn't configured yet. Please try again later.");
+      return;
+    }
+    if (!turnstileToken) {
+      setSubmitError("Please complete the verification challenge below.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setUploadProgress(0);
+    try {
+      const recordingId = await uploadRecording(
+        {
+          service_slug: selectedService.value,
+          season_slug: selectedSeason.value,
+          hymn_slug: selectedHymn.value,
+          languages: selectedLanguage.map((l) => l.value),
+          content_type: contentType,
+          size_bytes: file.size,
+          original_filename: file.name,
+          wants_updates: checked,
+          email: checked && email ? email : undefined,
+          turnstile_token: turnstileToken,
+          file,
+        },
+        (pct) => setUploadProgress(pct),
+      );
+
+      // Keep the local gallery behavior for now.
       onUpload({ title, artist, fileUrl: URL.createObjectURL(file) });
+
       setTitle("");
       setSelectedService(null);
       setSelectedSeason(null);
@@ -96,9 +138,18 @@ export function UploadForm({ onUpload }: UploadFormProps) {
       setChecked(false);
       setEmail("");
       setEmailError("");
+      setUploadProgress(null);
+      alert(`Thank you for your submission! Reference: ${recordingId.slice(0, 8)}`);
+    } catch (err) {
+      setSubmitError(
+        err instanceof UploadError ? err.message : "Something went wrong. Please try again.",
+      );
+    } finally {
+      // A Turnstile token is single-use — reset the widget for the next attempt.
+      turnstileRef.current?.reset();
+      setTurnstileToken(null);
       setIsSubmitting(false);
-      alert("Thank you for your submission!");
-    }, 1000);
+    }
   };
 
   return (
@@ -526,10 +577,64 @@ export function UploadForm({ onUpload }: UploadFormProps) {
               )}
             </div>
 
+            {/* Bot verification */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              {TURNSTILE_SITE_KEY ? (
+                <Turnstile
+                  ref={turnstileRef}
+                  siteKey={TURNSTILE_SITE_KEY}
+                  onSuccess={(token) => setTurnstileToken(token)}
+                  onExpire={() => setTurnstileToken(null)}
+                  onError={() => setTurnstileToken(null)}
+                  options={{ theme: 'dark' }}
+                />
+              ) : (
+                <p style={{
+                  fontFamily: 'var(--font-ui)',
+                  fontSize: '0.875rem',
+                  fontStyle: 'italic',
+                  color: 'var(--gold-muted)',
+                  margin: 0,
+                }}>
+                  Verification isn't configured — set VITE_TURNSTILE_SITE_KEY.
+                </p>
+              )}
+            </div>
+
+            {/* Upload progress */}
+            {isSubmitting && uploadProgress !== null && (
+              <div style={{ marginBottom: '1.25rem' }} aria-live="polite">
+                <div style={{ height: '2px', background: 'var(--ink-mid)', overflow: 'hidden' }}>
+                  <div style={{
+                    height: '100%',
+                    width: `${uploadProgress}%`,
+                    background: 'var(--gold)',
+                    transition: 'width 0.2s ease',
+                  }} />
+                </div>
+              </div>
+            )}
+
+            {/* Submit error */}
+            {submitError && (
+              <p style={{
+                fontFamily: 'var(--font-ui)',
+                fontSize: '0.9375rem',
+                color: 'var(--crimson-label)',
+                margin: '0 0 1rem',
+              }}>
+                {submitError}
+              </p>
+            )}
+
             {/* Submit */}
             <button type="submit" disabled={isSubmitting} className="codex-submit">
               <Upload style={{ width: '0.875rem', height: '0.875rem' }} />
-              {isSubmitting ? 'Uploading...' : 'Upload Track'}
+              {isSubmitting
+                ? uploadProgress !== null && uploadProgress < 100
+                  ? `Uploading… ${uploadProgress}%`
+                  : 'Finishing…'
+                : 'Upload Track'}
             </button>
 
           </form>
