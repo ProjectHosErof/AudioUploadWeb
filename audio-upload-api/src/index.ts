@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { uploads } from './routes/uploads';
+import { scheduled } from './scheduled';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -26,4 +27,8 @@ app.onError((err, c) => {
 
 app.notFound((c) => c.json({ error: 'Not found' }, 404));
 
-export default app;
+// Export both the fetch handler (Hono app) and the scheduled handler (Cron Trigger janitor).
+export default {
+  fetch: app.fetch,
+  scheduled,
+};

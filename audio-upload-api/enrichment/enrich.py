@@ -58,6 +58,7 @@ from botocore.exceptions import BotoCoreError, ClientError
 from blake3 import blake3
 from dotenv import load_dotenv
 import psycopg2
+import psycopg2.errors
 import psycopg2.extras
 
 # --- config -----------------------------------------------------------------
@@ -248,7 +249,18 @@ def process_row(conn, s3, row: dict, dry_run: bool) -> str:
         # Unique + readable.
         target_status = "ready" if AUTO_APPROVE else "processing"
         if not dry_run:
-            _update_enriched(conn, rec_id, content_hash, meta, target_status)
+            try:
+                _update_enriched(conn, rec_id, content_hash, meta, target_status)
+            except psycopg2.errors.UniqueViolation:
+                # Race backstop: another worker set this hash active between our
+                # FIND_DUPLICATE check and the update. The DB's partial unique
+                # index (recordings_unique_active_hash) rejected us -> we're the
+                # duplicate. Roll back and mark rejected.
+                conn.rollback()
+                reason = "duplicate (hash already active)"
+                _update_rejected(conn, rec_id, content_hash, reason, meta=meta)
+                print(f"  {rec_id}  REJECTED ({reason}) [index race]")
+                return "duplicate"
         print(
             f"  {rec_id}  OK  "
             f"dur={meta['duration_seconds']}s sr={meta['sample_rate_hz']} "

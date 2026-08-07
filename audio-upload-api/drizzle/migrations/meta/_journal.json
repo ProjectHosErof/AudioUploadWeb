@@ -15,6 +15,13 @@
       "when": 1785726020918,
       "tag": "0001_grant_api_access",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786123511857,
+      "tag": "0002_solid_scarlet_witch",
+      "breakpoints": true
     }
   ]
 }

@@ -18,6 +18,10 @@
   "observability": {
     "enabled": true
   },
+  // Scheduled janitor: reap stale `pending` rows + sweep orphaned R2 objects.
+  "triggers": {
+    "crons": ["*/15 * * * *"]
+  },
   "vars": {
     // Comma-separated list of allowed browser origins for CORS.
     "ALLOWED_ORIGINS": "http://localhost:5173,http://localhost:4173",

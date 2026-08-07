@@ -66,3 +66,82 @@ export async function headObject(env: Env, key: string): Promise<HeadResult | nu
     etag: res.headers.get('etag'),
   };
 }
+
+export interface R2Object {
+  key: string;
+  lastModified: Date;
+  size: number;
+}
+
+function bucketUrl(env: Env): string {
+  return `https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${env.R2_BUCKET_NAME}`;
+}
+
+// Keys we generate are safe chars only, but decode the handful of XML entities
+// S3 could still emit, so the janitor never mistakes an encoded key for a miss.
+function unescapeXml(s: string): string {
+  return s
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&');
+}
+
+/**
+ * List objects under a prefix via the S3 ListObjectsV2 API, following
+ * continuation tokens. Used by the scheduled janitor to reconcile the bucket
+ * against the DB. Parses the ListBucketResult XML with regex (no DOMParser in
+ * Workers); our keys contain no XML-special chars.
+ */
+export async function listRawObjects(
+  env: Env,
+  opts: { prefix?: string } = {},
+): Promise<R2Object[]> {
+  const prefix = opts.prefix ?? 'raw/';
+  const c = client(env);
+  const out: R2Object[] = [];
+  let token: string | undefined;
+
+  do {
+    const url = new URL(bucketUrl(env));
+    url.searchParams.set('list-type', '2');
+    url.searchParams.set('prefix', prefix);
+    url.searchParams.set('max-keys', '1000');
+    if (token) url.searchParams.set('continuation-token', token);
+
+    const res = await c.fetch(url.toString(), { method: 'GET' });
+    if (!res.ok) {
+      throw new Error(`R2 list failed: ${res.status} ${res.statusText}`);
+    }
+    const xml = await res.text();
+
+    for (const m of xml.matchAll(/<Contents>([\s\S]*?)<\/Contents>/g)) {
+      const block = m[1];
+      const key = block.match(/<Key>([\s\S]*?)<\/Key>/)?.[1];
+      if (!key) continue;
+      const lm = block.match(/<LastModified>([\s\S]*?)<\/LastModified>/)?.[1];
+      const size = block.match(/<Size>([\s\S]*?)<\/Size>/)?.[1];
+      out.push({
+        key: unescapeXml(key),
+        lastModified: lm ? new Date(lm) : new Date(0),
+        size: size ? Number(size) : 0,
+      });
+    }
+
+    const truncated = /<IsTruncated>true<\/IsTruncated>/.test(xml);
+    token = truncated
+      ? xml.match(/<NextContinuationToken>([\s\S]*?)<\/NextContinuationToken>/)?.[1]
+      : undefined;
+  } while (token);
+
+  return out;
+}
+
+/** Signed DELETE. Treats 404 as success (already gone). */
+export async function deleteObject(env: Env, key: string): Promise<void> {
+  const res = await client(env).fetch(objectUrl(env, key), { method: 'DELETE' });
+  if (!res.ok && res.status !== 404) {
+    throw new Error(`R2 DELETE failed: ${res.status} ${res.statusText}`);
+  }
+}

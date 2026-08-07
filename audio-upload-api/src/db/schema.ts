@@ -12,7 +12,9 @@ import {
   timestamp,
   jsonb,
   index,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 
 // ==========================================
 // 1. ENUMS — stable, small, controlled lifecycles.
@@ -135,6 +137,12 @@ export const recordings = pgTable(
     index('recordings_upload_status_idx').on(t.uploadStatus),
     index('recordings_review_status_idx').on(t.reviewStatus),
     index('recordings_contributor_id_idx').on(t.contributorId),
+    // Dedup backstop: at most one non-rejected recording per content hash.
+    // The enrichment job dedups app-side first; this makes concurrent
+    // enrichment race-proof at the DB level.
+    uniqueIndex('recordings_unique_active_hash')
+      .on(t.contentHash)
+      .where(sql`${t.contentHash} is not null and ${t.reviewStatus} <> 'rejected'`),
   ],
 );
 
