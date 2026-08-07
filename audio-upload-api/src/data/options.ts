@@ -85,7 +85,7 @@ export const hymn_options = [
   },
   { value: "the-third-canticle", label: "The Third Canticle" },
   {
-    value: "watos-psali-for-three-saintly-children",
+    value: "greek-watos-psali-for-three-saintly-children",
     label: "Greek Watos Psali for the Three Saintly Children",
   },
   {
@@ -242,8 +242,6 @@ export const hymn_options = [
     value: "aspasmos-adam-fourth-sunday",
     label: "Aspasmos Adam - 4th Sunday (God is Light...)",
   },
-  // Kiahk Season - St. Basil - Distribution
-  { value: "", label: "" },
 ] satisfies ReadonlyArray<{
   value: string;
   label: string;
