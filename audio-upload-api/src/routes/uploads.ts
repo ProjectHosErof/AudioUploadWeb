@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { getSupabase } from '../lib/supabase';
+import { getVocab } from '../lib/vocab';
 import { CONTENT_TYPE_TO_EXT, initiateSchema } from '../lib/validation';
 import { verifyTurnstile } from '../middleware/turnstile';
 import { rateLimit } from '../middleware/rateLimit';
@@ -14,7 +15,7 @@ export const uploads = new Hono<{ Bindings: Env }>();
  * Validate metadata, create a `pending` recording row, and return a presigned
  * PUT URL for the browser to upload the audio directly to R2.
  */
-uploads.post('/initiate', rateLimit({ limit: 20, windowMs: 60_000 }), async (c) => {
+uploads.post('/initiate', rateLimit(), async (c) => {
   const parsed = initiateSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) {
     return c.json({ error: 'Invalid request', details: parsed.error.flatten() }, 400);
@@ -34,26 +35,23 @@ uploads.post('/initiate', rateLimit({ limit: 20, windowMs: 60_000 }), async (c) 
 
   const supabase = getSupabase(c.env);
 
-  // Validate controlled vocabulary against the reference tables (parallel).
-  const [svc, ssn, hymn, langRows] = await Promise.all([
-    supabase.from('services').select('slug').eq('slug', body.service_slug).maybeSingle(),
-    supabase.from('seasons').select('slug').eq('slug', body.season_slug).maybeSingle(),
-    supabase.from('hymns').select('slug, label').eq('slug', body.hymn_slug).maybeSingle(),
-    supabase.from('languages').select('slug'),
-  ]);
-
-  const vocabError = svc.error ?? ssn.error ?? hymn.error ?? langRows.error;
-  if (vocabError) {
-    console.error('vocab lookup failed', vocabError);
+  // Validate controlled vocabulary against the per-isolate cached reference
+  // sets (0 DB round-trips on a warm isolate). FK constraints remain the
+  // authoritative backstop at insert time.
+  let vocab;
+  try {
+    vocab = await getVocab(c.env);
+  } catch (err) {
+    console.error('vocab lookup failed', err);
     return c.json({ error: 'Validation lookup failed.' }, 500);
   }
 
   const invalid: string[] = [];
-  if (!svc.data) invalid.push('service_slug');
-  if (!ssn.data) invalid.push('season_slug');
-  if (!hymn.data) invalid.push('hymn_slug');
-  const allowedLangs = new Set((langRows.data ?? []).map((r) => r.slug));
-  const badLangs = body.languages.filter((l) => !allowedLangs.has(l));
+  if (!vocab.services.has(body.service_slug)) invalid.push('service_slug');
+  if (!vocab.seasons.has(body.season_slug)) invalid.push('season_slug');
+  const hymnLabel = vocab.hymns.get(body.hymn_slug);
+  if (hymnLabel === undefined) invalid.push('hymn_slug');
+  const badLangs = body.languages.filter((l) => !vocab.languages.has(l));
   if (badLangs.length) invalid.push(`languages: ${badLangs.join(', ')}`);
   if (invalid.length) {
     return c.json({ error: 'Unknown selection', fields: invalid }, 400);
@@ -71,7 +69,7 @@ uploads.post('/initiate', rateLimit({ limit: 20, windowMs: 60_000 }), async (c) 
     service_slug: body.service_slug,
     season_slug: body.season_slug,
     hymn_slug: body.hymn_slug,
-    hymn_label: hymn.data!.label,
+    hymn_label: hymnLabel!,
     languages: body.languages,
     submitter_email: body.email ?? null,
     wants_updates: body.wants_updates,

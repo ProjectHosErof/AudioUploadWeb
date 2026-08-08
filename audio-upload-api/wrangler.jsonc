@@ -22,6 +22,18 @@
   "triggers": {
     "crons": ["*/15 * * * *"]
   },
+  // Native, edge-enforced IP rate limiting for the anonymous upload path.
+  // period must be 10 or 60 (seconds); limit is requests per period per key.
+  "unsafe": {
+    "bindings": [
+      {
+        "name": "RATE_LIMITER",
+        "type": "ratelimit",
+        "namespace_id": "1001",
+        "simple": { "limit": 20, "period": 60 }
+      }
+    ]
+  },
   "vars": {
     // Comma-separated list of allowed browser origins for CORS.
     "ALLOWED_ORIGINS": "http://localhost:5173,http://localhost:4173",
