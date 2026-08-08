@@ -1,0 +1,15 @@
+# Wrangler local dev secrets - never commit
+.dev.vars
+.dev.vars.*
+*.vars
+
+# macOS
+.DS_Store
+
+# Wrangler
+.wrangler/
+
+# Python (enrichment/ Phase 2 job)
+.venv/
+__pycache__/
+*.pyc
