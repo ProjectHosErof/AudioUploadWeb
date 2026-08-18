@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { uploads } from './routes/uploads';
+import { me } from './routes/me';
 import { scheduled } from './scheduled';
 
 const app = new Hono<{ Bindings: Env }>();
@@ -11,7 +12,9 @@ app.use('*', async (c, next) => {
   return cors({
     origin: (origin) => (allowed.includes(origin) ? origin : allowed[0]),
     allowMethods: ['GET', 'POST', 'OPTIONS'],
-    allowHeaders: ['Content-Type'],
+    // Authorization is required for the signed-in endpoints (/me/*) and for
+    // attributing an upload to a logged-in contributor.
+    allowHeaders: ['Content-Type', 'Authorization'],
     maxAge: 86400,
   })(c, next);
 });
@@ -19,6 +22,7 @@ app.use('*', async (c, next) => {
 app.get('/health', (c) => c.json({ ok: true, service: 'audio-upload-api' }));
 
 app.route('/uploads', uploads);
+app.route('/me', me);
 
 app.onError((err, c) => {
   console.error('Unhandled error', err);
