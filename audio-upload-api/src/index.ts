@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { uploads } from './routes/uploads';
 import { me } from './routes/me';
+import { stats } from './routes/stats';
 import { scheduled } from './scheduled';
 
 const app = new Hono<{ Bindings: Env }>();
@@ -23,6 +24,7 @@ app.get('/health', (c) => c.json({ ok: true, service: 'audio-upload-api' }));
 
 app.route('/uploads', uploads);
 app.route('/me', me);
+app.route('/stats', stats);
 
 app.onError((err, c) => {
   console.error('Unhandled error', err);
