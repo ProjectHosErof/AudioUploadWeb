@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Route, Routes } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Route, Routes, useLocation } from "react-router-dom";
 import { Nav } from "./components/Nav";
 import { Hero } from "./components/Hero";
 import { About } from "./components/About";
@@ -23,6 +23,16 @@ export interface AudioFile {
 
 function LandingPage() {
   const [, setAudioFiles] = useState<AudioFile[]>([]);
+  const { hash } = useLocation();
+
+  // Arriving from another route (e.g. the dashboard's "Upload New Recording")
+  // only changes history state, so the browser won't scroll to the anchor
+  // itself — do it once the section has rendered.
+  useEffect(() => {
+    if (!hash) return;
+    const target = document.querySelector(hash);
+    if (target) target.scrollIntoView({ behavior: 'smooth' });
+  }, [hash]);
 
   const handleUpload = (file: Omit<AudioFile, "id" | "uploadedAt">) => {
     const newFile: AudioFile = {
