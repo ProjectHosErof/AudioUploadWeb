@@ -1,4 +1,31 @@
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../auth/AuthProvider';
+
+const linkStyle: React.CSSProperties = {
+  fontFamily: 'var(--font-ui)',
+  fontSize: '0.8125rem',
+  letterSpacing: '0.15em',
+  textTransform: 'uppercase' as const,
+  color: 'var(--text-muted)',
+  textDecoration: 'none',
+  transition: 'color 0.2s',
+  background: 'none',
+  border: 'none',
+  padding: 0,
+  cursor: 'pointer',
+};
+
 export function Nav() {
+  const { session, enabled, signOut } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const onLanding = location.pathname === '/';
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
+
   return (
     <nav style={{
       position: 'fixed',
@@ -16,8 +43,8 @@ export function Nav() {
       WebkitBackdropFilter: 'blur(10px)',
       borderBottom: '1px solid var(--ink-mid)',
     }}>
-      <a
-        href="#"
+      <Link
+        to="/"
         style={{
           fontFamily: 'var(--font-display)',
           fontSize: '1.1875rem',
@@ -28,27 +55,53 @@ export function Nav() {
         }}
       >
         Project Hos Erof
-      </a>
+      </Link>
       <div style={{ display: 'flex', gap: '2.5rem', alignItems: 'center' }}>
-        {[{ label: 'About', href: '#about' }, { label: 'Stay Informed', href: '#notify' }, { label: 'Upload', href: '#upload' }].map(({ label, href }) => (
-          <a
-            key={label}
-            href={href}
-            style={{
-              fontFamily: 'var(--font-ui)',
-              fontSize: '0.8125rem',
-              letterSpacing: '0.15em',
-              textTransform: 'uppercase' as const,
-              color: 'var(--text-muted)',
-              textDecoration: 'none',
-              transition: 'color 0.2s',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--gold)')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
-          >
-            {label}
-          </a>
-        ))}
+        {/* Section anchors only resolve on the landing page. */}
+        {onLanding &&
+          [{ label: 'About', href: '#about' }, { label: 'Stay Informed', href: '#notify' }, { label: 'Upload', href: '#upload' }].map(({ label, href }) => (
+            <a
+              key={label}
+              href={href}
+              style={linkStyle}
+              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--gold)')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
+            >
+              {label}
+            </a>
+          ))}
+
+        {enabled && (
+          session ? (
+            <>
+              <Link
+                to="/dashboard"
+                style={linkStyle}
+                onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--gold)')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
+              >
+                My Contributions
+              </Link>
+              <button
+                onClick={handleSignOut}
+                style={linkStyle}
+                onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--gold)')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
+              >
+                Sign Out
+              </button>
+            </>
+          ) : (
+            <Link
+              to="/login"
+              style={{ ...linkStyle, color: 'var(--gold-muted)' }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--gold)')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--gold-muted)')}
+            >
+              Sign In
+            </Link>
+          )
+        )}
       </div>
     </nav>
   );
