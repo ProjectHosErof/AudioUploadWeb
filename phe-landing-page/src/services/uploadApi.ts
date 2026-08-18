@@ -5,6 +5,7 @@
  *   3. POST /uploads/:id/complete -> confirms the object, advances lifecycle
  */
 import { API_BASE_URL } from "../config";
+import { supabase } from "../lib/supabaseClient";
 
 export interface InitiateRequest {
   service_slug: string;
@@ -77,12 +78,31 @@ function messageFrom(data: unknown, fallback: string): string {
   return fallback;
 }
 
+/**
+ * Current access token, or null when signed out. Uploads stay anonymous
+ * (ADR-004) — this only lets the Worker attribute the submission to a
+ * contributor when one happens to be signed in.
+ */
+async function currentAccessToken(): Promise<string | null> {
+  if (!supabase) return null;
+  try {
+    const { data } = await supabase.auth.getSession();
+    return data.session?.access_token ?? null;
+  } catch {
+    return null;
+  }
+}
+
 async function initiate(req: InitiateRequest): Promise<InitiateResponse> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  const token = await currentAccessToken();
+  if (token) headers.Authorization = `Bearer ${token}`;
+
   let res: Response;
   try {
     res = await fetch(`${API_BASE_URL}/uploads/initiate`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify(req),
     });
   } catch {

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Route, Routes } from "react-router-dom";
 import { Nav } from "./components/Nav";
 import { Hero } from "./components/Hero";
 import { About } from "./components/About";
@@ -6,6 +7,9 @@ import { CounterSection } from "./components/CounterSection";
 import { NotifySection } from "./components/NotifySection";
 import { UploadForm } from "./components/UploadForm";
 import { Footer } from "./components/Footer";
+import { LoginPage } from "./components/LoginPage";
+import { DashboardPage } from "./components/DashboardPage";
+import { ProtectedRoute } from "./auth/ProtectedRoute";
 // import { AudioGallery } from "./components/AudioGallery";
 // import { Contact } from "./components/Contact";
 
@@ -17,30 +21,8 @@ export interface AudioFile {
   fileUrl: string;
 }
 
-export default function App() {
-  const [audioFiles, setAudioFiles] = useState<AudioFile[]>([
-    {
-      id: "1",
-      title: "Summer Vibes",
-      artist: "Anonymous",
-      uploadedAt: "2025-11-20",
-      fileUrl: "#",
-    },
-    {
-      id: "2",
-      title: "Jazz Evening",
-      artist: "John M.",
-      uploadedAt: "2025-11-18",
-      fileUrl: "#",
-    },
-    {
-      id: "3",
-      title: "Electronic Dreams",
-      artist: "Sarah K.",
-      uploadedAt: "2025-11-15",
-      fileUrl: "#",
-    },
-  ]);
+function LandingPage() {
+  const [, setAudioFiles] = useState<AudioFile[]>([]);
 
   const handleUpload = (file: Omit<AudioFile, "id" | "uploadedAt">) => {
     const newFile: AudioFile = {
@@ -48,11 +30,11 @@ export default function App() {
       id: Date.now().toString(),
       uploadedAt: new Date().toISOString().split("T")[0],
     };
-    setAudioFiles([newFile, ...audioFiles]);
+    setAudioFiles((prev) => [newFile, ...prev]);
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--ink)' }}>
+    <div className="min-h-screen" style={{ backgroundColor: "var(--ink)" }}>
       <Nav />
       <Hero />
       <About />
@@ -63,5 +45,24 @@ export default function App() {
       {/* <Contact /> */}
       <Footer />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      {/* Unknown paths fall back to the landing page. */}
+      <Route path="*" element={<LandingPage />} />
+    </Routes>
   );
 }
