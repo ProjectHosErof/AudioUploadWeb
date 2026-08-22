@@ -41,6 +41,35 @@ A browser upload fails unless the frontend's origin is allowed in **both**:
    (see above).
 4. **Database:** `npm run db:migrate` (applies all migrations, incl. the dedup
    unique index) then `npm run seed` (reference vocabulary).
+5. **Admins:** `npm run admins -- add <email> "who they are"`. Nothing reaches
+   `ready` without one — see below.
+
+## Moderation admins
+
+Recordings wait at `processing` until an admin promotes them (ADR-008), so an
+empty `admins` table means an empty corpus.
+
+```bash
+npm run admins                                   # list
+npm run admins -- add someone@example.com "role" # invite (they need not have an account yet)
+npm run admins -- remove someone@example.com
+```
+
+Invitations are keyed on **email**, so you can add someone before they have ever
+signed in; their `auth_user_id` resolves on their first request. Grants and
+revocations take effect within ~60s (the admin cache TTL). No deploy required.
+
+## ⚠️ `db:migrate` on an IPv4-only network
+
+`DIRECT_URL` (`db.<ref>.supabase.co`) is **IPv6-only**. On a network without
+IPv6 the connection is unreachable and `drizzle-kit migrate` reports this by
+**exiting 0 having applied nothing** — silent, and easy to mistake for success.
+
+Set **`MIGRATE_URL`** in `.env` to the Supabase **session pooler** (port `5432`,
+user `postgres.<project-ref>`); `drizzle.config.ts` prefers it when present. Use
+session mode, not the transaction pooler on `6543` — migrations need real
+transactions and advisory locks. Always confirm a migration actually landed
+rather than trusting the exit code.
 
 ## Every deploy
 

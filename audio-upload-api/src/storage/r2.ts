@@ -48,6 +48,26 @@ export async function presignPut(env: Env, key: string, ttlSeconds: number): Pro
   return signed.url;
 }
 
+/**
+ * Presigned GET URL, for moderation playback. Audio streams browser → R2
+ * directly, the same way it arrives — the Worker never proxies the bytes, so
+ * scrubbing through a 20-minute liturgy costs no Worker CPU and gets R2's
+ * Range support for free.
+ *
+ * Keep the TTL short (minutes): the URL grants unauthenticated read access to
+ * one object to anyone holding it, so it should outlive a review decision and
+ * nothing more.
+ */
+export async function presignGet(env: Env, key: string, ttlSeconds: number): Promise<string> {
+  const url = new URL(objectUrl(env, key));
+  url.searchParams.set('X-Amz-Expires', String(ttlSeconds));
+  const signed = await client(env).sign(url.toString(), {
+    method: 'GET',
+    aws: { signQuery: true },
+  });
+  return signed.url;
+}
+
 export interface HeadResult {
   sizeBytes: number | null;
   etag: string | null;

@@ -2,12 +2,10 @@ import { Hono } from 'hono';
 import { getSupabase } from '../lib/supabase';
 import { optionalUser } from '../lib/auth';
 import { getVocab } from '../lib/vocab';
-import { CONTENT_TYPE_TO_EXT, initiateSchema } from '../lib/validation';
+import { CONTENT_TYPE_TO_EXT, UUID_RE, initiateSchema } from '../lib/validation';
 import { verifyTurnstile } from '../middleware/turnstile';
 import { rateLimit } from '../middleware/rateLimit';
 import { buildObjectKey, headObject, presignPut } from '../storage/r2';
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export const uploads = new Hono<{ Bindings: Env }>();
 
