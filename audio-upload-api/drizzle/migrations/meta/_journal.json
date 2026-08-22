@@ -43,6 +43,13 @@
       "when": 1787423035736,
       "tag": "0005_subscribers",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1787425583166,
+      "tag": "0006_notification_digest",
+      "breakpoints": true
     }
   ]
 }

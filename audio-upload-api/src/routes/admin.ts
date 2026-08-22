@@ -1,13 +1,9 @@
-import { Hono, type Context } from 'hono';
+import { Hono } from 'hono';
 import { getSupabase } from '../lib/supabase';
 import { bearerToken, verifyUser } from '../lib/auth';
 import { requireAdmin, resolveAdmin, type AdminIdentity } from '../lib/admin';
 import { UUID_RE, reviewSchema } from '../lib/validation';
 import { presignGet } from '../storage/r2';
-import { sendEmail } from '../lib/email';
-import { background } from '../lib/background';
-import { recordingAccepted, recordingDeclined } from '../emails/templates';
-import { siteUrl } from '../lib/urls';
 
 /**
  * Moderation (Pillar C, ADR-008/009/010).
@@ -258,63 +254,11 @@ admin.post('/recordings/:id/review', async (c) => {
     );
   }
 
-  // Past this point the decision is committed AND the concurrency guard has
-  // proven this request won the race, so the contributor is mailed exactly
-  // once even if two moderators click at the same moment.
-  notifyContributor(c, data as unknown as ReviewedRow, decision, reason ?? null);
+  // The contributor is not mailed here. Decisions are batched into one digest
+  // per person by the scheduled job (src/jobs/digest.ts) — moderating forty
+  // recordings in one sitting must not put forty emails in one inbox.
 
   return c.json({ id: data.id, reviewStatus: data.review_status, reviewedAt: data.reviewed_at });
 });
 
 
-/** The columns the review UPDATE returns, as far as notification cares. */
-interface ReviewedRow {
-  hymn_label: string;
-  submitter_email: string | null;
-  contributors: { email: string | null; display_name: string | null } | null;
-}
-
-/**
- * First name only, for the greeting. Anonymous contributors have no name on
- * record, and guessing one from an email local-part reads worse than no
- * greeting at all — so this returns null and the template omits the line.
- */
-function firstNameOf(row: ReviewedRow): string | null {
-  const full = row.contributors?.display_name?.trim();
-  if (!full) return null;
-  return full.split(/\s+/)[0];
-}
-
-/**
- * Tell the contributor what happened to their recording.
- *
- * Fire-and-forget: a mail outage must never turn a recorded decision into a
- * failed request, and the moderator has already moved on to the next card.
- *
- * Not everyone is reachable. An anonymous upload with no opt-in leaves no
- * address anywhere, which is the expected outcome of uploads being anonymous
- * by default (ADR-004) rather than a fault — so it is logged, not surfaced.
- */
-function notifyContributor(
-  c: Context<{ Bindings: Env; Variables: { admin: AdminIdentity } }>,
-  row: ReviewedRow,
-  decision: 'approve' | 'reject',
-  reason: string | null,
-): void {
-  // Same coalescing GET /admin/queue uses: the linked account first, then the
-  // address given at upload time.
-  const recipient = row.contributors?.email ?? row.submitter_email;
-  if (!recipient) {
-    console.log('review notification skipped — no address for this recording');
-    return;
-  }
-
-  const site = siteUrl(c.env);
-  const firstName = firstNameOf(row);
-  const built =
-    decision === 'approve'
-      ? recordingAccepted(row.hymn_label, `${site}/dashboard`, firstName)
-      : recordingDeclined(row.hymn_label, reason, `${site}/#upload`, firstName);
-
-  background(c, sendEmail(c.env, { to: recipient, ...built }));
-}

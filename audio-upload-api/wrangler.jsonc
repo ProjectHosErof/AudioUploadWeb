@@ -18,9 +18,12 @@
   "observability": {
     "enabled": true
   },
-  // Scheduled janitor: reap stale `pending` rows + sweep orphaned R2 objects.
+  // Two schedules, dispatched on controller.cron in src/scheduled.ts:
+  //   */15 — janitor: reap stale `pending` rows + sweep orphaned R2 objects
+  //   16:00 UTC — one digest per contributor covering the day's moderation
+  //   decisions, rather than an email per recording
   "triggers": {
-    "crons": ["*/15 * * * *"]
+    "crons": ["*/15 * * * *", "0 16 * * *"]
   },
   // Native, edge-enforced IP rate limiting for the anonymous upload path.
   // period must be 10 or 60 (seconds); limit is requests per period per key.
@@ -53,8 +56,11 @@
     // ALLOWED_ORIGINS entry when unset; must be the real site in production.
     "SITE_URL": "http://localhost:5173",
     // Sender for all outbound mail. mail.hoserof.org is verified in Resend.
-    // no-reply because the domain has receiving disabled — a friendlier
-    // address would invite replies that silently go nowhere.
-    "EMAIL_FROM": "Project Hos Erof <no-reply@mail.hoserof.org>"
+    // Sending stays on the subdomain so a bad batch can never damage the
+    // apex domain's reputation.
+    "EMAIL_FROM": "Project Hos Erof <hello@mail.hoserof.org>",
+    // Where replies go. Currently the project mailbox directly; switch to
+    // hello@hoserof.org once Cloudflare Email Routing forwards it there.
+    "EMAIL_REPLY_TO": "projecthoserof@gmail.com"
   }
 }

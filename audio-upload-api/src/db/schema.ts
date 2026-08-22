@@ -179,6 +179,11 @@ export const recordings = pgTable(
     reviewedBy: uuid('reviewed_by'), // auth.users(id); FK added in migration 0004
     reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
     reviewReason: text('review_reason'),
+    // When the contributor was told about this decision. Decisions are batched
+    // into one digest per person per day rather than mailed individually —
+    // somebody who uploads their whole repertoire in an evening should not
+    // wake up to forty emails.
+    notifiedAt: timestamp('notified_at', { withTimezone: true }),
 
     // Structured replacement for the "duplicate of <id>" error_message pointer:
     // the surviving recording this one duplicates.

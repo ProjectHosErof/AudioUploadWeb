@@ -37,6 +37,10 @@ export async function sendEmail(env: Env, message: EmailMessage): Promise<boolea
       },
       body: JSON.stringify({
         from: env.EMAIL_FROM,
+        // Replies land in a real inbox rather than vanishing. The From address
+        // stays on the sending subdomain (which protects the apex domain's
+        // reputation); Reply-To needs no verification of its own.
+        ...(env.EMAIL_REPLY_TO ? { reply_to: env.EMAIL_REPLY_TO } : {}),
         to: [message.to],
         subject: message.subject,
         html: message.html,

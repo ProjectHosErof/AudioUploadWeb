@@ -1,5 +1,6 @@
 import { getSupabase } from './lib/supabase';
 import { deleteObject, listRawObjects } from './storage/r2';
+import { sendReviewDigests } from './jobs/digest';
 
 /**
  * Scheduled janitor (Cloudflare Cron Trigger). Keeps the DB and the R2 bucket
@@ -68,11 +69,26 @@ async function sweepOrphanObjects(env: Env): Promise<number> {
   return deleted;
 }
 
+/** The daily digest trigger, as declared in wrangler.jsonc. */
+const DIGEST_CRON = '0 16 * * *';
+
+/**
+ * Two schedules share this handler, so it dispatches on which one fired:
+ *   every 15 min — the janitor
+ *   16:00 UTC    — the review digest (noon US Eastern, early evening in Cairo,
+ *                  which is a reasonable hour across most of the contributor
+ *                  base; there is no per-contributor timezone to work from)
+ */
 export async function scheduled(
-  _controller: ScheduledController,
+  controller: ScheduledController,
   env: Env,
   _ctx: ExecutionContext,
 ): Promise<void> {
+  if (controller.cron === DIGEST_CRON) {
+    await sendReviewDigests(env);
+    return;
+  }
+
   const reaped = await reapStalePending(env);
   const swept = await sweepOrphanObjects(env);
   console.log(`janitor: reaped ${reaped} stale pending row(s), swept ${swept} orphan object(s)`);
