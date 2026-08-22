@@ -69,3 +69,17 @@ export const reviewSchema = z
   });
 
 export type ReviewInput = z.infer<typeof reviewSchema>;
+
+/**
+ * Body of POST /subscribe.
+ *
+ * `source` is not accepted from the browser as free text — only the two known
+ * origins — so the column stays analysable and a caller can't write junk into
+ * it. The landing form omits it entirely.
+ */
+export const subscribeSchema = z.object({
+  email: z.string().trim().email().max(254),
+  source: z.enum(['landing', 'upload']).optional(),
+});
+
+export type SubscribeInput = z.infer<typeof subscribeSchema>;

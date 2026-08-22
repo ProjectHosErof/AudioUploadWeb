@@ -1,9 +1,13 @@
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
 import { getSupabase } from '../lib/supabase';
 import { bearerToken, verifyUser } from '../lib/auth';
 import { requireAdmin, resolveAdmin, type AdminIdentity } from '../lib/admin';
 import { UUID_RE, reviewSchema } from '../lib/validation';
 import { presignGet } from '../storage/r2';
+import { sendEmail } from '../lib/email';
+import { background } from '../lib/background';
+import { recordingAccepted, recordingDeclined } from '../emails/templates';
+import { siteUrl } from '../lib/urls';
 
 /**
  * Moderation (Pillar C, ADR-008/009/010).
@@ -218,7 +222,9 @@ admin.post('/recordings/:id/review', async (c) => {
     })
     .eq('id', id)
     .eq('review_status', 'processing') // the concurrency guard
-    .select('id, review_status, reviewed_at')
+    // hymn_label and the two address paths ride along on the returned row so
+    // notifying the contributor costs no extra query.
+    .select('id, review_status, reviewed_at, hymn_label, submitter_email, contributors(email)')
     .maybeSingle();
 
   if (error) {
@@ -252,5 +258,51 @@ admin.post('/recordings/:id/review', async (c) => {
     );
   }
 
+  // Past this point the decision is committed AND the concurrency guard has
+  // proven this request won the race, so the contributor is mailed exactly
+  // once even if two moderators click at the same moment.
+  notifyContributor(c, data as unknown as ReviewedRow, decision, reason ?? null);
+
   return c.json({ id: data.id, reviewStatus: data.review_status, reviewedAt: data.reviewed_at });
 });
+
+
+/** The columns the review UPDATE returns, as far as notification cares. */
+interface ReviewedRow {
+  hymn_label: string;
+  submitter_email: string | null;
+  contributors: { email: string | null } | null;
+}
+
+/**
+ * Tell the contributor what happened to their recording.
+ *
+ * Fire-and-forget: a mail outage must never turn a recorded decision into a
+ * failed request, and the moderator has already moved on to the next card.
+ *
+ * Not everyone is reachable. An anonymous upload with no opt-in leaves no
+ * address anywhere, which is the expected outcome of uploads being anonymous
+ * by default (ADR-004) rather than a fault — so it is logged, not surfaced.
+ */
+function notifyContributor(
+  c: Context<{ Bindings: Env; Variables: { admin: AdminIdentity } }>,
+  row: ReviewedRow,
+  decision: 'approve' | 'reject',
+  reason: string | null,
+): void {
+  // Same coalescing GET /admin/queue uses: the linked account first, then the
+  // address given at upload time.
+  const recipient = row.contributors?.email ?? row.submitter_email;
+  if (!recipient) {
+    console.log('review notification skipped — no address for this recording');
+    return;
+  }
+
+  const site = siteUrl(c.env);
+  const built =
+    decision === 'approve'
+      ? recordingAccepted(row.hymn_label, `${site}/dashboard`)
+      : recordingDeclined(row.hymn_label, reason, `${site}/#upload`);
+
+  background(c, sendEmail(c.env, { to: recipient, ...built }));
+}

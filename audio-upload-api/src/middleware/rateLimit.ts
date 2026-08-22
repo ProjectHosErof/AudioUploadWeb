@@ -28,3 +28,23 @@ export function rateLimit(): MiddlewareHandler<{ Bindings: Env }> {
     await next();
   };
 }
+
+/**
+ * A tighter limit for the subscribe endpoint, on its own binding.
+ *
+ * The upload limit (20/min) is a sensible ceiling for uploads and far too
+ * generous for something that sends mail to an address the caller typed —
+ * that ceiling would let one IP mail-bomb a victim 20 times a minute. Double
+ * opt-in means the mail is only ever a confirm request, but the volume still
+ * matters.
+ */
+export function subscribeRateLimit(): MiddlewareHandler<{ Bindings: Env }> {
+  return async (c, next) => {
+    const ip = clientIp((n) => c.req.header(n));
+    const { success } = await c.env.SUBSCRIBE_LIMITER.limit({ key: ip });
+    if (!success) {
+      return c.json({ error: 'Too many attempts. Please wait a moment and try again.' }, 429);
+    }
+    await next();
+  };
+}

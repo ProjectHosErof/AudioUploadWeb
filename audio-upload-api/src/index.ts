@@ -4,6 +4,7 @@ import { uploads } from './routes/uploads';
 import { me } from './routes/me';
 import { stats } from './routes/stats';
 import { admin } from './routes/admin';
+import { subscribe } from './routes/subscribe';
 import { scheduled } from './scheduled';
 
 const app = new Hono<{ Bindings: Env }>();
@@ -27,6 +28,7 @@ app.route('/uploads', uploads);
 app.route('/me', me);
 app.route('/stats', stats);
 app.route('/admin', admin);
+app.route('/subscribe', subscribe);
 
 app.onError((err, c) => {
   console.error('Unhandled error', err);

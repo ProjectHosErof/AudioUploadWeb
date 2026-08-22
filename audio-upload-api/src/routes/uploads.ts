@@ -1,4 +1,4 @@
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
 import { getSupabase } from '../lib/supabase';
 import { optionalUser } from '../lib/auth';
 import { getVocab } from '../lib/vocab';
@@ -6,6 +6,10 @@ import { CONTENT_TYPE_TO_EXT, UUID_RE, initiateSchema } from '../lib/validation'
 import { verifyTurnstile } from '../middleware/turnstile';
 import { rateLimit } from '../middleware/rateLimit';
 import { buildObjectKey, headObject, presignPut } from '../storage/r2';
+import { sendEmail } from '../lib/email';
+import { background } from '../lib/background';
+import { confirmSubscription } from '../emails/templates';
+import { apiUrl } from '../lib/urls';
 
 export const uploads = new Hono<{ Bindings: Env }>();
 
@@ -96,6 +100,13 @@ uploads.post('/initiate', rateLimit(), async (c) => {
   if (insertErr) {
     console.error('recordings insert failed', insertErr);
     return c.json({ error: 'Could not create submission.' }, 500);
+  }
+
+  // The opt-in checkbox promises project updates, so the address has to reach
+  // the mailing list — otherwise it lands in submitter_email and goes nowhere,
+  // which is the same broken promise the landing-page form used to make.
+  if (body.wants_updates && body.email) {
+    background(c, addToMailingList(c, body.email));
   }
 
   const ttl = Number(c.env.PRESIGN_TTL_SECONDS);
@@ -195,3 +206,42 @@ uploads.get('/:id', async (c) => {
     createdAt: rec.created_at,
   });
 });
+
+
+/**
+ * Add an upload opt-in to the mailing list, unconfirmed, and send the same
+ * confirmation email the landing-page form sends. Consent stays explicit: the
+ * checkbox alone never makes an address mailable.
+ *
+ * Best-effort — an upload must never fail because the mailing list is
+ * unavailable. Silently does nothing if the address is already known, so
+ * re-uploading doesn't re-send a confirmation.
+ */
+async function addToMailingList(c: Context<{ Bindings: Env }>, rawEmail: string): Promise<void> {
+  const email = rawEmail.trim().toLowerCase();
+  const supabase = getSupabase(c.env);
+
+  const existing = await supabase
+    .from('subscribers')
+    .select('id')
+    .eq('email', email)
+    .maybeSingle();
+  if (existing.error) {
+    console.error('subscriber lookup failed (upload opt-in)', existing.error);
+    return;
+  }
+  if (existing.data) return; // already known — confirmed or not, don't nag
+
+  const created = await supabase
+    .from('subscribers')
+    .insert({ email, source: 'upload' })
+    .select('token')
+    .maybeSingle();
+  if (created.error || !created.data) {
+    console.error('subscriber insert failed (upload opt-in)', created.error);
+    return;
+  }
+
+  const built = confirmSubscription(`${apiUrl(c)}/subscribe/confirm/${created.data.token}`);
+  await sendEmail(c.env, { to: email, ...built });
+}

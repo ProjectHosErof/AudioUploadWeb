@@ -31,6 +31,14 @@
         "type": "ratelimit",
         "namespace_id": "1001",
         "simple": { "limit": 20, "period": 60 }
+      },
+      {
+        // Subscribing sends mail to an address the caller typed, so it gets a
+        // far tighter ceiling than the upload path.
+        "name": "SUBSCRIBE_LIMITER",
+        "type": "ratelimit",
+        "namespace_id": "1002",
+        "simple": { "limit": 3, "period": 60 }
       }
     ]
   },
@@ -40,6 +48,12 @@
     // Hard ceiling enforced at initiate time and in the presigned content-length range. 200 MB.
     "MAX_UPLOAD_BYTES": "209715200",
     // Presigned URL lifetime.
-    "PRESIGN_TTL_SECONDS": "900"
+    "PRESIGN_TTL_SECONDS": "900",
+    // Where links in outbound email send a human. Defaults to the first
+    // ALLOWED_ORIGINS entry when unset; must be the real site in production.
+    "SITE_URL": "http://localhost:5173",
+    // Sender for all outbound mail. The domain must be verified in Resend or
+    // delivery is refused for every recipient but the account owner.
+    "EMAIL_FROM": "Project Hos Erof <onboarding@resend.dev>"
   }
 }

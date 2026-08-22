@@ -103,6 +103,34 @@ export const admins = pgTable('admins', {
 });
 
 // ==========================================
+// 3c. SUBSCRIBERS — the "Stay Informed" list. Separate from `contributors`
+//     on purpose: subscribing is an interest in the project, contributing is
+//     an act of donation, and conflating them would mean an unsubscribe had
+//     to reason about someone's recordings.
+//
+//     Double opt-in: a row exists from the moment someone submits, but is not
+//     mailable until confirmed_at is set. Without that, the public endpoint
+//     would be a way to send mail to any address an attacker types.
+// ==========================================
+
+export const subscribers = pgTable('subscribers', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  // Stored lowercase; a CHECK constraint in migration 0005 enforces it so the
+  // unique index can't be sidestepped by casing (same pattern as `admins`).
+  email: varchar('email', { length: 255 }).notNull().unique(),
+  // Unguessable capability for both the confirm and unsubscribe links. One
+  // token for both: a leaked confirm link could unsubscribe you, which is a
+  // trivial harm next to the complexity of managing two.
+  token: uuid('token').defaultRandom().notNull().unique(),
+  confirmedAt: timestamp('confirmed_at', { withTimezone: true }),
+  unsubscribedAt: timestamp('unsubscribed_at', { withTimezone: true }),
+  // Where the signup came from: 'landing' (the Stay Informed form) or
+  // 'upload' (the opt-in checkbox on the upload form).
+  source: varchar('source', { length: 30 }).default('landing').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// ==========================================
 // 4. RECORDINGS — one row per submission. Combines storage state,
 //    liturgical metadata, offline-enrichment fields, and moderation.
 // ==========================================

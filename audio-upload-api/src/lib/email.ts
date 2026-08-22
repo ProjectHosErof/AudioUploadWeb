@@ -1,0 +1,66 @@
+/**
+ * Outbound email, via Resend's HTTP API.
+ *
+ * It has to be an HTTP API rather than SMTP: Workers cannot open the raw TCP
+ * connection SMTP needs, so a conventional mail library is not an option here.
+ *
+ * Nothing in this module throws. Sending mail is always a side effect of some
+ * more important action — a moderation decision, a signup — and a mail outage
+ * must never turn one of those into a failed request. Callers get a boolean and
+ * the failure detail goes to the log.
+ */
+
+export interface EmailMessage {
+  to: string;
+  subject: string;
+  html: string;
+  /** Always send one. Some clients prefer it, and spam filters expect it. */
+  text: string;
+}
+
+const RESEND_ENDPOINT = 'https://api.resend.com/emails';
+
+export async function sendEmail(env: Env, message: EmailMessage): Promise<boolean> {
+  if (!env.RESEND_API_KEY) {
+    // Deliberately not an error: local dev and CI run without a key, and the
+    // rest of the request should behave exactly as it does in production.
+    console.warn('email skipped — RESEND_API_KEY is not configured', { to: redact(message.to) });
+    return false;
+  }
+
+  try {
+    const res = await fetch(RESEND_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: env.EMAIL_FROM,
+        to: [message.to],
+        subject: message.subject,
+        html: message.html,
+        text: message.text,
+      }),
+    });
+
+    if (!res.ok) {
+      // Resend explains refusals (unverified domain, invalid address) in the
+      // body, and that detail is the difference between a five-minute fix and
+      // an afternoon, so log it rather than just the status.
+      console.error('email send failed', res.status, await res.text().catch(() => ''));
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('email request failed', err);
+    return false;
+  }
+}
+
+/** Keep full addresses out of the logs; enough remains to correlate a report. */
+function redact(address: string): string {
+  const [local, domain] = address.split('@');
+  if (!domain) return '***';
+  return `${local.slice(0, 2)}***@${domain}`;
+}
