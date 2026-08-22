@@ -12,7 +12,9 @@ import {
   timestamp,
   jsonb,
   index,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 
 // ==========================================
 // 1. ENUMS — stable, small, controlled lifecycles.
@@ -79,6 +81,56 @@ export const contributors = pgTable('contributors', {
 });
 
 // ==========================================
+// 3b. ADMINS — the moderation allowlist (ADR-010). Authorization is checked
+//     by the Worker, not by JWT claims, so promoting someone is an INSERT
+//     rather than a deploy.
+//
+//     Keyed on EMAIL so a moderator can be invited before they have ever
+//     signed in (auth.users has no row until first login). auth_user_id is
+//     resolved on their first authenticated request and is what subsequent
+//     checks match on — the email fallback only ever applies to a *verified*
+//     address. See src/lib/admin.ts.
+// ==========================================
+
+export const admins = pgTable('admins', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  // Stored lowercase; a CHECK constraint in migration 0004 enforces it so the
+  // unique index can't be sidestepped by casing.
+  email: varchar('email', { length: 255 }).notNull().unique(),
+  authUserId: uuid('auth_user_id').unique(), // backfilled on first admin request
+  note: varchar('note', { length: 200 }), // free-text "who is this", for the humans
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// ==========================================
+// 3c. SUBSCRIBERS — the "Stay Informed" list. Separate from `contributors`
+//     on purpose: subscribing is an interest in the project, contributing is
+//     an act of donation, and conflating them would mean an unsubscribe had
+//     to reason about someone's recordings.
+//
+//     Double opt-in: a row exists from the moment someone submits, but is not
+//     mailable until confirmed_at is set. Without that, the public endpoint
+//     would be a way to send mail to any address an attacker types.
+// ==========================================
+
+export const subscribers = pgTable('subscribers', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  // Stored lowercase; a CHECK constraint in migration 0005 enforces it so the
+  // unique index can't be sidestepped by casing (same pattern as `admins`).
+  email: varchar('email', { length: 255 }).notNull().unique(),
+  // Unguessable capability for both the confirm and unsubscribe links. One
+  // token for both: a leaked confirm link could unsubscribe you, which is a
+  // trivial harm next to the complexity of managing two.
+  token: uuid('token').defaultRandom().notNull().unique(),
+  confirmedAt: timestamp('confirmed_at', { withTimezone: true }),
+  unsubscribedAt: timestamp('unsubscribed_at', { withTimezone: true }),
+  // Where the signup came from: 'landing' (the Stay Informed form) or
+  // 'upload' (the opt-in checkbox on the upload form).
+  source: varchar('source', { length: 30 }).default('landing').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// ==========================================
 // 4. RECORDINGS — one row per submission. Combines storage state,
 //    liturgical metadata, offline-enrichment fields, and moderation.
 // ==========================================
@@ -120,6 +172,23 @@ export const recordings = pgTable(
     reviewStatus: reviewStatusEnum('review_status').default('processing').notNull(),
     errorMessage: text('error_message'),
 
+    // --- Moderation audit (Pillar C) ---
+    // Who promoted or rejected this, when, and why. Populated only by an
+    // admin decision — enrichment's automatic rejections leave these null and
+    // explain themselves in error_message instead.
+    reviewedBy: uuid('reviewed_by'), // auth.users(id); FK added in migration 0004
+    reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+    reviewReason: text('review_reason'),
+    // When the contributor was told about this decision. Decisions are batched
+    // into one digest per person per day rather than mailed individually —
+    // somebody who uploads their whole repertoire in an evening should not
+    // wake up to forty emails.
+    notifiedAt: timestamp('notified_at', { withTimezone: true }),
+
+    // Structured replacement for the "duplicate of <id>" error_message pointer:
+    // the surviving recording this one duplicates.
+    duplicateOfId: uuid('duplicate_of_id'), // recordings(id); FK added in migration 0004
+
     // --- Contributor / opt-in (anonymous-friendly) ---
     contributorId: uuid('contributor_id').references(() => contributors.id, {
       onDelete: 'set null',
@@ -135,6 +204,12 @@ export const recordings = pgTable(
     index('recordings_upload_status_idx').on(t.uploadStatus),
     index('recordings_review_status_idx').on(t.reviewStatus),
     index('recordings_contributor_id_idx').on(t.contributorId),
+    // Dedup backstop: at most one non-rejected recording per content hash.
+    // The enrichment job dedups app-side first; this makes concurrent
+    // enrichment race-proof at the DB level.
+    uniqueIndex('recordings_unique_active_hash')
+      .on(t.contentHash)
+      .where(sql`${t.contentHash} is not null and ${t.reviewStatus} <> 'rejected'`),
   ],
 );
 

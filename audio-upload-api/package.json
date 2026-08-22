@@ -10,7 +10,10 @@
     "cf-typegen": "wrangler types",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "seed": "tsx scripts/seed-reference.ts"
+    "seed": "tsx scripts/seed-reference.ts",
+    "admins": "tsx scripts/manage-admins.ts",
+    "check:vocab": "tsx scripts/check-vocab.ts",
+    "cors:set": "tsx scripts/set-r2-cors.ts"
   },
   "keywords": [],
   "author": "",

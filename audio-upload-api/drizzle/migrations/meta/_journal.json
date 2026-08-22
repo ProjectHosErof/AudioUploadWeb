@@ -15,6 +15,48 @@
       "when": 1785726020918,
       "tag": "0001_grant_api_access",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786123511857,
+      "tag": "0002_solid_scarlet_witch",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1786143367793,
+      "tag": "0003_enable_rls_contributor_access",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1787415427082,
+      "tag": "0004_moderation_admins",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1787423035736,
+      "tag": "0005_subscribers",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1787425583166,
+      "tag": "0006_notification_digest",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1787426223303,
+      "tag": "0007_unsubscribe_source",
+      "breakpoints": true
     }
   ]
 }

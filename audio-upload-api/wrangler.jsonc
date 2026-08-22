@@ -18,12 +18,53 @@
   "observability": {
     "enabled": true
   },
+  // Two schedules, dispatched on controller.cron in src/scheduled.ts:
+  //   */15 — janitor: reap stale `pending` rows + sweep orphaned R2 objects
+  //   16:00 UTC — one digest per contributor covering the day's moderation
+  //   decisions, rather than an email per recording
+  "triggers": {
+    "crons": ["*/15 * * * *", "0 16 * * *"]
+  },
+  // Native, edge-enforced IP rate limiting for the anonymous upload path.
+  // period must be 10 or 60 (seconds); limit is requests per period per key.
+  "unsafe": {
+    "bindings": [
+      {
+        "name": "RATE_LIMITER",
+        "type": "ratelimit",
+        "namespace_id": "1001",
+        "simple": { "limit": 20, "period": 60 }
+      },
+      {
+        // Subscribing sends mail to an address the caller typed, so it gets a
+        // far tighter ceiling than the upload path.
+        "name": "SUBSCRIBE_LIMITER",
+        "type": "ratelimit",
+        "namespace_id": "1002",
+        "simple": { "limit": 3, "period": 60 }
+      }
+    ]
+  },
   "vars": {
     // Comma-separated list of allowed browser origins for CORS.
     "ALLOWED_ORIGINS": "http://localhost:5173,http://localhost:4173",
     // Hard ceiling enforced at initiate time and in the presigned content-length range. 200 MB.
     "MAX_UPLOAD_BYTES": "209715200",
     // Presigned URL lifetime.
-    "PRESIGN_TTL_SECONDS": "900"
+    "PRESIGN_TTL_SECONDS": "900",
+    // Where links in outbound email send a human. Defaults to the first
+    // ALLOWED_ORIGINS entry when unset; must be the real site in production.
+    "SITE_URL": "http://localhost:5173",
+    // Sender for all outbound mail. mail.hoserof.org is verified in Resend.
+    // Sending stays on the subdomain so a bad batch can never damage the
+    // apex domain's reputation.
+    "EMAIL_FROM": "Project Hos Erof <hello@mail.hoserof.org>",
+    // Where replies go. Currently the project mailbox directly; switch to
+    // hello@hoserof.org once Cloudflare Email Routing forwards it there.
+    "EMAIL_REPLY_TO": "projecthoserof@gmail.com",
+    // This Worker's own public origin. The fetch path reads it from the
+    // request; a scheduled run has no request, so unsubscribe links in the
+    // digest need it configured.
+    "API_ORIGIN": "https://audio-upload-api.dev-anthonyriad.workers.dev"
   }
 }

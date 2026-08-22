@@ -1,20 +1,6 @@
 import type { MiddlewareHandler } from 'hono';
 
-/**
- * Lightweight IP-based rate limiter for the anonymous upload path.
- *
- * NOTE: state is an in-memory Map scoped to a single Worker isolate, so limits
- * are approximate and reset on isolate recycle. It's a cheap first line of
- * defense against casual abuse. For hard guarantees, add a Cloudflare WAF
- * rate-limiting rule or back this with KV / a Durable Object.
- */
-interface Bucket {
-  count: number;
-  resetAt: number;
-}
-
-const buckets = new Map<string, Bucket>();
-
+/** Client IP used as the rate-limit key. */
 function clientIp(headerLookup: (name: string) => string | undefined): string {
   return (
     headerLookup('cf-connecting-ip') ??
@@ -23,31 +9,42 @@ function clientIp(headerLookup: (name: string) => string | undefined): string {
   );
 }
 
-export function rateLimit(opts: { limit: number; windowMs: number }): MiddlewareHandler {
+/**
+ * IP-based rate limiting backed by Cloudflare's native rate-limit binding
+ * (`env.RATE_LIMITER`), enforced across all isolates at the edge — unlike a
+ * per-isolate in-memory counter, which each isolate resets independently.
+ * The limit/period are configured on the `ratelimit` binding in wrangler.jsonc.
+ */
+export function rateLimit(): MiddlewareHandler<{ Bindings: Env }> {
   return async (c, next) => {
     const ip = clientIp((n) => c.req.header(n));
-    const now = Date.now();
-    const bucket = buckets.get(ip);
-
-    if (!bucket || now > bucket.resetAt) {
-      buckets.set(ip, { count: 1, resetAt: now + opts.windowMs });
-    } else {
-      bucket.count += 1;
-      if (bucket.count > opts.limit) {
-        const retryAfter = Math.ceil((bucket.resetAt - now) / 1000);
-        return c.json({ error: 'Too many requests. Please slow down and try again shortly.' }, 429, {
-          'Retry-After': String(retryAfter),
-        });
-      }
+    const { success } = await c.env.RATE_LIMITER.limit({ key: ip });
+    if (!success) {
+      return c.json(
+        { error: 'Too many requests. Please slow down and try again shortly.' },
+        429,
+      );
     }
+    await next();
+  };
+}
 
-    // Opportunistic cleanup so the Map can't grow unbounded.
-    if (buckets.size > 10_000) {
-      for (const [key, value] of buckets) {
-        if (now > value.resetAt) buckets.delete(key);
-      }
+/**
+ * A tighter limit for the subscribe endpoint, on its own binding.
+ *
+ * The upload limit (20/min) is a sensible ceiling for uploads and far too
+ * generous for something that sends mail to an address the caller typed —
+ * that ceiling would let one IP mail-bomb a victim 20 times a minute. Double
+ * opt-in means the mail is only ever a confirm request, but the volume still
+ * matters.
+ */
+export function subscribeRateLimit(): MiddlewareHandler<{ Bindings: Env }> {
+  return async (c, next) => {
+    const ip = clientIp((n) => c.req.header(n));
+    const { success } = await c.env.SUBSCRIBE_LIMITER.limit({ key: ip });
+    if (!success) {
+      return c.json({ error: 'Too many attempts. Please wait a moment and try again.' }, 429);
     }
-
     await next();
   };
 }

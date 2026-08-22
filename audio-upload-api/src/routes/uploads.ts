@@ -1,11 +1,15 @@
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
 import { getSupabase } from '../lib/supabase';
-import { CONTENT_TYPE_TO_EXT, initiateSchema } from '../lib/validation';
+import { optionalUser } from '../lib/auth';
+import { getVocab } from '../lib/vocab';
+import { CONTENT_TYPE_TO_EXT, UUID_RE, initiateSchema } from '../lib/validation';
 import { verifyTurnstile } from '../middleware/turnstile';
 import { rateLimit } from '../middleware/rateLimit';
 import { buildObjectKey, headObject, presignPut } from '../storage/r2';
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+import { sendEmail } from '../lib/email';
+import { background } from '../lib/background';
+import { confirmSubscription } from '../emails/templates';
+import { apiUrl } from '../lib/urls';
 
 export const uploads = new Hono<{ Bindings: Env }>();
 
@@ -14,7 +18,7 @@ export const uploads = new Hono<{ Bindings: Env }>();
  * Validate metadata, create a `pending` recording row, and return a presigned
  * PUT URL for the browser to upload the audio directly to R2.
  */
-uploads.post('/initiate', rateLimit({ limit: 20, windowMs: 60_000 }), async (c) => {
+uploads.post('/initiate', rateLimit(), async (c) => {
   const parsed = initiateSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) {
     return c.json({ error: 'Invalid request', details: parsed.error.flatten() }, 400);
@@ -34,26 +38,23 @@ uploads.post('/initiate', rateLimit({ limit: 20, windowMs: 60_000 }), async (c) 
 
   const supabase = getSupabase(c.env);
 
-  // Validate controlled vocabulary against the reference tables (parallel).
-  const [svc, ssn, hymn, langRows] = await Promise.all([
-    supabase.from('services').select('slug').eq('slug', body.service_slug).maybeSingle(),
-    supabase.from('seasons').select('slug').eq('slug', body.season_slug).maybeSingle(),
-    supabase.from('hymns').select('slug, label').eq('slug', body.hymn_slug).maybeSingle(),
-    supabase.from('languages').select('slug'),
-  ]);
-
-  const vocabError = svc.error ?? ssn.error ?? hymn.error ?? langRows.error;
-  if (vocabError) {
-    console.error('vocab lookup failed', vocabError);
+  // Validate controlled vocabulary against the per-isolate cached reference
+  // sets (0 DB round-trips on a warm isolate). FK constraints remain the
+  // authoritative backstop at insert time.
+  let vocab;
+  try {
+    vocab = await getVocab(c.env);
+  } catch (err) {
+    console.error('vocab lookup failed', err);
     return c.json({ error: 'Validation lookup failed.' }, 500);
   }
 
   const invalid: string[] = [];
-  if (!svc.data) invalid.push('service_slug');
-  if (!ssn.data) invalid.push('season_slug');
-  if (!hymn.data) invalid.push('hymn_slug');
-  const allowedLangs = new Set((langRows.data ?? []).map((r) => r.slug));
-  const badLangs = body.languages.filter((l) => !allowedLangs.has(l));
+  if (!vocab.services.has(body.service_slug)) invalid.push('service_slug');
+  if (!vocab.seasons.has(body.season_slug)) invalid.push('season_slug');
+  const hymnLabel = vocab.hymns.get(body.hymn_slug);
+  if (hymnLabel === undefined) invalid.push('hymn_slug');
+  const badLangs = body.languages.filter((l) => !vocab.languages.has(l));
   if (badLangs.length) invalid.push(`languages: ${badLangs.join(', ')}`);
   if (invalid.length) {
     return c.json({ error: 'Unknown selection', fields: invalid }, 400);
@@ -63,6 +64,24 @@ uploads.post('/initiate', rateLimit({ limit: 20, windowMs: 60_000 }), async (c) 
   const ext = CONTENT_TYPE_TO_EXT[body.content_type];
   const r2Key = buildObjectKey(recordingId, ext);
 
+  // Uploads stay anonymous (ADR-004). If the contributor happens to be signed
+  // in, attribute the submission to them; a bad token just falls back to
+  // anonymous rather than failing the upload.
+  let contributorId: string | null = null;
+  const user = await optionalUser(c.env, c.req.header('authorization'));
+  if (user) {
+    const { data: contributor, error: contributorErr } = await supabase
+      .from('contributors')
+      .select('id')
+      .eq('auth_user_id', user.id)
+      .maybeSingle();
+    if (contributorErr) {
+      console.error('contributor lookup failed during initiate', contributorErr);
+    } else {
+      contributorId = (contributor?.id as string | undefined) ?? null;
+    }
+  }
+
   const { error: insertErr } = await supabase.from('recordings').insert({
     id: recordingId,
     r2_key: r2Key,
@@ -71,15 +90,23 @@ uploads.post('/initiate', rateLimit({ limit: 20, windowMs: 60_000 }), async (c) 
     service_slug: body.service_slug,
     season_slug: body.season_slug,
     hymn_slug: body.hymn_slug,
-    hymn_label: hymn.data!.label,
+    hymn_label: hymnLabel!,
     languages: body.languages,
     submitter_email: body.email ?? null,
     wants_updates: body.wants_updates,
     upload_status: 'pending',
+    contributor_id: contributorId,
   });
   if (insertErr) {
     console.error('recordings insert failed', insertErr);
     return c.json({ error: 'Could not create submission.' }, 500);
+  }
+
+  // The opt-in checkbox promises project updates, so the address has to reach
+  // the mailing list — otherwise it lands in submitter_email and goes nowhere,
+  // which is the same broken promise the landing-page form used to make.
+  if (body.wants_updates && body.email) {
+    background(c, addToMailingList(c, body.email));
   }
 
   const ttl = Number(c.env.PRESIGN_TTL_SECONDS);
@@ -179,3 +206,46 @@ uploads.get('/:id', async (c) => {
     createdAt: rec.created_at,
   });
 });
+
+
+/**
+ * Add an upload opt-in to the mailing list, unconfirmed, and send the same
+ * confirmation email the landing-page form sends. Consent stays explicit: the
+ * checkbox alone never makes an address mailable.
+ *
+ * Best-effort — an upload must never fail because the mailing list is
+ * unavailable. Silently does nothing if the address is already known, so
+ * re-uploading doesn't re-send a confirmation.
+ */
+async function addToMailingList(c: Context<{ Bindings: Env }>, rawEmail: string): Promise<void> {
+  const email = rawEmail.trim().toLowerCase();
+  const supabase = getSupabase(c.env);
+
+  const existing = await supabase
+    .from('subscribers')
+    .select('id')
+    .eq('email', email)
+    .maybeSingle();
+  if (existing.error) {
+    console.error('subscriber lookup failed (upload opt-in)', existing.error);
+    return;
+  }
+  if (existing.data) return; // already known — confirmed or not, don't nag
+
+  const created = await supabase
+    .from('subscribers')
+    .insert({ email, source: 'upload' })
+    .select('token')
+    .maybeSingle();
+  if (created.error || !created.data) {
+    console.error('subscriber insert failed (upload opt-in)', created.error);
+    return;
+  }
+
+  const built = confirmSubscription(`${apiUrl(c)}/subscribe/confirm/${created.data.token}`);
+  await sendEmail(c.env, {
+    to: email,
+    ...built,
+    unsubscribeUrl: `${apiUrl(c)}/subscribe/unsubscribe/${created.data.token}`,
+  });
+}

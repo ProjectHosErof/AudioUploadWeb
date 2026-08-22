@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "recordings_unique_active_hash" ON "recordings" USING btree ("content_hash") WHERE "recordings"."content_hash" is not null and "recordings"."review_status" <> 'rejected';
