@@ -243,5 +243,9 @@ async function addToMailingList(c: Context<{ Bindings: Env }>, rawEmail: string)
   }
 
   const built = confirmSubscription(`${apiUrl(c)}/subscribe/confirm/${created.data.token}`);
-  await sendEmail(c.env, { to: email, ...built });
+  await sendEmail(c.env, {
+    to: email,
+    ...built,
+    unsubscribeUrl: `${apiUrl(c)}/subscribe/unsubscribe/${created.data.token}`,
+  });
 }

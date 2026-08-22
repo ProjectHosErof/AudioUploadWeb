@@ -61,6 +61,10 @@
     "EMAIL_FROM": "Project Hos Erof <hello@mail.hoserof.org>",
     // Where replies go. Currently the project mailbox directly; switch to
     // hello@hoserof.org once Cloudflare Email Routing forwards it there.
-    "EMAIL_REPLY_TO": "projecthoserof@gmail.com"
+    "EMAIL_REPLY_TO": "projecthoserof@gmail.com",
+    // This Worker's own public origin. The fetch path reads it from the
+    // request; a scheduled run has no request, so unsubscribe links in the
+    // digest need it configured.
+    "API_ORIGIN": "https://audio-upload-api.dev-anthonyriad.workers.dev"
   }
 }

@@ -16,6 +16,13 @@ export interface EmailMessage {
   html: string;
   /** Always send one. Some clients prefer it, and spam filters expect it. */
   text: string;
+  /**
+   * One-click unsubscribe endpoint (RFC 8058). Set it on anything recurring:
+   * Gmail and Yahoo expect it from bulk senders, and its absence costs
+   * deliverability for everyone else. Note the URL is called with **POST**,
+   * not GET — see the route in src/routes/subscribe.ts.
+   */
+  unsubscribeUrl?: string;
 }
 
 const RESEND_ENDPOINT = 'https://api.resend.com/emails';
@@ -45,6 +52,7 @@ export async function sendEmail(env: Env, message: EmailMessage): Promise<boolea
         subject: message.subject,
         html: message.html,
         text: message.text,
+        ...(message.unsubscribeUrl ? { headers: unsubscribeHeaders(env, message.unsubscribeUrl) } : {}),
       }),
     });
 
@@ -65,6 +73,25 @@ export async function sendEmail(env: Env, message: EmailMessage): Promise<boolea
     console.error('email request failed', err);
     return false;
   }
+}
+
+/**
+ * RFC 8058 one-click unsubscribe.
+ *
+ * Both forms are offered: the URL is what Gmail and Yahoo surface as an
+ * "Unsubscribe" button next to the sender, and the mailto is the fallback for
+ * clients that only understand that. List-Unsubscribe-Post is what makes the
+ * button one-click rather than sending the reader to a web page — and it is
+ * also what makes the request a POST.
+ */
+function unsubscribeHeaders(env: Env, url: string): Record<string, string> {
+  const headers: Record<string, string> = {
+    'List-Unsubscribe': env.EMAIL_REPLY_TO
+      ? `<${url}>, <mailto:${env.EMAIL_REPLY_TO}?subject=unsubscribe>`
+      : `<${url}>`,
+    'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+  };
+  return headers;
 }
 
 /** Keep full addresses out of the logs; enough remains to correlate a report. */

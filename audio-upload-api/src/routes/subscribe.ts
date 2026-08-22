@@ -80,7 +80,14 @@ subscribe.post('/', subscribeRateLimit(), async (c) => {
   if (token && !alreadyConfirmed) {
     // Points at THIS Worker — the confirm route below, not the frontend.
     const built = confirmSubscription(`${apiUrl(c)}/subscribe/confirm/${token}`);
-    background(c, sendEmail(c.env, { to: email, ...built }));
+    background(
+      c,
+      sendEmail(c.env, {
+        to: email,
+        ...built,
+        unsubscribeUrl: `${apiUrl(c)}/subscribe/unsubscribe/${token}`,
+      }),
+    );
   }
 
   // Every path returns this: new signup, repeat signup, already-confirmed,
@@ -115,6 +122,31 @@ subscribe.get('/confirm/:token', async (c) => {
   if (!data) return c.redirect(`${site}/subscribed?status=unknown`, 302);
 
   return c.redirect(`${site}/subscribed`, 302);
+});
+
+/**
+ * RFC 8058 one-click unsubscribe. Mail providers call this with POST (and a
+ * `List-Unsubscribe=One-Click` body) when the reader taps the Unsubscribe
+ * button the client shows beside the sender. It is a machine caller, so this
+ * returns a bare 200 rather than redirecting anywhere.
+ *
+ * Deliberately not rate-limited and not idempotency-checked: honouring an
+ * unsubscribe is never something to make harder, and repeating one is free.
+ */
+subscribe.post('/unsubscribe/:token', async (c) => {
+  const { error } = await getSupabase(c.env)
+    .from('subscribers')
+    .update({ unsubscribed_at: new Date().toISOString() })
+    .eq('token', c.req.param('token'));
+
+  if (error) {
+    console.error('one-click unsubscribe failed', error);
+    return c.json({ error: 'Could not process that just now.' }, 500);
+  }
+  // 200 even for an unknown token: the caller is a mail provider, and the
+  // outcome it cares about — "this address should stop receiving mail" — is
+  // already true.
+  return c.body(null, 200);
 });
 
 subscribe.get('/unsubscribe/:token', async (c) => {

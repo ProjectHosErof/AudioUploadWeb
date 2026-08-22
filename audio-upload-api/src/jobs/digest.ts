@@ -2,6 +2,7 @@ import { getSupabase } from '../lib/supabase';
 import { sendEmail } from '../lib/email';
 import { reviewDigest, type DigestItem } from '../emails/templates';
 import { siteUrl } from '../lib/urls';
+import { mailPreferenceFor, unsubscribeUrl } from '../lib/mailPreferences';
 
 /**
  * Daily digest of moderation decisions.
@@ -47,7 +48,7 @@ interface Batch {
   recordingIds: string[];
 }
 
-export async function sendReviewDigests(env: Env): Promise<void> {
+export async function sendReviewDigests(env: Env, apiOrigin: string): Promise<void> {
   const supabase = getSupabase(env);
 
   const { data, error } = await supabase
@@ -83,10 +84,34 @@ export async function sendReviewDigests(env: Env): Promise<void> {
   const site = siteUrl(env);
   const urls = { dashboard: `${site}/dashboard`, upload: `${site}/#upload` };
   let sent = 0;
+  let suppressed = 0;
 
   for (const batch of slice) {
+    // Every recipient needs a token so the message can carry a working
+    // unsubscribe link — creating the row is a preferences record, not a
+    // subscription (confirmed_at stays null).
+    const pref = await mailPreferenceFor(env, batch.recipient, 'digest');
+    if (!pref) {
+      console.error('digest skipped — could not resolve mail preferences');
+      continue;
+    }
+    if (pref.suppressed) {
+      // They asked to stop. Stamp the decisions so we do not reconsider them
+      // every night, and say nothing.
+      await supabase
+        .from('recordings')
+        .update({ notified_at: new Date().toISOString() })
+        .in('id', batch.recordingIds);
+      suppressed += 1;
+      continue;
+    }
+
     const built = reviewDigest(batch.items, batch.firstName, urls);
-    const ok = await sendEmail(env, { to: batch.recipient, ...built });
+    const ok = await sendEmail(env, {
+      to: batch.recipient,
+      ...built,
+      unsubscribeUrl: unsubscribeUrl(apiOrigin, pref.token),
+    });
     if (!ok) {
       // Leave notified_at null so tomorrow's run tries again. Better a late
       // digest than a decision the contributor never hears about.
@@ -112,6 +137,7 @@ export async function sendReviewDigests(env: Env): Promise<void> {
   // separately keeps the log from implying a backlog that will never clear.
   console.log(
     `digest: sent ${sent}/${slice.length} covering ${reachable} decision(s)` +
+      (suppressed ? `; ${suppressed} recipient(s) have unsubscribed` : '') +
       (unreachable ? `; ${unreachable} decision(s) have no reachable address` : ''),
   );
 }

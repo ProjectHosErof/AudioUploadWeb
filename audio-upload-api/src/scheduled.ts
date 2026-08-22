@@ -85,7 +85,10 @@ export async function scheduled(
   _ctx: ExecutionContext,
 ): Promise<void> {
   if (controller.cron === DIGEST_CRON) {
-    await sendReviewDigests(env);
+    // A scheduled run has no request to read the Worker's own origin from, so
+    // unlike the fetch path it has to be configured. API_ORIGIN falls back to
+    // the deployed Worker URL.
+    await sendReviewDigests(env, env.API_ORIGIN);
     return;
   }
 
