@@ -52,8 +52,9 @@
     // Where links in outbound email send a human. Defaults to the first
     // ALLOWED_ORIGINS entry when unset; must be the real site in production.
     "SITE_URL": "http://localhost:5173",
-    // Sender for all outbound mail. The domain must be verified in Resend or
-    // delivery is refused for every recipient but the account owner.
-    "EMAIL_FROM": "Project Hos Erof <onboarding@resend.dev>"
+    // Sender for all outbound mail. mail.hoserof.org is verified in Resend.
+    // no-reply because the domain has receiving disabled — a friendlier
+    // address would invite replies that silently go nowhere.
+    "EMAIL_FROM": "Project Hos Erof <no-reply@mail.hoserof.org>"
   }
 }

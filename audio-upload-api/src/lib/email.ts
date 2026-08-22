@@ -51,6 +51,11 @@ export async function sendEmail(env: Env, message: EmailMessage): Promise<boolea
       console.error('email send failed', res.status, await res.text().catch(() => ''));
       return false;
     }
+
+    // Log the provider's id: without it there is no way to answer "did we
+    // actually send it?" when somebody says a message never arrived.
+    const body = (await res.json().catch(() => null)) as { id?: string } | null;
+    console.log('email sent', { to: redact(message.to), id: body?.id ?? 'unknown' });
     return true;
   } catch (err) {
     console.error('email request failed', err);
