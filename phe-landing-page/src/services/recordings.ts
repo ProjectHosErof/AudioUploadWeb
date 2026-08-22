@@ -23,6 +23,8 @@ export interface MyRecording {
   status: ReviewStatus;
   /** Set when a rejection was an exact-duplicate rather than a moderation call. */
   isDuplicate: boolean;
+  /** A moderator's explanation, when they left one. Null for automatic outcomes. */
+  reviewReason: string | null;
 }
 
 export interface CommunityStats {
@@ -55,6 +57,8 @@ interface RecordingRow {
   created_at: string;
   review_status: ReviewStatus;
   error_message: string | null;
+  review_reason: string | null;
+  duplicate_of_id: string | null;
   services: { label: string } | null;
   seasons: { label: string } | null;
 }
@@ -85,7 +89,7 @@ export async function fetchMyRecordings(): Promise<MyRecording[]> {
     supabase
       .from("recordings")
       .select(
-        "id, hymn_label, languages, duration_seconds, created_at, review_status, error_message, services(label), seasons(label)",
+        "id, hymn_label, languages, duration_seconds, created_at, review_status, error_message, review_reason, duplicate_of_id, services(label), seasons(label)",
       )
       .order("created_at", { ascending: false }),
     getLanguageLabels(),
@@ -104,7 +108,11 @@ export async function fetchMyRecordings(): Promise<MyRecording[]> {
     durationSeconds: row.duration_seconds === null ? null : Number(row.duration_seconds),
     uploadedAt: row.created_at,
     status: row.review_status,
-    isDuplicate: (row.error_message ?? "").toLowerCase().includes("duplicate"),
+    // duplicate_of_id is the structured signal (migration 0004); the
+    // error_message check still covers rows rejected before it existed.
+    isDuplicate:
+      row.duplicate_of_id !== null || (row.error_message ?? "").toLowerCase().includes("duplicate"),
+    reviewReason: row.review_reason,
   }));
 }
 

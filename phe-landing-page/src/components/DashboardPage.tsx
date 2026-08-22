@@ -374,6 +374,20 @@ export function DashboardPage() {
                           }}>
                             {presented.label}
                           </span>
+                          {/* A decline is explainable to the person who submitted it. */}
+                          {track.reviewReason && track.status === 'rejected' && (
+                            <span style={{
+                              display: 'block',
+                              fontFamily: 'var(--font-ui)',
+                              fontSize: '0.6875rem',
+                              lineHeight: 1.5,
+                              color: 'var(--text-muted)',
+                              marginTop: '0.5rem',
+                              maxWidth: '200px',
+                            }}>
+                              {track.reviewReason}
+                            </span>
+                          )}
                         </td>
                       </tr>
                     );

@@ -16,7 +16,7 @@ const linkStyle: React.CSSProperties = {
 };
 
 export function Nav() {
-  const { session, enabled, signOut } = useAuth();
+  const { session, enabled, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const onLanding = location.pathname === '/';
@@ -82,6 +82,17 @@ export function Nav() {
               >
                 My Contributions
               </Link>
+              {/* Only rendered for moderators; the Worker is what enforces it. */}
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  style={{ ...linkStyle, color: 'var(--crimson-label)' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--gold)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--crimson-label)')}
+                >
+                  Review Queue
+                </Link>
+              )}
               <button
                 onClick={handleSignOut}
                 style={linkStyle}

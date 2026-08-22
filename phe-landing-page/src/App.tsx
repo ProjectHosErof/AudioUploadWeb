@@ -9,7 +9,9 @@ import { UploadForm } from "./components/UploadForm";
 import { Footer } from "./components/Footer";
 import { LoginPage } from "./components/LoginPage";
 import { DashboardPage } from "./components/DashboardPage";
+import { AdminPage } from "./components/AdminPage";
 import { ProtectedRoute } from "./auth/ProtectedRoute";
+import { AdminRoute } from "./auth/AdminRoute";
 // import { AudioGallery } from "./components/AudioGallery";
 // import { Contact } from "./components/Contact";
 
@@ -69,6 +71,14 @@ export default function App() {
           <ProtectedRoute>
             <DashboardPage />
           </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin"
+        element={
+          <AdminRoute>
+            <AdminPage />
+          </AdminRoute>
         }
       />
       {/* Unknown paths fall back to the landing page. */}
