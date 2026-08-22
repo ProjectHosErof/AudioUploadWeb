@@ -42,3 +42,30 @@ export const initiateSchema = z.object({
 });
 
 export type InitiateInput = z.infer<typeof initiateSchema>;
+
+export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Body of POST /admin/recordings/:id/review.
+ *
+ * A rejection must carry a reason — it becomes the contributor-facing
+ * explanation and the audit record, and "rejected, no reason given" is the one
+ * outcome that helps nobody. Approvals may carry an optional note.
+ */
+export const reviewSchema = z
+  .object({
+    decision: z.enum(['approve', 'reject']),
+    reason: z.string().trim().min(1).max(500).optional(),
+    /** Set when rejecting as a duplicate of an existing recording. */
+    duplicate_of_id: z.string().regex(UUID_RE).optional(),
+  })
+  .refine((v) => v.decision !== 'reject' || Boolean(v.reason), {
+    message: 'A reason is required when rejecting a recording',
+    path: ['reason'],
+  })
+  .refine((v) => v.decision !== 'approve' || !v.duplicate_of_id, {
+    message: 'duplicate_of_id only applies to a rejection',
+    path: ['duplicate_of_id'],
+  });
+
+export type ReviewInput = z.infer<typeof reviewSchema>;

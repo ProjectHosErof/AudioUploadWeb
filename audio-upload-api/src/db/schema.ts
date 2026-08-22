@@ -81,6 +81,28 @@ export const contributors = pgTable('contributors', {
 });
 
 // ==========================================
+// 3b. ADMINS — the moderation allowlist (ADR-010). Authorization is checked
+//     by the Worker, not by JWT claims, so promoting someone is an INSERT
+//     rather than a deploy.
+//
+//     Keyed on EMAIL so a moderator can be invited before they have ever
+//     signed in (auth.users has no row until first login). auth_user_id is
+//     resolved on their first authenticated request and is what subsequent
+//     checks match on — the email fallback only ever applies to a *verified*
+//     address. See src/lib/admin.ts.
+// ==========================================
+
+export const admins = pgTable('admins', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  // Stored lowercase; a CHECK constraint in migration 0004 enforces it so the
+  // unique index can't be sidestepped by casing.
+  email: varchar('email', { length: 255 }).notNull().unique(),
+  authUserId: uuid('auth_user_id').unique(), // backfilled on first admin request
+  note: varchar('note', { length: 200 }), // free-text "who is this", for the humans
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// ==========================================
 // 4. RECORDINGS — one row per submission. Combines storage state,
 //    liturgical metadata, offline-enrichment fields, and moderation.
 // ==========================================
@@ -121,6 +143,18 @@ export const recordings = pgTable(
     uploadStatus: uploadStatusEnum('upload_status').default('pending').notNull(),
     reviewStatus: reviewStatusEnum('review_status').default('processing').notNull(),
     errorMessage: text('error_message'),
+
+    // --- Moderation audit (Pillar C) ---
+    // Who promoted or rejected this, when, and why. Populated only by an
+    // admin decision — enrichment's automatic rejections leave these null and
+    // explain themselves in error_message instead.
+    reviewedBy: uuid('reviewed_by'), // auth.users(id); FK added in migration 0004
+    reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+    reviewReason: text('review_reason'),
+
+    // Structured replacement for the "duplicate of <id>" error_message pointer:
+    // the surviving recording this one duplicates.
+    duplicateOfId: uuid('duplicate_of_id'), // recordings(id); FK added in migration 0004
 
     // --- Contributor / opt-in (anonymous-friendly) ---
     contributorId: uuid('contributor_id').references(() => contributors.id, {
