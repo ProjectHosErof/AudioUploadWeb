@@ -10,6 +10,7 @@ import { Footer } from "./components/Footer";
 import { LoginPage } from "./components/LoginPage";
 import { DashboardPage } from "./components/DashboardPage";
 import { AdminPage } from "./components/AdminPage";
+import { SubscriptionResultPage } from "./components/SubscriptionResultPage";
 import { ProtectedRoute } from "./auth/ProtectedRoute";
 import { AdminRoute } from "./auth/AdminRoute";
 // import { AudioGallery } from "./components/AudioGallery";
@@ -81,6 +82,9 @@ export default function App() {
           </AdminRoute>
         }
       />
+      {/* Where the confirm / unsubscribe links in an email land. */}
+      <Route path="/subscribed" element={<SubscriptionResultPage variant="confirmed" />} />
+      <Route path="/unsubscribed" element={<SubscriptionResultPage variant="unsubscribed" />} />
       {/* Unknown paths fall back to the landing page. */}
       <Route path="*" element={<LandingPage />} />
     </Routes>

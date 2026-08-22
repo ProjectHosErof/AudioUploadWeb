@@ -530,7 +530,7 @@ export function UploadForm({ onUpload }: UploadFormProps) {
                     color: 'var(--text-muted)',
                     margin: '0 0 0.25rem',
                   }}>
-                    Receive emails about project updates and sign up to become a future tester.
+                    Hear what happens to your recording, receive project updates, and sign up to become a future tester.
                   </p>
                   <p style={{
                     fontFamily: 'var(--font-ui)',

@@ -1,22 +1,33 @@
 import { useState } from 'react';
+import { subscribeEmail } from '../services/subscribe';
 
 export function NotifySection() {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   function isValidEmail(e: string) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
     if (!email || !isValidEmail(email)) {
       setError('Please enter a valid email address.');
       return;
     }
     setError('');
-    setSubmitted(true);
+    setSubmitting(true);
+    try {
+      await subscribeEmail(email);
+      setSubmitted(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -61,7 +72,7 @@ export function NotifySection() {
               color: 'var(--parchment)',
               margin: '0 0 0.5rem',
             }}>
-              You're on the list.
+              Check your email.
             </p>
             <p style={{
               fontFamily: 'var(--font-ui)',
@@ -69,7 +80,7 @@ export function NotifySection() {
               color: 'var(--text-muted)',
               margin: 0,
             }}>
-              We'll be in touch as the project grows.
+              We've sent a link to <span style={{ color: 'var(--gold-muted)' }}>{email}</span>. Click it to confirm, and we'll be in touch as the project grows.
             </p>
           </div>
         ) : (
@@ -93,12 +104,15 @@ export function NotifySection() {
                   className={`codex-input${error ? ' codex-input--error' : ''}`}
                   placeholder="your.email@example.com"
                   style={{ flex: 1 }}
+                  disabled={submitting}
                 />
                 <button
                   type="submit"
                   className="notify-cta"
+                  disabled={submitting}
+                  style={{ opacity: submitting ? 0.55 : 1, cursor: submitting ? 'wait' : 'pointer' }}
                 >
-                  Notify Me
+                  {submitting ? 'Sending…' : 'Notify Me'}
                 </button>
               </div>
               {error && (
