@@ -224,7 +224,7 @@ admin.post('/recordings/:id/review', async (c) => {
     .eq('review_status', 'processing') // the concurrency guard
     // hymn_label and the two address paths ride along on the returned row so
     // notifying the contributor costs no extra query.
-    .select('id, review_status, reviewed_at, hymn_label, submitter_email, contributors(email)')
+    .select('id, review_status, reviewed_at, hymn_label, submitter_email, contributors(email, display_name)')
     .maybeSingle();
 
   if (error) {
@@ -271,7 +271,18 @@ admin.post('/recordings/:id/review', async (c) => {
 interface ReviewedRow {
   hymn_label: string;
   submitter_email: string | null;
-  contributors: { email: string | null } | null;
+  contributors: { email: string | null; display_name: string | null } | null;
+}
+
+/**
+ * First name only, for the greeting. Anonymous contributors have no name on
+ * record, and guessing one from an email local-part reads worse than no
+ * greeting at all — so this returns null and the template omits the line.
+ */
+function firstNameOf(row: ReviewedRow): string | null {
+  const full = row.contributors?.display_name?.trim();
+  if (!full) return null;
+  return full.split(/\s+/)[0];
 }
 
 /**
@@ -299,10 +310,11 @@ function notifyContributor(
   }
 
   const site = siteUrl(c.env);
+  const firstName = firstNameOf(row);
   const built =
     decision === 'approve'
-      ? recordingAccepted(row.hymn_label, `${site}/dashboard`)
-      : recordingDeclined(row.hymn_label, reason, `${site}/#upload`);
+      ? recordingAccepted(row.hymn_label, `${site}/dashboard`, firstName)
+      : recordingDeclined(row.hymn_label, reason, `${site}/#upload`, firstName);
 
   background(c, sendEmail(c.env, { to: recipient, ...built }));
 }

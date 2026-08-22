@@ -1,13 +1,17 @@
 import type { EmailMessage } from '../lib/email';
-import { esc, paragraph, render } from './layout';
+import { esc, greeting, paragraph, render } from './layout';
 
 /**
- * One function per message. Each returns subject + HTML + plain text so the
- * caller never assembles a message by hand.
+ * One function per message.
  *
- * A note on tone: the recordings here are donated, often by people who are not
- * technical and who sang something meaningful to them. These read like a person
- * wrote them, not like a system emitted them.
+ * On tone: the recordings here are donated, often by people who are not
+ * technical, singing something they were taught by someone they loved. These
+ * read like a person wrote them — gratitude first, mechanics second, and never
+ * the passive voice of a system reporting a state change.
+ *
+ * The decline does the hardest work and gets the most care: it thanks the
+ * contributor twice, explains without blaming, and makes clear that one
+ * recording not making it says nothing about them.
  */
 
 interface Built {
@@ -16,53 +20,78 @@ interface Built {
   text: string;
 }
 
+/** Keep subject lines readable when a hymn title is very long. */
+function trimTitle(label: string, max = 42): string {
+  return label.length <= max ? label : `${label.slice(0, max - 1).trimEnd()}…`;
+}
+
 /** Confirm a "Stay Informed" signup (double opt-in). */
 export function confirmSubscription(confirmUrl: string): Built {
   return {
-    subject: 'Confirm your email — Project Hos Erof',
+    subject: 'Welcome — please confirm your email',
     html: render({
-      eyebrow: 'One more step',
-      heading: 'Confirm your email',
+      preheader: 'One click and you’re on the list.',
+      eyebrow: 'Welcome',
+      heading: 'One click to go',
       body:
-        paragraph('Someone — hopefully you — asked to follow Project Hos Erof, an effort to preserve Coptic Orthodox hymns as a living archive.') +
-        paragraph('Confirm below and we’ll write when there is something worth telling you about.'),
-      cta: { label: 'Confirm', url: confirmUrl },
+        paragraph('Thank you for wanting to follow along.') +
+        paragraph('Project Hos Erof is a small effort with a large hope: to gather the hymns of the Coptic Orthodox Church — sung by the people who carry them — and keep them safe for whoever comes next.') +
+        paragraph('Confirm your address below and we’ll write only when there’s something genuinely worth sharing. Rarely, in other words.'),
+      cta: { label: 'Confirm my email', url: confirmUrl },
       footnote:
-        'If this wasn’t you, ignore this message — nothing further will be sent, and the address is removed automatically.',
+        'If you didn’t sign up, you can safely ignore this message — we won’t write again, and the address is removed on its own.',
     }),
     text: [
-      'Confirm your email — Project Hos Erof',
+      'Welcome — please confirm your email',
       '',
-      'Someone — hopefully you — asked to follow Project Hos Erof, an effort to',
-      'preserve Coptic Orthodox hymns as a living archive.',
+      'Thank you for wanting to follow along.',
       '',
-      'Confirm here:',
+      'Project Hos Erof is a small effort with a large hope: to gather the hymns of',
+      'the Coptic Orthodox Church — sung by the people who carry them — and keep',
+      'them safe for whoever comes next.',
+      '',
+      'Confirm your address here, and we’ll write only when there’s something',
+      'genuinely worth sharing:',
       confirmUrl,
       '',
-      'If this wasn’t you, ignore this message. Nothing further will be sent.',
+      'If you didn’t sign up, you can safely ignore this message. We won’t write again.',
     ].join('\n'),
   };
 }
 
 /** A recording passed moderation and is now part of the corpus. */
-export function recordingAccepted(hymnLabel: string, dashboardUrl: string): Built {
+export function recordingAccepted(
+  hymnLabel: string,
+  dashboardUrl: string,
+  firstName: string | null,
+): Built {
   return {
-    subject: `Your recording of "${hymnLabel}" is in the collection`,
+    subject: `Thank you — “${trimTitle(hymnLabel)}” is now in the collection`,
     html: render({
-      eyebrow: 'Your contribution',
-      heading: 'It’s in the collection',
+      preheader: 'We listened, and your recording has been added to the archive.',
+      eyebrow: 'Thank you',
+      heading: 'Your recording is in',
       body:
-        paragraph(`Your recording of <strong style="color:#F0E8D0;font-weight:normal;">${esc(hymnLabel)}</strong> has been reviewed and added to the archive.`) +
-        paragraph('It now sits alongside the other hymns preserved here, and will help teach a system to recognise them. Thank you for singing.'),
-      cta: { label: 'View your contributions', url: dashboardUrl },
+        greeting(firstName) +
+        paragraph(`We listened to your recording of <strong style="color:#F0E8D0;font-weight:normal;">${esc(hymnLabel)}</strong>, and it is now part of the archive.`) +
+        paragraph('That might sound like a small thing. It isn’t. Hymns like this one have travelled from voice to voice for generations, mostly without ever being written down. Yours is now among the recordings that will hold on to it — and that will teach a system to recognise it, so that one day someone who hears it can simply ask what it is.') +
+        paragraph('Thank you for taking the time to record it, and for trusting us with it.'),
+      cta: { label: 'See your contributions', url: dashboardUrl },
     }),
     text: [
-      'It’s in the collection',
+      'Your recording is in',
       '',
-      `Your recording of "${hymnLabel}" has been reviewed and added to the archive.`,
+      ...(firstName ? [`Dear ${firstName},`, ''] : []),
+      `We listened to your recording of "${hymnLabel}", and it is now part of the`,
+      'archive.',
       '',
-      'It now sits alongside the other hymns preserved here, and will help teach a',
-      'system to recognise them. Thank you for singing.',
+      'That might sound like a small thing. It isn’t. Hymns like this one have',
+      'travelled from voice to voice for generations, mostly without ever being',
+      'written down. Yours is now among the recordings that will hold on to it —',
+      'and that will teach a system to recognise it, so that one day someone who',
+      'hears it can simply ask what it is.',
+      '',
+      'Thank you for taking the time to record it, and for trusting us with it.',
       '',
       dashboardUrl,
     ].join('\n'),
@@ -73,31 +102,47 @@ export function recordingAccepted(hymnLabel: string, dashboardUrl: string): Buil
  * A recording did not pass. The moderator's reason is shown verbatim — they
  * were told when writing it that the contributor would see it.
  */
-export function recordingDeclined(hymnLabel: string, reason: string | null, uploadUrl: string): Built {
-  const explanation = reason
-    ? paragraph(`<span style="color:#9A8B6E;">Reason given:</span> ${esc(reason)}`)
+export function recordingDeclined(
+  hymnLabel: string,
+  reason: string | null,
+  uploadUrl: string,
+  firstName: string | null,
+): Built {
+  // Framed as an observation rather than a verdict: "what we noticed" invites
+  // a second attempt in a way that "reason given" does not.
+  const noted = reason
+    ? paragraph(`<span style="color:#9A8B6E;">What we noticed:</span> ${esc(reason)}`)
     : '';
 
   return {
-    subject: `About your recording of "${hymnLabel}"`,
+    subject: `About your recording of “${trimTitle(hymnLabel)}”`,
     html: render({
-      eyebrow: 'Your contribution',
-      heading: 'Not added this time',
+      preheader: 'We couldn’t add this one — but please do send another.',
+      eyebrow: 'About your recording',
+      heading: 'Not this one — but thank you',
       body:
-        paragraph(`Your recording of <strong style="color:#F0E8D0;font-weight:normal;">${esc(hymnLabel)}</strong> was reviewed, and it hasn’t been added to the collection.`) +
-        explanation +
-        paragraph('This is a judgement about one recording, not about you — and you’re very welcome to send another whenever you like.'),
-      cta: { label: 'Contribute another', url: uploadUrl },
+        greeting(firstName) +
+        paragraph(`We listened to your recording of <strong style="color:#F0E8D0;font-weight:normal;">${esc(hymnLabel)}</strong>. After review, we weren’t able to add this one to the collection.`) +
+        noted +
+        paragraph('Please don’t let that discourage you. Nearly every recording we can’t use comes down to the room, the microphone, or a moment of noise passing through — rarely the singing itself. A quieter space or a phone held a little closer often makes all the difference.') +
+        paragraph('Thank you for taking the time to record and send it. We’d be very glad to hear from you again.'),
+      cta: { label: 'Try another recording', url: uploadUrl },
     }),
     text: [
-      'Not added this time',
+      'Not this one — but thank you',
       '',
-      `Your recording of "${hymnLabel}" was reviewed, and it hasn’t been added to`,
-      'the collection.',
-      ...(reason ? ['', `Reason given: ${reason}`] : []),
+      ...(firstName ? [`Dear ${firstName},`, ''] : []),
+      `We listened to your recording of "${hymnLabel}". After review, we weren’t`,
+      'able to add this one to the collection.',
+      ...(reason ? ['', `What we noticed: ${reason}`] : []),
       '',
-      'This is a judgement about one recording, not about you — and you’re very',
-      'welcome to send another whenever you like.',
+      'Please don’t let that discourage you. Nearly every recording we can’t use',
+      'comes down to the room, the microphone, or a moment of noise passing',
+      'through — rarely the singing itself. A quieter space or a phone held a',
+      'little closer often makes all the difference.',
+      '',
+      'Thank you for taking the time to record and send it. We’d be very glad to',
+      'hear from you again.',
       '',
       uploadUrl,
     ].join('\n'),

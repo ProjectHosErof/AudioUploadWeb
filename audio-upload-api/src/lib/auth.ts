@@ -15,6 +15,12 @@ export interface AuthedUser {
   email: string | null;
   /** Supabase confirms the address for both magic-link and OAuth sign-ins. */
   emailVerified: boolean;
+  /**
+   * Name as the identity provider gave it, when there is one. Google supplies
+   * this for OAuth sign-ins; magic-link users have none. Used to address
+   * people by name in email rather than writing to a stranger.
+   */
+  displayName: string | null;
 }
 
 /** Pull the token out of an `Authorization: Bearer <jwt>` header. */
@@ -32,10 +38,14 @@ export function bearerToken(header: string | undefined): string | null {
 export async function verifyUser(env: Env, token: string): Promise<AuthedUser | null> {
   const { data, error } = await getSupabase(env).auth.getUser(token);
   if (error || !data?.user) return null;
+  const metadata = (data.user.user_metadata ?? {}) as Record<string, unknown>;
+  const name = metadata.full_name ?? metadata.name;
+
   return {
     id: data.user.id,
     email: data.user.email ?? null,
     emailVerified: Boolean(data.user.email_confirmed_at),
+    displayName: typeof name === 'string' && name.trim() ? name.trim() : null,
   };
 }
 

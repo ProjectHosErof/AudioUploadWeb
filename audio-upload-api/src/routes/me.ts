@@ -74,7 +74,7 @@ me.post('/link', async (c) => {
   if (!contributorId) {
     const created = await supabase
       .from('contributors')
-      .insert({ auth_user_id: user.id, email: user.email })
+      .insert({ auth_user_id: user.id, email: user.email, display_name: user.displayName })
       .select('id')
       .maybeSingle();
     if (created.error || !created.data) {
@@ -82,6 +82,18 @@ me.post('/link', async (c) => {
       return c.json({ error: 'Could not create your profile.' }, 500);
     }
     contributorId = created.data.id as string;
+  }
+
+  // --- 1b. Backfill a missing display name ---------------------------------
+  // Only when it is absent: this is the provider's idea of their name, and it
+  // must not overwrite one the contributor has since set for themselves.
+  if (contributorId && user.displayName) {
+    const named = await supabase
+      .from('contributors')
+      .update({ display_name: user.displayName })
+      .eq('id', contributorId)
+      .is('display_name', null);
+    if (named.error) console.error('display name backfill failed', named.error);
   }
 
   // --- 2. Claim prior anonymous uploads by verified email -----------------

@@ -20,6 +20,12 @@ const DISPLAY = "Georgia, 'Times New Roman', serif";
 const UI = "'Helvetica Neue', Helvetica, Arial, sans-serif";
 
 export interface Shell {
+  /**
+   * The grey line an inbox shows next to the subject. Without one the client
+   * grabs whatever body copy comes first, which wastes the second-most-read
+   * text in the whole message.
+   */
+  preheader: string;
   /** Small uppercase line above the heading. */
   eyebrow: string;
   heading: string;
@@ -40,6 +46,12 @@ export function esc(value: string): string {
     .replace(/'/g, '&#39;');
 }
 
+/** "Dear Anthony," — omitted entirely when we don't know who they are. */
+export function greeting(firstName: string | null): string {
+  if (!firstName) return '';
+  return `<p style="margin:0 0 16px;font-family:${UI};font-size:16px;line-height:1.7;color:${PARCHMENT_DIM};">Dear ${esc(firstName)},</p>`;
+}
+
 export function paragraph(html: string): string {
   return `<p style="margin:0 0 16px;font-family:${UI};font-size:16px;line-height:1.7;color:${PARCHMENT_DIM};">${html}</p>`;
 }
@@ -58,7 +70,13 @@ export function render(shell: Shell): string {
        <p style="margin:0;font-family:${UI};font-size:12px;line-height:1.6;color:${MUTED};">${shell.footnote}</p>`
     : '';
 
+  // Hidden from the rendered email, read by the inbox list. The padding
+  // characters stop the client trailing body copy in after it.
+  const preheader = `<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">${esc(shell.preheader)}</div>
+<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">${'&#847;&zwnj;&nbsp;'.repeat(60)}</div>`;
+
   return `<!-- Project Hos Erof -->
+${preheader}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:${INK};margin:0;padding:32px 16px;">
   <tr><td align="center">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;background-color:${INK_SOFT};border:1px solid ${INK_MID};">
