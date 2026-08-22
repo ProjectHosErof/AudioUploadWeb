@@ -9,7 +9,10 @@
 # Wrangler
 .wrangler/
 
-# Python (enrichment/ Phase 2 job)
+# Python (enrichment/ and ml-export/ jobs)
 .venv/
 __pycache__/
 *.pyc
+
+# Local copies of exported datasets — the versioned artifacts live in R2.
+ml-export/out/

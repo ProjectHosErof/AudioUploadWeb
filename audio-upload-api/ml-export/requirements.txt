@@ -1,0 +1,6 @@
+# Phase 3 / Pillar D manifest-export dependencies.
+# Install into a venv: python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt
+pyarrow>=14,<21         # parquet + CSV writing (no pandas needed for flat rows)
+boto3>=1.34,<2          # R2 upload over the S3-compatible API
+psycopg2-binary>=2.9    # direct Postgres read of the approved corpus
+python-dotenv>=1.0      # load ../.env (DB + R2_* creds)
