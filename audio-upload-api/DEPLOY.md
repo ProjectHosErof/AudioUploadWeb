@@ -71,6 +71,25 @@ session mode, not the transaction pooler on `6543` — migrations need real
 transactions and advisory locks. Always confirm a migration actually landed
 rather than trusting the exit code.
 
+## ⚠️ Before restoring or repointing the database: turn the sweep off
+
+Every 15 minutes the janitor deletes R2 audio that has no `recordings` row.
+Restore an older dump, or point `SUPABASE_URL` at a different project, and
+real recordings look orphaned. Audio can't be recreated, so **first**:
+
+```bash
+# wrangler.jsonc → "JANITOR_SWEEP_ENABLED": "false"
+npm run deploy
+```
+
+Do the database work, reconcile any objects that have no row (keep them, don't
+delete them), then set it back to `"true"` and deploy again.
+
+The sweep also refuses on its own (`janitor: sweep aborted` in the logs) when
+the DB reports zero completed uploads, or when one run would delete more than
+`max(5, 2%)` of the bucket. Treat that log line as an incident: find out why
+the DB and the bucket disagree before re-enabling anything.
+
 ## Every deploy
 
 ```bash
