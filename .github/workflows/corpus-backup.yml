@@ -1,0 +1,50 @@
+# Nightly corpus backup — see docs/adr/012-corpus-backup.md and
+# audio-upload-api/DEPLOY.md → "Corpus backup".
+#
+# THIS REPOSITORY IS PUBLIC, SO THESE LOGS ARE PUBLIC. The scripts print counts
+# and byte totals only; keep it that way (no set -x, no echoing env, no
+# per-file rclone output).
+
+name: Corpus backup
+
+on:
+  schedule:
+    - cron: "0 7 * * *" # 07:00 UTC — overnight across the US
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: corpus-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install rclone, age and the Postgres 17 client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq rclone age postgresql-common >/dev/null
+          # PGDG repo: the runner's default client may be older than the
+          # Supabase server, and pg_dump refuses to dump a newer server.
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y >/dev/null
+          sudo apt-get install -y -qq postgresql-client-17 >/dev/null
+          echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
+
+      - name: Back up audio and database, then verify
+        env:
+          SRC_R2_ACCOUNT_ID: ${{ secrets.SRC_R2_ACCOUNT_ID }}
+          SRC_R2_ACCESS_KEY_ID: ${{ secrets.SRC_R2_ACCESS_KEY_ID }}
+          SRC_R2_SECRET_ACCESS_KEY: ${{ secrets.SRC_R2_SECRET_ACCESS_KEY }}
+          DST_R2_ACCOUNT_ID: ${{ secrets.DST_R2_ACCOUNT_ID }}
+          DST_R2_ACCESS_KEY_ID: ${{ secrets.DST_R2_ACCESS_KEY_ID }}
+          DST_R2_SECRET_ACCESS_KEY: ${{ secrets.DST_R2_SECRET_ACCESS_KEY }}
+          BACKUP_DB_URL: ${{ secrets.BACKUP_DB_URL }}
+          AGE_RECIPIENT: ${{ secrets.AGE_RECIPIENT }}
+          GIT_SHA: ${{ github.sha }}
+        run: audio-upload-api/scripts/backup/run-backup.sh
