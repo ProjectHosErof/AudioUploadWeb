@@ -105,3 +105,120 @@ and the **rate-limit binding** — both take effect automatically on deploy.
 - Worker: `https://audio-upload-api.dev-anthonyriad.workers.dev`
 - R2 bucket: `audio-uploads-dev`
 - Supabase project: `rnlxoisifqsfcralgarb`
+- Backup bucket: `phe-corpus-backup` in the **separate backup Cloudflare account** (ADR-012)
+
+## Corpus backup
+
+Nightly at 07:00 UTC, `.github/workflows/corpus-backup.yml` runs
+`scripts/backup/run-backup.sh`:
+
+- It **copies** `raw/` and `datasets/` to the backup bucket. It never syncs, so deletions never propagate.
+- It dumps the `public` schema as `backup_reader`, encrypted with `age`.
+- It checks that every completed recording is in the backup, then writes `runs/<stamp>.json`.
+
+A failed run emails the repo owner. **The repo is public, so its logs are
+public:** the scripts print counts only. Keep it that way.
+
+### One-time setup
+
+1. **Backup account.** Create a second Cloudflare account (free), with its own
+   login and 2FA. In it:
+   ```bash
+   npx wrangler r2 bucket create phe-corpus-backup
+   npx wrangler r2 bucket lock add phe-corpus-backup audio raw/ --retention-days 30
+   npx wrangler r2 bucket lock add phe-corpus-backup datasets datasets/ --retention-days 30
+   npx wrangler r2 bucket lock add phe-corpus-backup db db/ --retention-days 7
+   npx wrangler r2 bucket lock add phe-corpus-backup runs runs/ --retention-days 7
+   npx wrangler r2 bucket lifecycle add phe-corpus-backup db-expiry db/ --expire-days 35
+   ```
+   You can also do all of this in the dashboard: R2 → bucket → Settings.
+2. **R2 API tokens:**
+   - **Main account:** **Object Read only**, applied to `audio-uploads-dev` only.
+   - **Backup account:** Object Read & Write, applied to `phe-corpus-backup` only.
+   - While you're in the main account, confirm the **Worker's** R2 token is also scoped to `audio-uploads-dev` alone.
+3. **Encryption key**, on your own machine and never in the repo:
+   ```bash
+   age-keygen -o phe-backup.key     # prints the public key
+   ```
+   Store `phe-backup.key` in a password manager, plus a printed copy somewhere
+   safe. **Without it, every database dump is unreadable.**
+4. **Database role:** run `npm run db:migrate` (applies 0008). Then, in the Supabase SQL editor:
+   ```sql
+   ALTER ROLE backup_reader PASSWORD '<long random password>';
+   ```
+   The connection string is the **session pooler** (port 5432) with user
+   `backup_reader.<project-ref>`.
+5. **GitHub secrets.** Run each of these yourself, so the values never pass through anyone else:
+   ```bash
+   gh secret set SRC_R2_ACCOUNT_ID         # main account id
+   gh secret set SRC_R2_ACCESS_KEY_ID
+   gh secret set SRC_R2_SECRET_ACCESS_KEY
+   gh secret set DST_R2_ACCOUNT_ID         # backup account id
+   gh secret set DST_R2_ACCESS_KEY_ID
+   gh secret set DST_R2_SECRET_ACCESS_KEY
+   gh secret set BACKUP_DB_URL             # postgresql://backup_reader.<ref>:<pw>@<pooler-host>:5432/postgres
+   gh secret set AGE_RECIPIENT             # the age1… public key
+   ```
+6. **First run:** `gh workflow run corpus-backup.yml`, then check that it's green and
+   the bucket has `raw/`, `db/` and `runs/`.
+
+### New tables
+
+Every table in `public` has RLS on, so the backup role reads through a policy.
+**A migration that adds a table must also add:**
+```sql
+CREATE POLICY backup_reader_read_all ON public.<table>
+  FOR SELECT TO backup_reader USING (true);
+```
+Without it, the next backup fails and names the table. That's deliberate: the
+alternative is quietly backing it up empty.
+
+### Quarterly restore drill
+
+This touches nothing live. It needs Postgres 17 locally (`brew install postgresql@17`)
+and the backup-account token in the environment:
+```bash
+export PATH="$(brew --prefix postgresql@17)/bin:$PATH"
+export DST_R2_ACCOUNT_ID=… DST_R2_ACCESS_KEY_ID=… DST_R2_SECRET_ACCESS_KEY=…
+scripts/backup/restore-drill.sh --identity ~/path/to/phe-backup.key
+```
+It should end with `drill ok — N tables match the run record`. A difference of
+1–2 in `recordings` means an upload landed during the dump; rerun it.
+
+## Restore runbook
+
+Supabase Pro's own daily backups (7 days, Dashboard → Database → Backups) are
+the first choice for a recent database mistake. Use the corpus backup when
+those can't help: older than 7 days, the project is gone, or R2 lost audio.
+
+1. **Switch the sweep off first.** Set `"JANITOR_SWEEP_ENABLED": "false"` in
+   `wrangler.jsonc`, run `npm run deploy`, then `wrangler tail` and wait for
+   `janitor: sweep disabled`.
+2. **Get the dump:** download `db/<stamp>.dump.age` from the backup bucket, then
+   `age -d -i phe-backup.key -o db.dump db.dump.age`. Keep `db.dump` off shared disks and delete it afterwards.
+3. **Restore in sections**, into the target project (restored or new):
+   ```bash
+   pg_restore -d "$TARGET_URL" --no-owner --section=pre-data db.dump
+   pg_restore -d "$TARGET_URL" --no-owner --section=data db.dump
+   ```
+   Then clear identity links whose auth user doesn't exist in the target. People
+   re-link by verified email on their next sign-in (`/me/link`):
+   ```sql
+   UPDATE public.contributors SET auth_user_id = NULL
+     WHERE auth_user_id IS NOT NULL AND auth_user_id NOT IN (SELECT id FROM auth.users);
+   UPDATE public.admins SET auth_user_id = NULL
+     WHERE auth_user_id IS NOT NULL AND auth_user_id NOT IN (SELECT id FROM auth.users);
+   UPDATE public.recordings SET reviewed_by = NULL
+     WHERE reviewed_by IS NOT NULL AND reviewed_by NOT IN (SELECT id FROM auth.users);
+   ```
+   ```bash
+   pg_restore -d "$TARGET_URL" --no-owner --section=post-data db.dump
+   ```
+   `restore-drill.sh` performs exactly these steps; read it if anything here is unclear.
+4. **Reconcile.** List `raw/` objects with no `recordings` row. These are
+   uploads newer than the dump. **Keep them**, and record the keys for
+   relabelling.
+5. **If audio was lost**, copy it back from the backup account (`rclone copy dst:phe-corpus-backup/raw src:audio-uploads-dev/raw`, using a
+   main-account token that can write).
+6. **Switch the sweep back on** only once reconciliation shows no unexplained
+   orphans. Set it back to `"true"` and deploy.
