@@ -1,5 +1,6 @@
 import { getSupabase } from './lib/supabase';
 import { deleteObject, listRawObjects } from './storage/r2';
+import { isSweepEnabled, maxSweepDeletions, planSweep } from './lib/sweepGuard';
 
 /**
  * Scheduled janitor (Cloudflare Cron Trigger). Keeps the DB and the R2 bucket
@@ -8,7 +9,10 @@ import { deleteObject, listRawObjects } from './storage/r2';
  *  - reapStalePending: deletes `pending` rows whose presigned URL has long
  *    since expired (they can never complete).
  *  - sweepOrphanObjects: deletes R2 objects with no live DB row (a browser PUT
- *    that succeeded but whose /complete never fired).
+ *    that succeeded but whose /complete never fired). Guarded by
+ *    src/lib/sweepGuard.ts: it deletes nothing when switched off, when the DB
+ *    reports no completed uploads, or when a run would delete more than a few
+ *    objects — the signatures of a wrong or restored database.
  *
  * Reap runs first so a just-reaped row's leftover object is then swept.
  */
@@ -37,11 +41,29 @@ async function reapStalePending(env: Env): Promise<number> {
 }
 
 async function sweepOrphanObjects(env: Env): Promise<number> {
+  if (!isSweepEnabled(env.JANITOR_SWEEP_ENABLED)) {
+    console.warn('janitor: sweep disabled (JANITOR_SWEEP_ENABLED)');
+    return 0;
+  }
+
   const cutoff = cutoffMs(env);
-  const objects = (await listRawObjects(env)).filter((o) => o.lastModified.getTime() < cutoff);
+  const listed = await listRawObjects(env);
+  const objects = listed.filter((o) => o.lastModified.getTime() < cutoff);
   if (objects.length === 0) return 0;
 
   const supabase = getSupabase(env);
+
+  // How many uploads the DB believes are complete — the guard's check that
+  // we're talking to the right, non-empty database.
+  const completed = await supabase
+    .from('recordings')
+    .select('id', { count: 'exact', head: true })
+    .eq('upload_status', 'completed');
+  if (completed.error || completed.count === null) {
+    console.error('sweepOrphanObjects count failed', completed.error);
+    return 0;
+  }
+
   const known = new Set<string>();
   const CHUNK = 200;
   for (let i = 0; i < objects.length; i += CHUNK) {
@@ -55,14 +77,30 @@ async function sweepOrphanObjects(env: Env): Promise<number> {
     for (const row of data ?? []) known.add(row.r2_key);
   }
 
+  const plan = planSweep({
+    candidates: objects.map((o) => o.key),
+    knownKeys: known,
+    completedCount: completed.count,
+    totalListed: listed.length,
+  });
+  if (plan.action === 'abort') {
+    // Deliberately deletes nothing: this is what a wrong or restored database
+    // looks like. Investigate before re-running; see the restore runbook.
+    console.error('janitor: sweep aborted', plan.reason, {
+      orphans: plan.orphans,
+      listed: listed.length,
+      limit: maxSweepDeletions(listed.length),
+    });
+    return 0;
+  }
+
   let deleted = 0;
-  for (const o of objects) {
-    if (known.has(o.key)) continue;
+  for (const key of plan.keys) {
     try {
-      await deleteObject(env, o.key);
+      await deleteObject(env, key);
       deleted++;
     } catch (e) {
-      console.error('sweep deleteObject failed', o.key, e);
+      console.error('sweep deleteObject failed', key, e);
     }
   }
   return deleted;
