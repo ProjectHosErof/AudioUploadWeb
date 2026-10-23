@@ -47,10 +47,11 @@ async function main() {
   }));
   const typeLinks = vocab.hymns.flatMap((h) => h.types.map((t) => ({ hymn_slug: h.slug, type_slug: t })));
   const tuneLinks = vocab.hymns.flatMap((h) => h.tunes.map((t) => ({ hymn_slug: h.slug, tune_slug: t })));
-  const placements = vocab.placements.map(([hymn, season, service]) => ({
+  const placements = vocab.placements.map(([hymn, season, service, order]) => ({
     hymn_slug: hymn,
     season_slug: season,
     service_slug: service,
+    sort_order: order,
   }));
 
   await sql.begin(async (tx) => {

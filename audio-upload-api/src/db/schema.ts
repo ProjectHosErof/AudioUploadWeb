@@ -125,6 +125,7 @@ export const hymnPlacements = pgTable(
     serviceSlug: varchar('service_slug', { length: 100 })
       .notNull()
       .references(() => services.slug, { onDelete: 'cascade' }),
+    sortOrder: integer('sort_order').notNull(), // position within that season + service
   },
   (t) => [
     primaryKey({ columns: [t.hymnSlug, t.seasonSlug, t.serviceSlug] }),

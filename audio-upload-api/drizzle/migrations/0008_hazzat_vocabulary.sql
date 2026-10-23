@@ -2,6 +2,7 @@ CREATE TABLE "hymn_placements" (
 	"hymn_slug" varchar(200) NOT NULL,
 	"season_slug" varchar(100) NOT NULL,
 	"service_slug" varchar(100) NOT NULL,
+	"sort_order" integer NOT NULL,
 	CONSTRAINT "hymn_placements_hymn_slug_season_slug_service_slug_pk" PRIMARY KEY("hymn_slug","season_slug","service_slug")
 );
 --> statement-breakpoint

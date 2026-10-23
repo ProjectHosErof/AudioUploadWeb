@@ -100,9 +100,19 @@ def main() -> None:
 
     # ---- walk the sheet ----
     hymns: dict[str, dict] = {}
-    placements: set[tuple[str, str, str]] = set()
+    # (hymn, season, service) -> its position in that service's list. Rows are
+    # in chanting order within the FIRST service a row names; a row naming
+    # several services (e.g. "Liturgy; Vespers & Matins") gives no position in
+    # the others, so it goes at their end, where shared closing hymns (Gospel
+    # Response, End of Service Hymn) belong. Hymns hazzat lacks come last.
+    n = len(sheet)
+    placements: dict[tuple[str, str, str], int] = {}
+
+    def place(key: tuple[str, str, str], order: int) -> None:
+        placements[key] = min(order, placements.get(key, order))
+
     unmapped = Counter()
-    for row in sheet.to_dict("records"):
+    for rank, row in enumerate(sheet.to_dict("records")):
         hz_id = row["Hymn ID"]
         slug = to_app.get(hz_id) or slugify(hz_id)
         if slug in legacy_slugs and hz_id not in to_app:
@@ -119,34 +129,36 @@ def main() -> None:
         season_name = row["Season"]
         if season_name in maps["occasions"]:
             occ = maps["occasions"][season_name]
-            placements.add((slug, occ["season"], occ["service"]))
+            place((slug, occ["season"], occ["service"]), rank)
             continue
         season = maps["seasons"].get(season_name)
         if not season:
             unmapped[f"season {season_name!r}"] += 1
             continue
-        for svc_name in split(row["Service(s)"]):
+        for svc_index, svc_name in enumerate(split(row["Service(s)"])):
             targets = maps["services"].get(svc_name)
             if not targets:
                 unmapped[f"service {svc_name!r} (season {season_name!r})"] += 1
                 continue
             for svc in targets:
-                placements.add((slug, season, svc))
+                place((slug, season, svc), rank if svc_index == 0 else n + rank)
     errors += [f"unmapped {k} x{n}" for k, n in unmapped.items()]
 
     # ---- legacy hymns: keep slug + label, add section placements ----
     retired = {k: v for k, v in maps["retired"].items() if not k.startswith("_")}
     out_hymns = []
-    for lh in legacy["hymns"]:
+    for legacy_index, lh in enumerate(legacy["hymns"]):
         h = hymns.pop(lh["slug"], None) or {"hazzatId": None, "hazzatTitle": None, "labelAr": None,
                                               "sourceUrl": None, "types": set(), "tunes": set(),
                                               "hzServices": set()}
         active = lh["slug"] not in retired
         if active:
+            # The old list was in service order; it follows hazzat's rows.
             for season, svc in maps["sectionPlacements"].get(lh["section"], []):
-                placements.add((lh["slug"], season, svc))
+                place((lh["slug"], season, svc), 2 * n + legacy_index)
         else:
-            placements.difference_update({p for p in placements if p[0] == lh["slug"]})
+            for key in [k for k in placements if k[0] == lh["slug"]]:
+                del placements[key]
         out_hymns.append({**h, "slug": lh["slug"], "label": lh["label"], "active": active, "legacy": True})
     for h in hymns.values():
         out_hymns.append({**h, "label": h["hazzatTitle"], "active": True, "legacy": False})
@@ -199,7 +211,8 @@ def main() -> None:
         "tunes": [{"slug": slugify(t), "label": t} for t in tune_labels],
         "hymns": [{k: h[k] for k in ("slug", "label", "labelAr", "hazzatId", "sourceUrl",
                                      "rhythm", "active", "types", "tunes")} for h in out_hymns],
-        "placements": sorted(map(list, placements)),
+        # [hymn, season, service, order]; order sorts each season + service list.
+        "placements": sorted([*key, order] for key, order in placements.items()),
     }
     text = json.dumps(vocab, ensure_ascii=False, indent=1) + "\n"
     for path in OUTPUTS:

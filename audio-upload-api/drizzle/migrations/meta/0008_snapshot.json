@@ -1,5 +1,5 @@
 {
-  "id": "bbc398d9-54eb-4f89-b5de-b9dc949a0953",
+  "id": "1bb570a8-cc3d-4f6d-8688-fc118c6fbd1d",
   "prevId": "ae6d51fc-7e33-4c02-8810-18b2fd2237e8",
   "version": "7",
   "dialect": "postgresql",
@@ -143,6 +143,12 @@
         "service_slug": {
           "name": "service_slug",
           "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true
         }
