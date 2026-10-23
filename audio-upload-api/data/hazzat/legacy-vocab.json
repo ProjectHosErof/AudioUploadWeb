@@ -1,0 +1,611 @@
+{
+  "_comment": "Snapshot of the vocabulary that existed before the hazzat.com import (src/data/options.ts at 3bc43ec). Slugs here are permanent: recordings reference them.",
+  "services": [
+    {
+      "slug": "vesper-praises",
+      "label": "Vesper Praises"
+    },
+    {
+      "slug": "morning-praises",
+      "label": "Morning Praises"
+    },
+    {
+      "slug": "midnight-praises",
+      "label": "Midnight Praises"
+    },
+    {
+      "slug": "st-basil-liturgy",
+      "label": "St. Basil Divine Liturgy"
+    },
+    {
+      "slug": "st-gregory-liturgy",
+      "label": "St. Gregory Divine Liturgy"
+    },
+    {
+      "slug": "st-cyril-liturgy",
+      "label": "St. Cyril Divine Liturgy"
+    },
+    {
+      "slug": "matins",
+      "label": "Matins"
+    },
+    {
+      "slug": "vespers",
+      "label": "Vespers"
+    },
+    {
+      "slug": "melodies",
+      "label": "Melodies"
+    },
+    {
+      "slug": "ceremony-baptism",
+      "label": "Baptism"
+    },
+    {
+      "slug": "ceremony-crowning",
+      "label": "Crowning"
+    },
+    {
+      "slug": "unction",
+      "label": "Unction"
+    },
+    {
+      "slug": "venerations",
+      "label": "Venerations"
+    },
+    {
+      "slug": "funeral",
+      "label": "Funeral"
+    },
+    {
+      "slug": "pascha",
+      "label": "Pascha"
+    },
+    {
+      "slug": "lakkan",
+      "label": "Lakkan"
+    },
+    {
+      "slug": "other",
+      "label": "Other"
+    },
+    {
+      "slug": "unknown",
+      "label": "Unknown"
+    }
+  ],
+  "seasons": [
+    {
+      "slug": "annual",
+      "label": "Annual"
+    },
+    {
+      "slug": "nairouz",
+      "label": "Nairouz"
+    },
+    {
+      "slug": "feast-of-the-cross",
+      "label": "Feast of the Cross"
+    },
+    {
+      "slug": "kiahk",
+      "label": "Kiahk"
+    },
+    {
+      "slug": "nativity-paramoune",
+      "label": "Nativity (Paramoune)"
+    },
+    {
+      "slug": "nativity",
+      "label": "Nativity"
+    },
+    {
+      "slug": "feast-of-circumcision",
+      "label": "Feast of Circumcision"
+    },
+    {
+      "slug": "epiphany-paramoune",
+      "label": "Epiphany (Paramoune)"
+    },
+    {
+      "slug": "epiphany",
+      "label": "Epiphany"
+    },
+    {
+      "slug": "wedding-at-cana-of-galilee",
+      "label": "Wedding at Cana of Galilee"
+    },
+    {
+      "slug": "lords-entry-into-temple",
+      "label": "The Lord's Entry into the Temple"
+    },
+    {
+      "slug": "ninevah-fast",
+      "label": "Ninevah's Fast"
+    },
+    {
+      "slug": "ninevah-feast",
+      "label": "Ninevah's Feast"
+    },
+    {
+      "slug": "great-lent-saturdays-sundays",
+      "label": "Great Lent (Saturdays and Sundays)"
+    },
+    {
+      "slug": "great-lent-weekdays",
+      "label": "Great Lent (Weekdays)"
+    },
+    {
+      "slug": "annunciation",
+      "label": "Annunciation"
+    },
+    {
+      "slug": "lazarus-saturday",
+      "label": "Lazarus Saturday"
+    },
+    {
+      "slug": "palm-sunday",
+      "label": "Palm Sunday"
+    },
+    {
+      "slug": "holy-week-general-hours",
+      "label": "Holy Week (General Hours)"
+    },
+    {
+      "slug": "holy-week-covenant-thursday",
+      "label": "Holy Week (Covenant Thursday)"
+    },
+    {
+      "slug": "holy-week-good-friday",
+      "label": "Holy Week (Good Friday)"
+    },
+    {
+      "slug": "bright-saturday",
+      "label": "Bright Saturday"
+    },
+    {
+      "slug": "resurrection",
+      "label": "Resurrection"
+    },
+    {
+      "slug": "ascension",
+      "label": "Ascension"
+    },
+    {
+      "slug": "pentecost",
+      "label": "Pentecost"
+    },
+    {
+      "slug": "apostles-fast",
+      "label": "Apostles Fast"
+    },
+    {
+      "slug": "apostles-feast",
+      "label": "Apostles Feast"
+    },
+    {
+      "slug": "other",
+      "label": "Other"
+    },
+    {
+      "slug": "unknown",
+      "label": "Unknown"
+    }
+  ],
+  "languages": [
+    {
+      "slug": "lang-english",
+      "label": "English"
+    },
+    {
+      "slug": "lang-coptic",
+      "label": "Coptic"
+    },
+    {
+      "slug": "lang-arabic",
+      "label": "Arabic"
+    }
+  ],
+  "hymns": [
+    {
+      "slug": "verses-of-cymbals-adam",
+      "label": "Verses of Cymbals (Adam)",
+      "section": "Kiahk Season - Matins & Vespers"
+    },
+    {
+      "slug": "verses-of-cymbals-watos",
+      "label": "Verses of Cymbals (Watos)",
+      "section": "Kiahk Season - Matins & Vespers"
+    },
+    {
+      "slug": "intro-to-doxologies",
+      "label": "Intro to Doxologies",
+      "section": "Kiahk Season - Matins & Vespers"
+    },
+    {
+      "slug": "first-doxology-kiahk",
+      "label": "First Doxology for Kiahk",
+      "section": "Kiahk Season - Matins & Vespers"
+    },
+    {
+      "slug": "second-doxology-kiahk",
+      "label": "Second Doxology for Kiahk",
+      "section": "Kiahk Season - Matins & Vespers"
+    },
+    {
+      "slug": "third-doxology-kiahk",
+      "label": "Third Doxology for Kiahk",
+      "section": "Kiahk Season - Matins & Vespers"
+    },
+    {
+      "slug": "fourth-doxology-kiahk",
+      "label": "Fourth Doxology for Kiahk",
+      "section": "Kiahk Season - Matins & Vespers"
+    },
+    {
+      "slug": "fifth-doxology-kiahk",
+      "label": "Fifth Doxology for Kiahk",
+      "section": "Kiahk Season - Matins & Vespers"
+    },
+    {
+      "slug": "sixth-doxology-kiahk",
+      "label": "Sixth Doxology for Kiahk",
+      "section": "Kiahk Season - Matins & Vespers"
+    },
+    {
+      "slug": "kiahk-doxology-archangel-michael",
+      "label": "Kiahk Doxology for Archangel Michael",
+      "section": "Kiahk Season - Matins & Vespers"
+    },
+    {
+      "slug": "first-secondweek-kiahk-gospel-response",
+      "label": "Gospel Response (1st & 2nd Week of Kiahk)",
+      "section": "Kiahk Season - Matins & Vespers"
+    },
+    {
+      "slug": "third-fourthweek-kiahk-gospel-response",
+      "label": "Gospel Response (3rd & 4th Week of Kiahk)",
+      "section": "Kiahk Season - Matins & Vespers"
+    },
+    {
+      "slug": "End of Service Hymn",
+      "label": "End of Service Hymn (Kiahk)",
+      "section": "Kiahk Season - Matins & Vespers"
+    },
+    {
+      "slug": "intro-to-midnight-praises-tentheeno",
+      "label": "Intro to Midnight Praises (Tentheeno)",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "kiahk-ode",
+      "label": "Kiahk Ode",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "amen-alleluia",
+      "label": "Amen Alleluia",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "adam-psali-on-first-canticle",
+      "label": "Adam Psali on the First Canticle",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "the-first-canticle",
+      "label": "The First Canticle",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "adam-psali-for-first-canticle",
+      "label": "Adam Psali (Lobsh) for the First Canticle",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "hymn-after-first-canticle",
+      "label": "Hymn After the First Canticle",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "exposition-first-canticle",
+      "label": "Exposition on the First Canticle",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "adam-psali-on-second-canticle",
+      "label": "Adam Psali on the Second Canticle",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "the-second-canticle",
+      "label": "The Second Canticle",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "adam-psali-for-second-canticle",
+      "label": "Adam Psali (Lobsh) for the Second Canticle",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "hymn-after-second-canticle",
+      "label": "Hymn After the Second Canticle",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "exposition-second-canticle",
+      "label": "Exposition on the Second Canticle",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "adam-psali-on-third-canticle",
+      "label": "Adam Psali on the Third Canticle",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "kiahk-praise-for-holy-trinity",
+      "label": "Kiahk Praise for the Holy Trinity",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "the-third-canticle",
+      "label": "The Third Canticle",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "greek-watos-psali-for-three-saintly-children",
+      "label": "Greek Watos Psali for the Three Saintly Children",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "hymn-after-praise-of-three-young-men",
+      "label": "Hymn After Praise of the Three Men",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "another-hymn-after-praise-of-three-young-men",
+      "label": "Another Hymn After Praise of the Three Young Men",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "song-of-the-three-saintly-children",
+      "label": "The Song of the Three Saintly Children (Tenen)",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "watos-psali-for-three-saintly-children",
+      "label": "Watos Psali for the Three Saintly Children",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "exposition-third-canticle",
+      "label": "Exposition on the Third Canticle",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "commemoration-virgin-angels-apostles-martyrs-saints",
+      "label": "Commemoration of the Virgin, the Angels, the Apostles, the Martyrs and the Saints",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "praise-for-st-anthony",
+      "label": "Praise for St. Anthony the Great",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "praise-for-st-maximus-st-dometius",
+      "label": "Praise for St. Maximus and St. Dometius",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "praise-for-st-moses",
+      "label": "Praise for St. Moses the Strong",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "praise-for-st-samuel",
+      "label": "Praise for St. Samuel the Confessor",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "exposition-on-commemoration-of-saints",
+      "label": "Exposition on the Commemoration of the Saints",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "adam-psali-on-fourth-canticle",
+      "label": "Adam Psali on the Fourth Canticle",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "the-fourth-canticle",
+      "label": "The Fourth Canticle (Esmo E'epchois/E'erof",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "exposition-on-fourth-canticle",
+      "label": "Exposition on the Fourth Canticle",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "adam-praise-on-sunday-adam-psali-for-lord-jesus",
+      "label": "Adam Praise on the Sunday Adam Psali for the Lord Jesus (I praise the Virgin)",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "i-open-my-mouth-with-praise",
+      "label": "I Open My Mouth With Praise",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "adam-psali-on-you-are-called",
+      "label": "Adam Psali on 'You are Called' (Come, O you people...)",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "the-first-explanation",
+      "label": "The First Explanation",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "the-second-explanation",
+      "label": "The Second Explanation",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "the-third-explanation",
+      "label": "The Third Explanation",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "the-fourth-explanation",
+      "label": "The Fourth Explanation",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "the-fifth-explanation",
+      "label": "The Fifth Explanation",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "the-sixth-explanation",
+      "label": "The Sixth Explanation",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "the-seventh-explanation",
+      "label": "The Seventh Explanation",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "exposition-on-first-you-are-called",
+      "label": "Exposition on the First 'You are called'",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "exposition-on-second-you-are-called",
+      "label": "Exposition on the Second 'You are called'",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "kiahk-melody-on-eigth-part-of-sunday-theotokia",
+      "label": "Kiahk Melody on the Eighth Part of the Sunday Theotokia",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "exposition-on-seven-times-everyday",
+      "label": "Exposition on 'Seven Times Every Day'",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "rejoice-o-mary",
+      "label": "Rejoice O Mary",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "o-mary",
+      "label": "O Mary",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "o-daughter-of-david",
+      "label": "O Daughter of David",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "adam-psali-on-tenth-part-of-sunday-theotokia",
+      "label": "Adam Psali on the Tenth Part of the Sunday Theotokia 'You are more worthy'",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "i-praise-the-virgin",
+      "label": "I Praise the Virgin",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "exposition-of-laborers",
+      "label": "Exposition of the Laborers",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "conclusion-to-exposition-of-laborers",
+      "label": "Conclusion to the Exposition of the Laborers",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "your-mercies-o-my-god",
+      "label": "Your Mercies O My God",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "exposition-on-your-mercies-o-my-god",
+      "label": "Exposition on 'Your mercies, O my God'",
+      "section": "Kiahk Season - Midnight Praises (Saturday)"
+    },
+    {
+      "slug": "hiten-archangel-michael",
+      "label": "Hiten for Archangel Michael",
+      "section": "Kiahk Season - St. Basil - Liturgy of the Word"
+    },
+    {
+      "slug": "hiten-john-son-of-zacharias",
+      "label": "Hiten for John, Son of Zacharias",
+      "section": "Kiahk Season - St. Basil - Liturgy of the Word"
+    },
+    {
+      "slug": "hiten-zacharias-and-elizabeth",
+      "label": "Hiten for Zacharias and Elizabeth",
+      "section": "Kiahk Season - St. Basil - Liturgy of the Word"
+    },
+    {
+      "slug": "hiten-joachim-and-anna",
+      "label": "Hiten for Joachim and Anna",
+      "section": "Kiahk Season - St. Basil - Liturgy of the Word"
+    },
+    {
+      "slug": "praxis-response-first-and-third-sunday",
+      "label": "Praxis Response - 1st and 3rd Sunday",
+      "section": "Kiahk Season - St. Basil - Liturgy of the Word"
+    },
+    {
+      "slug": "praxis-response-second-sunday",
+      "label": "Praxis Response - 2nd Sunday",
+      "section": "Kiahk Season - St. Basil - Liturgy of the Word"
+    },
+    {
+      "slug": "praxis-response-fourth-sunday",
+      "label": "Praxis Response - 4th Sunday",
+      "section": "Kiahk Season - St. Basil - Liturgy of the Word"
+    },
+    {
+      "slug": "gospel-response-first-and-second-sunday",
+      "label": "Gospel Response - 1st and 2nd Sunday (We send you greetings...)",
+      "section": "Kiahk Season - St. Basil - Liturgy of the Faithful"
+    },
+    {
+      "slug": "gospel-response-third-and-fourth-sunday",
+      "label": "Gospel Response - 3rd and 4th Sunday (We exalt you worthily...)",
+      "section": "Kiahk Season - St. Basil - Liturgy of the Faithful"
+    },
+    {
+      "slug": "aspasmos-adam-first-sunday",
+      "label": "Aspasmos Adam - 1st Sunday (Zachariah the Priest)",
+      "section": "Kiahk Season - St. Basil - Liturgy of the Faithful"
+    },
+    {
+      "slug": "aspasmos-adam-second-sunday",
+      "label": "Aspasmos Adam - 2nd Sunday (You also flew to Saint Mary...)",
+      "section": "Kiahk Season - St. Basil - Liturgy of the Faithful"
+    },
+    {
+      "slug": "aspasmos-adam-third-sunday",
+      "label": "Aspasmos Adam - 3rd Sunday (Rejoice, O Mary, handmaiden...)",
+      "section": "Kiahk Season - St. Basil - Liturgy of the Faithful"
+    },
+    {
+      "slug": "aspasmos-adam-fourth-sunday",
+      "label": "Aspasmos Adam - 4th Sunday (God is Light...)",
+      "section": "Kiahk Season - St. Basil - Liturgy of the Faithful"
+    }
+  ]
+}
