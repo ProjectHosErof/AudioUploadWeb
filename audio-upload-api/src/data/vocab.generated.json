@@ -535,17 +535,6 @@
    "tunes": []
   },
   {
-   "slug": "adam-psali-on-you-are-called",
-   "label": "Adam Psali on 'You are Called' (Come, O you people...)",
-   "labelAr": null,
-   "hazzatId": null,
-   "sourceUrl": null,
-   "rhythm": null,
-   "active": true,
-   "types": [],
-   "tunes": []
-  },
-  {
    "slug": "adam-psali-on-first-canticle",
    "label": "Adam Psali on the First Canticle",
    "labelAr": null,
@@ -1460,6 +1449,19 @@
    "rhythm": null,
    "active": false,
    "types": [],
+   "tunes": []
+  },
+  {
+   "slug": "adam-psali-on-you-are-called",
+   "label": "You are Called (Semouti)",
+   "labelAr": "سيموتي",
+   "hazzatId": "semouti",
+   "sourceUrl": "Open on hazzat",
+   "rhythm": null,
+   "active": true,
+   "types": [
+    "psalmody"
+   ],
    "tunes": []
   },
   {
@@ -7763,19 +7765,6 @@
    ]
   },
   {
-   "slug": "semouti",
-   "label": "You are Called (Semouti)",
-   "labelAr": "سيموتي",
-   "hazzatId": "semouti",
-   "sourceUrl": "Open on hazzat",
-   "rhythm": null,
-   "active": true,
-   "types": [
-    "psalmody"
-   ],
-   "tunes": []
-  },
-  {
    "slug": "a-pekran",
    "label": "Your Name (A Pekran)",
    "labelAr": null,
@@ -8065,9 +8054,27 @@
   ],
   [
    "adam-psali-on-you-are-called",
+   "annual",
+   "ceremony-crowning",
+   545
+  ],
+  [
+   "adam-psali-on-you-are-called",
+   "annual",
+   "midnight-praises",
+   55
+  ],
+  [
+   "adam-psali-on-you-are-called",
    "kiahk",
    "midnight-praises",
-   1258
+   122
+  ],
+  [
+   "adam-psali-on-you-are-called",
+   "saint-marys-fast-feast",
+   "midnight-praises",
+   491
   ],
   [
    "adam-psali-pentecost",
@@ -14170,30 +14177,6 @@
    "kiahk",
    "st-gregory-liturgy",
    99
-  ],
-  [
-   "semouti",
-   "annual",
-   "ceremony-crowning",
-   545
-  ],
-  [
-   "semouti",
-   "annual",
-   "midnight-praises",
-   55
-  ],
-  [
-   "semouti",
-   "kiahk",
-   "midnight-praises",
-   122
-  ],
-  [
-   "semouti",
-   "saint-marys-fast-feast",
-   "midnight-praises",
-   491
   ],
   [
    "sena-etsho",

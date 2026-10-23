@@ -235,7 +235,8 @@
     "aspasmos-adam-second-sunday": "aspasmos-adam-2nd-sunday",
     "aspasmos-adam-third-sunday": "aspasmos-adam-3rd-sunday",
     "aspasmos-adam-fourth-sunday": "aspasmos-adam-4th-sunday",
-    "exposition-on-seven-times-everyday": "shashf-ensop-seven-times-everyday-glorifications"
+    "exposition-on-seven-times-everyday": "shashf-ensop-seven-times-everyday-glorifications",
+    "adam-psali-on-you-are-called": "semouti"
   },
   "splits": {
     "_comment": "hazzat hymn ID -> several existing hymns. Kiahk Verses of Cymbals share their main verses but open differently: Adam is said Sunday to Tuesday, Watos Wednesday to Saturday. Recordings differ, so they stay separate hymns and hazzat's combined entry is not added.",
@@ -249,7 +250,8 @@
     "intro-to-midnight-praises-tentheeno": "Arise O Children of the Light (Ten Theno)",
     "exposition-on-seven-times-everyday": "Seven Times Everyday (Shashf Ensop)",
     "verses-of-cymbals-adam": "Verses of Cymbals (Adam) - Sunday to Tuesday",
-    "verses-of-cymbals-watos": "Verses of Cymbals (Watos) - Wednesday to Saturday"
+    "verses-of-cymbals-watos": "Verses of Cymbals (Watos) - Wednesday to Saturday",
+    "adam-psali-on-you-are-called": "You are Called (Semouti)"
   },
   "retired": {
     "_comment": "Existing slugs hidden from the form (is_active = false) because another slug is the same hymn. Their rows and recordings are kept.",
@@ -258,8 +260,7 @@
     "watos-psali-for-three-saintly-children": "greek-watos-psali-for-three-saintly-children"
   },
   "needsReview": {
-    "_comment": "Possible matches NOT merged. Both entries stay as separate hymns until someone confirms.",
-    "adam-psali-on-you-are-called": "semouti ('You are Called') (psali on it vs the hymn itself)"
+    "_comment": "Possible matches NOT merged. Both entries stay as separate hymns until someone confirms."
   },
   "confirmedDistinct": {
     "_comment": "Reviewed and confirmed to be different hymns; kept separate.",
