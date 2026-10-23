@@ -1,6 +1,5 @@
 {
   "_comment": "Hand-maintained rules that turn Coptic_Hymns_hazzat.xlsx into the app's vocabulary. Read by scripts/import_hazzat.py. Every hazzat season and service name in the sheet must appear here, or the import fails.",
-
   "seasons": {
     "_comment": "hazzat season name -> app season slug. Occasions (see below) are not listed here.",
     "Annual": "annual",
@@ -33,61 +32,181 @@
     "Saint Mary's Fast/Feast": "saint-marys-fast-feast",
     "Transfiguration": "transfiguration"
   },
-
   "newSeasons": [
-    { "slug": "saint-marys-fast-feast", "label": "Saint Mary's Fast/Feast", "after": "apostles-feast" },
-    { "slug": "transfiguration", "label": "Transfiguration", "after": "saint-marys-fast-feast" }
+    {
+      "slug": "saint-marys-fast-feast",
+      "label": "Saint Mary's Fast/Feast",
+      "after": "apostles-feast"
+    },
+    {
+      "slug": "transfiguration",
+      "label": "Transfiguration",
+      "after": "saint-marys-fast-feast"
+    }
   ],
-
   "occasions": {
     "_comment": "hazzat treats these as seasons; the app files them as a service in the Annual season. Every hymn in the occasion goes to that one service.",
-    "Coptic Weddings": { "season": "annual", "service": "ceremony-crowning" },
-    "Funeral": { "season": "annual", "service": "funeral" },
-    "Glorifications": { "season": "annual", "service": "venerations" },
-    "Papal": { "season": "annual", "service": "papal" },
-    "Reception of New Priest": { "season": "annual", "service": "reception-of-new-priest" }
+    "Coptic Weddings": {
+      "season": "annual",
+      "service": "ceremony-crowning"
+    },
+    "Funeral": {
+      "season": "annual",
+      "service": "funeral"
+    },
+    "Glorifications": {
+      "season": "annual",
+      "service": "venerations"
+    },
+    "Papal": {
+      "season": "annual",
+      "service": "papal"
+    },
+    "Reception of New Priest": {
+      "season": "annual",
+      "service": "reception-of-new-priest"
+    }
   },
-
   "newServices": [
-    { "slug": "papal", "label": "Papal Hymns", "after": "lakkan" },
-    { "slug": "reception-of-new-priest", "label": "Reception of New Priest", "after": "papal" }
+    {
+      "slug": "papal",
+      "label": "Papal Hymns",
+      "after": "lakkan"
+    },
+    {
+      "slug": "reception-of-new-priest",
+      "label": "Reception of New Priest",
+      "after": "papal"
+    }
   ],
-
   "services": {
     "_comment": "hazzat service name -> app service slugs. Generic liturgy parts go to all three liturgies.",
-    "Vespers": ["vespers"],
-    "Matins": ["matins"],
-    "Vespers & Matins": ["vespers", "matins"],
-    "Vespers Psalmody": ["vesper-praises"],
-    "Matins Psalmody": ["morning-praises"],
-    "Midnight Psalmody": ["midnight-praises"],
-    "Liturgy": ["st-basil-liturgy", "st-gregory-liturgy", "st-cyril-liturgy"],
-    "Liturgy of the Word": ["st-basil-liturgy", "st-gregory-liturgy", "st-cyril-liturgy"],
-    "Distribution": ["st-basil-liturgy", "st-gregory-liturgy", "st-cyril-liturgy"],
-    "Liturgy (Deacon Responses)": ["st-basil-liturgy", "st-gregory-liturgy", "st-cyril-liturgy"],
-    "Liturgy of St. Basil": ["st-basil-liturgy"],
-    "Liturgy of St. Gregory": ["st-gregory-liturgy"],
-    "Pascha Hours": ["pascha"],
-    "1st Hour": ["pascha"],
-    "6th Hour": ["pascha"],
-    "9th Hour": ["pascha"],
-    "12th Hour": ["pascha"],
-    "Psalm Readings": ["pascha"],
-    "Revelation": ["pascha"],
-    "Praises": ["pascha"],
-    "Liturgy of the Waters": ["lakkan"],
-    "General Funeral": ["funeral"],
-    "Veneration": ["venerations"]
+    "Vespers": [
+      "vespers"
+    ],
+    "Matins": [
+      "matins"
+    ],
+    "Vespers & Matins": [
+      "vespers",
+      "matins"
+    ],
+    "Vespers Psalmody": [
+      "vesper-praises"
+    ],
+    "Matins Psalmody": [
+      "morning-praises"
+    ],
+    "Midnight Psalmody": [
+      "midnight-praises"
+    ],
+    "Liturgy": [
+      "st-basil-liturgy",
+      "st-gregory-liturgy",
+      "st-cyril-liturgy"
+    ],
+    "Liturgy of the Word": [
+      "st-basil-liturgy",
+      "st-gregory-liturgy",
+      "st-cyril-liturgy"
+    ],
+    "Distribution": [
+      "st-basil-liturgy",
+      "st-gregory-liturgy",
+      "st-cyril-liturgy"
+    ],
+    "Liturgy (Deacon Responses)": [
+      "st-basil-liturgy",
+      "st-gregory-liturgy",
+      "st-cyril-liturgy"
+    ],
+    "Liturgy of St. Basil": [
+      "st-basil-liturgy"
+    ],
+    "Liturgy of St. Gregory": [
+      "st-gregory-liturgy"
+    ],
+    "Pascha Hours": [
+      "pascha"
+    ],
+    "1st Hour": [
+      "pascha"
+    ],
+    "6th Hour": [
+      "pascha"
+    ],
+    "9th Hour": [
+      "pascha"
+    ],
+    "12th Hour": [
+      "pascha"
+    ],
+    "Psalm Readings": [
+      "pascha"
+    ],
+    "Revelation": [
+      "pascha"
+    ],
+    "Praises": [
+      "pascha"
+    ],
+    "Liturgy of the Waters": [
+      "lakkan"
+    ],
+    "General Funeral": [
+      "pascha"
+    ],
+    "Veneration": [
+      "venerations"
+    ]
   },
-
   "sectionPlacements": {
     "_comment": "Placements for the pre-existing hymns, taken from the section headings in the old options.ts.",
-    "Kiahk Season - Matins & Vespers": [["kiahk", "vespers"], ["kiahk", "matins"]],
-    "Kiahk Season - Midnight Praises (Saturday)": [["kiahk", "midnight-praises"]],
-    "Kiahk Season - St. Basil - Liturgy of the Word": [["kiahk", "st-basil-liturgy"], ["kiahk", "st-gregory-liturgy"], ["kiahk", "st-cyril-liturgy"]],
-    "Kiahk Season - St. Basil - Liturgy of the Faithful": [["kiahk", "st-basil-liturgy"], ["kiahk", "st-gregory-liturgy"], ["kiahk", "st-cyril-liturgy"]]
+    "Kiahk Season - Matins & Vespers": [
+      [
+        "kiahk",
+        "vespers"
+      ],
+      [
+        "kiahk",
+        "matins"
+      ]
+    ],
+    "Kiahk Season - Midnight Praises (Saturday)": [
+      [
+        "kiahk",
+        "midnight-praises"
+      ]
+    ],
+    "Kiahk Season - St. Basil - Liturgy of the Word": [
+      [
+        "kiahk",
+        "st-basil-liturgy"
+      ],
+      [
+        "kiahk",
+        "st-gregory-liturgy"
+      ],
+      [
+        "kiahk",
+        "st-cyril-liturgy"
+      ]
+    ],
+    "Kiahk Season - St. Basil - Liturgy of the Faithful": [
+      [
+        "kiahk",
+        "st-basil-liturgy"
+      ],
+      [
+        "kiahk",
+        "st-gregory-liturgy"
+      ],
+      [
+        "kiahk",
+        "st-cyril-liturgy"
+      ]
+    ]
   },
-
   "crosswalk": {
     "_comment": "Existing app slug -> hazzat Hymn ID for the same hymn. The app slug is kept (recordings reference it); it gains the hazzat hymn's titles, types, tunes and placements, and no separate row is made for the hazzat ID.",
     "intro-to-doxologies": "introduction-to-the-doxologies-kiahk",
@@ -115,24 +234,40 @@
     "aspasmos-adam-first-sunday": "aspasmos-adam-1st-sunday",
     "aspasmos-adam-second-sunday": "aspasmos-adam-2nd-sunday",
     "aspasmos-adam-third-sunday": "aspasmos-adam-3rd-sunday",
-    "aspasmos-adam-fourth-sunday": "aspasmos-adam-4th-sunday"
+    "aspasmos-adam-fourth-sunday": "aspasmos-adam-4th-sunday",
+    "exposition-on-seven-times-everyday": "shashf-ensop-seven-times-everyday-glorifications"
   },
-
+  "splits": {
+    "_comment": "hazzat hymn ID -> several existing hymns. Kiahk Verses of Cymbals share their main verses but open differently: Adam is said Sunday to Tuesday, Watos Wednesday to Saturday. Recordings differ, so they stay separate hymns and hazzat's combined entry is not added.",
+    "verses-of-cymbals-kiahk": [
+      "verses-of-cymbals-adam",
+      "verses-of-cymbals-watos"
+    ]
+  },
+  "labelOverrides": {
+    "_comment": "New labels for existing hymns (slugs unchanged). Recordings keep the label they were submitted with.",
+    "intro-to-midnight-praises-tentheeno": "Arise O Children of the Light (Ten Theno)",
+    "exposition-on-seven-times-everyday": "Seven Times Everyday (Shashf Ensop)",
+    "verses-of-cymbals-adam": "Verses of Cymbals (Adam) - Sunday to Tuesday",
+    "verses-of-cymbals-watos": "Verses of Cymbals (Watos) - Wednesday to Saturday"
+  },
   "retired": {
     "_comment": "Existing slugs hidden from the form (is_active = false) because another slug is the same hymn. Their rows and recordings are kept.",
     "first-secondweek-kiahk-gospel-response": "gospel-response-first-and-second-sunday",
-    "third-fourthweek-kiahk-gospel-response": "gospel-response-third-and-fourth-sunday"
+    "third-fourthweek-kiahk-gospel-response": "gospel-response-third-and-fourth-sunday",
+    "watos-psali-for-three-saintly-children": "greek-watos-psali-for-three-saintly-children"
   },
-
   "needsReview": {
     "_comment": "Possible matches NOT merged. Both entries stay as separate hymns until someone confirms.",
-    "verses-of-cymbals-adam": "verses-of-cymbals-kiahk (hazzat has one Kiahk 'Verses of the Cymbals'; the app splits Adam/Watos)",
-    "verses-of-cymbals-watos": "verses-of-cymbals-kiahk (see above)",
-    "watos-psali-for-three-saintly-children": "greek-psali-batos-for-the-three-saintly-children-arepsalin-annual (Coptic vs Greek psali?)",
-    "o-mary": "shere-ne-maria-annual ('Hail to You Mary')?",
-    "exposition-on-seven-times-everyday": "shashf-ensop-seven-times-everyday-glorifications (exposition vs the hymn itself)",
     "adam-psali-on-you-are-called": "semouti ('You are Called') (psali on it vs the hymn itself)"
   },
-
-  "ignoreTuneOrType": ["Unspecified", "Not listed", "Not listed (not on hazzat.com)"]
+  "confirmedDistinct": {
+    "_comment": "Reviewed and confirmed to be different hymns; kept separate.",
+    "o-mary": "shere-ne-maria-annual"
+  },
+  "ignoreTuneOrType": [
+    "Unspecified",
+    "Not listed",
+    "Not listed (not on hazzat.com)"
+  ]
 }

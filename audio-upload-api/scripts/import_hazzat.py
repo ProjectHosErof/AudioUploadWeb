@@ -86,15 +86,19 @@ def main() -> None:
     for i, s in enumerate(services):
         s["sortOrder"] = i + 1
 
-    # ---- crosswalk: hazzat id -> existing app slug ----
+    # ---- crosswalk: hazzat id -> existing app slug(s) ----
+    # A split sends one hazzat hymn to several existing hymns that differ in a
+    # way hazzat doesn't record (e.g. the Adam and Watos Verses of Cymbals).
     legacy_slugs = {h["slug"] for h in legacy["hymns"]}
-    to_app = {}
-    for app_slug, hz in maps["crosswalk"].items():
-        if app_slug.startswith("_"):
-            continue
+    to_app: dict[str, list[str]] = {}
+    pairs = [(a, hz) for a, hz in maps["crosswalk"].items() if not a.startswith("_")]
+    pairs += [(a, hz) for hz, apps in maps["splits"].items() if not hz.startswith("_") for a in apps]
+    for app_slug, hz in pairs:
         if app_slug not in legacy_slugs:
             errors.append(f"crosswalk: unknown app slug {app_slug!r}")
-        to_app[hz] = app_slug
+        to_app.setdefault(hz, []).append(app_slug)
+    overrides = {k: v for k, v in maps["labelOverrides"].items() if not k.startswith("_")}
+    errors += [f"labelOverrides: unknown app slug {a!r}" for a in overrides if a not in legacy_slugs]
     sheet_ids = set(sheet["Hymn ID"])
     errors += [f"crosswalk: hazzat id {hz!r} not in the sheet" for hz in to_app if hz not in sheet_ids]
 
@@ -112,11 +116,8 @@ def main() -> None:
         placements[key] = min(order, placements.get(key, order))
 
     unmapped = Counter()
-    for rank, row in enumerate(sheet.to_dict("records")):
-        hz_id = row["Hymn ID"]
-        slug = to_app.get(hz_id) or slugify(hz_id)
-        if slug in legacy_slugs and hz_id not in to_app:
-            errors.append(f"slug collision: hazzat {hz_id!r} -> {slug!r} already exists")
+
+    def place_row(slug: str, hz_id: str, row: dict, rank: int) -> None:
         h = hymns.setdefault(slug, {
             "slug": slug, "hazzatId": hz_id, "hazzatTitle": row["Hymn Title"],
             "labelAr": row["Hymn Title (Arabic)"] if isinstance(row["Hymn Title (Arabic)"], str) else None,
@@ -130,11 +131,11 @@ def main() -> None:
         if season_name in maps["occasions"]:
             occ = maps["occasions"][season_name]
             place((slug, occ["season"], occ["service"]), rank)
-            continue
+            return
         season = maps["seasons"].get(season_name)
         if not season:
             unmapped[f"season {season_name!r}"] += 1
-            continue
+            return
         for svc_index, svc_name in enumerate(split(row["Service(s)"])):
             targets = maps["services"].get(svc_name)
             if not targets:
@@ -142,9 +143,16 @@ def main() -> None:
                 continue
             for svc in targets:
                 place((slug, season, svc), rank if svc_index == 0 else n + rank)
-    errors += [f"unmapped {k} x{n}" for k, n in unmapped.items()]
 
-    # ---- legacy hymns: keep slug + label, add section placements ----
+    for rank, row in enumerate(sheet.to_dict("records")):
+        hz_id = row["Hymn ID"]
+        if hz_id not in to_app and slugify(hz_id) in legacy_slugs:
+            errors.append(f"slug collision: hazzat {hz_id!r} -> {slugify(hz_id)!r} already exists")
+        for slug in to_app.get(hz_id) or [slugify(hz_id)]:
+            place_row(slug, hz_id, row, rank)
+    errors += [f"unmapped {k} x{count}" for k, count in unmapped.items()]
+
+    # ---- legacy hymns: keep slug (and label unless overridden), add section placements ----
     retired = {k: v for k, v in maps["retired"].items() if not k.startswith("_")}
     out_hymns = []
     for legacy_index, lh in enumerate(legacy["hymns"]):
@@ -159,7 +167,8 @@ def main() -> None:
         else:
             for key in [k for k in placements if k[0] == lh["slug"]]:
                 del placements[key]
-        out_hymns.append({**h, "slug": lh["slug"], "label": lh["label"], "active": active, "legacy": True})
+        label = overrides.get(lh["slug"], lh["label"])
+        out_hymns.append({**h, "slug": lh["slug"], "label": label, "active": active, "legacy": True})
     for h in hymns.values():
         out_hymns.append({**h, "label": h["hazzatTitle"], "active": True, "legacy": False})
 
@@ -261,6 +270,16 @@ def write_report(vocab, legacy, maps, renamed, by_pair) -> None:
         "| --- | --- | --- |",
     ]
     lines += [f"| `{a}` | {labels[a]} | `{h}` |" for a, h in maps["crosswalk"].items() if not a.startswith("_")]
+    lines += ["", "## One hazzat hymn split across existing hymns", "",
+              "Each existing hymn gets the hazzat hymn's types, tunes and placements; "
+              "no separate row is made for the hazzat ID.", "",
+              "| hazzat ID | Existing hymns |", "| --- | --- |"]
+    lines += [f"| `{hz}` | {', '.join(f'`{a}`' for a in apps)} |"
+              for hz, apps in maps["splits"].items() if not hz.startswith("_")]
+    lines += ["", "## Labels changed on existing hymns", "", "| Slug | New label |", "| --- | --- |"]
+    lines += [f"| `{a}` | {b} |" for a, b in maps["labelOverrides"].items() if not a.startswith("_")]
+    lines += ["", "## Confirmed different (not merged)", "", "| Existing hymn | hazzat hymn |", "| --- | --- |"]
+    lines += [f"| `{a}` | `{b}` |" for a, b in maps["confirmedDistinct"].items() if not a.startswith("_")]
     lines += ["", "## Retired (hidden from the form, rows kept)", "", "| Slug | Same hymn as |", "| --- | --- |"]
     lines += [f"| `{a}` | `{b}` |" for a, b in maps["retired"].items() if not a.startswith("_")]
     lines += ["", "## Needs review (not merged)", "", "| App slug | Possible hazzat match |", "| --- | --- |"]

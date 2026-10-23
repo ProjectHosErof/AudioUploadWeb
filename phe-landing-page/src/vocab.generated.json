@@ -623,6 +623,19 @@
    "tunes": []
   },
   {
+   "slug": "intro-to-midnight-praises-tentheeno",
+   "label": "Arise O Children of the Light (Ten Theno)",
+   "labelAr": "قوموا يابني النور (تين ثينو)",
+   "hazzatId": "arise-o-children-of-the-light-ten-theno",
+   "sourceUrl": "Open on hazzat",
+   "rhythm": null,
+   "active": true,
+   "types": [
+    "psalmody"
+   ],
+   "tunes": []
+  },
+  {
    "slug": "aspasmos-adam-first-sunday",
    "label": "Aspasmos Adam - 1st Sunday (Zachariah the Priest)",
    "labelAr": null,
@@ -722,17 +735,6 @@
   {
    "slug": "exposition-of-laborers",
    "label": "Exposition of the Laborers",
-   "labelAr": null,
-   "hazzatId": null,
-   "sourceUrl": null,
-   "rhythm": null,
-   "active": true,
-   "types": [],
-   "tunes": []
-  },
-  {
-   "slug": "exposition-on-seven-times-everyday",
-   "label": "Exposition on 'Seven Times Every Day'",
    "labelAr": null,
    "hazzatId": null,
    "sourceUrl": null,
@@ -1056,19 +1058,6 @@
    ]
   },
   {
-   "slug": "intro-to-midnight-praises-tentheeno",
-   "label": "Intro to Midnight Praises (Tentheeno)",
-   "labelAr": "قوموا يابني النور (تين ثينو)",
-   "hazzatId": "arise-o-children-of-the-light-ten-theno",
-   "sourceUrl": "Open on hazzat",
-   "rhythm": null,
-   "active": true,
-   "types": [
-    "psalmody"
-   ],
-   "tunes": []
-  },
-  {
    "slug": "kiahk-doxology-archangel-michael",
    "label": "Kiahk Doxology for Archangel Michael",
    "labelAr": null,
@@ -1241,6 +1230,21 @@
    ],
    "tunes": [
     "kiahky"
+   ]
+  },
+  {
+   "slug": "exposition-on-seven-times-everyday",
+   "label": "Seven Times Everyday (Shashf Ensop)",
+   "labelAr": null,
+   "hazzatId": "shashf-ensop-seven-times-everyday-glorifications",
+   "sourceUrl": "Open on hazzat",
+   "rhythm": null,
+   "active": true,
+   "types": [
+    "glorification"
+   ],
+   "tunes": [
+    "annual"
    ]
   },
   {
@@ -1419,25 +1423,33 @@
   },
   {
    "slug": "verses-of-cymbals-adam",
-   "label": "Verses of Cymbals (Adam)",
-   "labelAr": null,
-   "hazzatId": null,
-   "sourceUrl": null,
+   "label": "Verses of Cymbals (Adam) - Sunday to Tuesday",
+   "labelAr": "أرباع الناقوس",
+   "hazzatId": "verses-of-cymbals-kiahk",
+   "sourceUrl": "Open on hazzat",
    "rhythm": "adam",
    "active": true,
-   "types": [],
-   "tunes": []
+   "types": [
+    "verses-of-cymbals"
+   ],
+   "tunes": [
+    "annual"
+   ]
   },
   {
    "slug": "verses-of-cymbals-watos",
-   "label": "Verses of Cymbals (Watos)",
-   "labelAr": null,
-   "hazzatId": null,
-   "sourceUrl": null,
+   "label": "Verses of Cymbals (Watos) - Wednesday to Saturday",
+   "labelAr": "أرباع الناقوس",
+   "hazzatId": "verses-of-cymbals-kiahk",
+   "sourceUrl": "Open on hazzat",
    "rhythm": "watos",
    "active": true,
-   "types": [],
-   "tunes": []
+   "types": [
+    "verses-of-cymbals"
+   ],
+   "tunes": [
+    "annual"
+   ]
   },
   {
    "slug": "watos-psali-for-three-saintly-children",
@@ -1446,7 +1458,7 @@
    "hazzatId": null,
    "sourceUrl": null,
    "rhythm": null,
-   "active": true,
+   "active": false,
    "types": [],
    "tunes": []
   },
@@ -6595,21 +6607,6 @@
    ]
   },
   {
-   "slug": "shashf-ensop-seven-times-everyday-glorifications",
-   "label": "Seven Times Everyday (Shashf Ensop)",
-   "labelAr": null,
-   "hazzatId": "shashf-ensop-seven-times-everyday-glorifications",
-   "sourceUrl": "Open on hazzat",
-   "rhythm": null,
-   "active": true,
-   "types": [
-    "glorification"
-   ],
-   "tunes": [
-    "annual"
-   ]
-  },
-  {
    "slug": "shere-maria",
    "label": "Shere Maria",
    "labelAr": "شيرى ماريا",
@@ -7523,21 +7520,6 @@
    "tunes": [
     "adam",
     "festal"
-   ]
-  },
-  {
-   "slug": "verses-of-cymbals-kiahk",
-   "label": "Verses of the Cymbals",
-   "labelAr": "أرباع الناقوس",
-   "hazzatId": "verses-of-cymbals-kiahk",
-   "sourceUrl": "Open on hazzat",
-   "rhythm": null,
-   "active": true,
-   "types": [
-    "verses-of-cymbals"
-   ],
-   "tunes": [
-    "annual"
    ]
   },
   {
@@ -9895,9 +9877,27 @@
   ],
   [
    "exposition-on-seven-times-everyday",
+   "annual",
+   "midnight-praises",
+   56
+  ],
+  [
+   "exposition-on-seven-times-everyday",
+   "annual",
+   "venerations",
+   523
+  ],
+  [
+   "exposition-on-seven-times-everyday",
    "kiahk",
    "midnight-praises",
    1269
+  ],
+  [
+   "exposition-on-seven-times-everyday",
+   "saint-marys-fast-feast",
+   "venerations",
+   498
   ],
   [
    "exposition-on-your-mercies-o-my-god",
@@ -14238,24 +14238,6 @@
    444
   ],
   [
-   "shashf-ensop-seven-times-everyday-glorifications",
-   "annual",
-   "midnight-praises",
-   56
-  ],
-  [
-   "shashf-ensop-seven-times-everyday-glorifications",
-   "annual",
-   "venerations",
-   523
-  ],
-  [
-   "shashf-ensop-seven-times-everyday-glorifications",
-   "saint-marys-fast-feast",
-   "venerations",
-   498
-  ],
-  [
    "shere-maria",
    "annual",
    "ceremony-crowning",
@@ -14822,7 +14804,7 @@
   [
    "the-pauline-epistle-ethve-tianastasees",
    "palm-sunday",
-   "funeral",
+   "pascha",
    297
   ],
   [
@@ -15224,7 +15206,7 @@
   [
    "trisagion-agios-passion-pascha-week-good-friday",
    "palm-sunday",
-   "funeral",
+   "pascha",
    298
   ],
   [
@@ -15279,13 +15261,13 @@
    "verses-of-cymbals-adam",
    "kiahk",
    "matins",
-   1212
+   124
   ],
   [
    "verses-of-cymbals-adam",
    "kiahk",
    "vespers",
-   1212
+   124
   ],
   [
    "verses-of-cymbals-apostles-feast",
@@ -15358,18 +15340,6 @@
    "great-lent-saturdays-sundays",
    "vespers",
    255
-  ],
-  [
-   "verses-of-cymbals-kiahk",
-   "kiahk",
-   "matins",
-   124
-  ],
-  [
-   "verses-of-cymbals-kiahk",
-   "kiahk",
-   "vespers",
-   124
   ],
   [
    "verses-of-cymbals-lazarus-saturday",
@@ -15471,13 +15441,13 @@
    "verses-of-cymbals-watos",
    "kiahk",
    "matins",
-   1213
+   124
   ],
   [
    "verses-of-cymbals-watos",
    "kiahk",
    "vespers",
-   1213
+   124
   ],
   [
    "verses-of-the-cymbals",
@@ -15510,12 +15480,6 @@
    370
   ],
   [
-   "watos-psali-for-three-saintly-children",
-   "kiahk",
-   "midnight-praises",
-   1245
-  ],
-  [
    "we-follow-you-tenoueh-ensok-annual",
    "annual",
    "midnight-praises",
@@ -15542,7 +15506,7 @@
   [
    "we-look-for-the-resurrection",
    "palm-sunday",
-   "funeral",
+   "pascha",
    299
   ],
   [
