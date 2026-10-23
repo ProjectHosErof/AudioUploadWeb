@@ -13,6 +13,7 @@ import {
   jsonb,
   index,
   uniqueIndex,
+  primaryKey,
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
@@ -46,20 +47,90 @@ export const reviewStatusEnum = pgEnum('review_status', [
 export const services = pgTable('services', {
   slug: varchar('slug', { length: 100 }).primaryKey(),
   label: varchar('label', { length: 200 }).notNull(),
+  sortOrder: integer('sort_order'), // dropdown order
 });
 
 export const seasons = pgTable('seasons', {
   slug: varchar('slug', { length: 100 }).primaryKey(),
   label: varchar('label', { length: 200 }).notNull(),
+  labelAr: varchar('label_ar', { length: 200 }),
+  sortOrder: integer('sort_order'), // church-calendar order
 });
 
 export const hymns = pgTable('hymns', {
   slug: varchar('slug', { length: 200 }).primaryKey(),
   label: varchar('label', { length: 300 }).notNull(),
+  labelAr: varchar('label_ar', { length: 300 }),
   // Rhythm is often encoded in the label ("…(Adam)" vs "…(Watos)"); it lives
   // here rather than being asked of the contributor. Nullable until known.
   rhythm: varchar('rhythm', { length: 30 }),
+  // Where the hymn came from (data/hazzat/). Null for hymns hazzat.com lacks.
+  hazzatId: varchar('hazzat_id', { length: 200 }),
+  sourceUrl: varchar('source_url', { length: 500 }),
+  // Retired hymns stay for the recordings that reference them, but are hidden
+  // from the form and rejected for new uploads.
+  isActive: boolean('is_active').default(true).notNull(),
 });
+
+// Kind of hymn (Doxology, Psalm Response, Aspasmos Adam, …) and the melody it
+// is sung in (Annual, Festal, Kiahky, …), both from hazzat.com. A hymn can
+// carry several of each, so they hang off link tables.
+export const hymnTypes = pgTable('hymn_types', {
+  slug: varchar('slug', { length: 100 }).primaryKey(),
+  label: varchar('label', { length: 200 }).notNull(),
+});
+
+export const tunes = pgTable('tunes', {
+  slug: varchar('slug', { length: 100 }).primaryKey(),
+  label: varchar('label', { length: 200 }).notNull(),
+});
+
+export const hymnTypeLinks = pgTable(
+  'hymn_type_links',
+  {
+    hymnSlug: varchar('hymn_slug', { length: 200 })
+      .notNull()
+      .references(() => hymns.slug, { onDelete: 'cascade' }),
+    typeSlug: varchar('type_slug', { length: 100 })
+      .notNull()
+      .references(() => hymnTypes.slug, { onDelete: 'cascade' }),
+  },
+  (t) => [primaryKey({ columns: [t.hymnSlug, t.typeSlug] })],
+);
+
+export const hymnTunes = pgTable(
+  'hymn_tunes',
+  {
+    hymnSlug: varchar('hymn_slug', { length: 200 })
+      .notNull()
+      .references(() => hymns.slug, { onDelete: 'cascade' }),
+    tuneSlug: varchar('tune_slug', { length: 100 })
+      .notNull()
+      .references(() => tunes.slug, { onDelete: 'cascade' }),
+  },
+  (t) => [primaryKey({ columns: [t.hymnSlug, t.tuneSlug] })],
+);
+
+// Which hymns are said in which season and service. Drives the form's hymn
+// dropdown and the upload check in src/lib/placement.ts.
+export const hymnPlacements = pgTable(
+  'hymn_placements',
+  {
+    hymnSlug: varchar('hymn_slug', { length: 200 })
+      .notNull()
+      .references(() => hymns.slug, { onDelete: 'cascade' }),
+    seasonSlug: varchar('season_slug', { length: 100 })
+      .notNull()
+      .references(() => seasons.slug, { onDelete: 'cascade' }),
+    serviceSlug: varchar('service_slug', { length: 100 })
+      .notNull()
+      .references(() => services.slug, { onDelete: 'cascade' }),
+  },
+  (t) => [
+    primaryKey({ columns: [t.hymnSlug, t.seasonSlug, t.serviceSlug] }),
+    index('hymn_placements_season_service_idx').on(t.seasonSlug, t.serviceSlug),
+  ],
+);
 
 export const languages = pgTable('languages', {
   slug: varchar('slug', { length: 50 }).primaryKey(),
