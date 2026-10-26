@@ -10,7 +10,7 @@ These Terms are an agreement between you and [OPERATOR LEGAL NAME] ("**Project H
 1.2 A **parent or guardian** may upload recordings in which their child sings. So may a **church servant or choir leader** who has permission from each child's parent or guardian. Whoever uploads accepts these Terms for the recording.
 
 ## 2. Your account
-You're responsible for activity on your account and for keeping your sign-in method secure. Tell us at hello@hoserof.org if you think your account has been misused.
+You're responsible for activity on your account and for keeping your sign-in method secure. Tell us at contact@hoserof.org if you think your account has been misused.
 
 ## 3. Contributor License: your recordings
 
@@ -29,7 +29,7 @@ You're responsible for activity on your account and for keeping your sign-in met
 
 If we ever want to do something beyond section 3.2, we'll ask for new permission.
 
-3.4 **Duration and withdrawal.** The license lasts until you withdraw the recording. Email hello@hoserof.org. We'll then:
+3.4 **Duration and withdrawal.** The license lasts until you withdraw the recording. Email contact@hoserof.org. We'll then:
 - remove it from the collection;
 - stop using it for future training;
 - delete it from our backups within 45 days.
@@ -88,4 +88,4 @@ We may update these Terms. Each version has a version number. **A recording stay
 - These Terms and the Privacy Policy are the whole agreement between you and us about the Service.
 
 ## 13. Contact
-**hello@hoserof.org** · [OPERATOR LEGAL NAME], [MAILING ADDRESS]
+**contact@hoserof.org** · [OPERATOR LEGAL NAME], [MAILING ADDRESS]

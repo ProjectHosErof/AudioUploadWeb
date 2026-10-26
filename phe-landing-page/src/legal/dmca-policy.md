@@ -10,7 +10,7 @@ Send a written notice to our designated copyright agent:
 > **Copyright Agent, Project Hos Erof**
 > [OPERATOR LEGAL NAME]
 > [MAILING ADDRESS]
-> Email: **copyright@hoserof.org**
+> Email: **legal@hoserof.org**
 
 Under 17 U.S.C. §512(c)(3), your notice must include:
 1. your physical or electronic signature;
@@ -38,4 +38,4 @@ We'll forward it to the person who sent the notice. Unless they tell us within 1
 We end, in appropriate circumstances, the accounts of contributors who repeatedly infringe, and we stop accepting their recordings.
 
 ## 5. Other concerns
-For concerns that aren't about copyright (for example, a recording of you that you didn't agree to share), write to **hello@hoserof.org**. We'll look into it and, where appropriate, remove it.
+For concerns that aren't about copyright (for example, a recording of you that you didn't agree to share), write to **contact@hoserof.org**. We'll look into it and, where appropriate, remove it.

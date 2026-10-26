@@ -84,7 +84,7 @@ export function Footer() {
                   Contact
                 </p>
                 <a
-                  href="mailto:hello@hoserof.org"
+                  href="mailto:contact@hoserof.org"
                   style={{
                     fontFamily: 'var(--font-ui)',
                     fontSize: '1rem',
@@ -95,7 +95,7 @@ export function Footer() {
                   onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--gold)')}
                   onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
                 >
-                  hello@hoserof.org
+                  contact@hoserof.org
                 </a>
               </div>
             </div>

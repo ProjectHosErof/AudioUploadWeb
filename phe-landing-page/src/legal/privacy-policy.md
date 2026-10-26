@@ -4,7 +4,7 @@
 
 Project Hos Erof ("**we**", "**us**") collects recordings of Coptic hymns so we can preserve them and build tools that recognize them. This policy explains what we collect on hoserof.org, why, who helps us run the service, and the choices you have. It's written to match how the site actually works. If that ever changes, we'll update this page first.
 
-Project Hos Erof is operated by [OPERATOR LEGAL NAME], [MAILING ADDRESS]. Questions or requests: **hello@hoserof.org**.
+Project Hos Erof is operated by [OPERATOR LEGAL NAME], [MAILING ADDRESS]. Questions or requests: **contact@hoserof.org**.
 
 ## 1. What we collect
 
@@ -66,10 +66,10 @@ Wherever you live, you can ask us to:
 - **delete** it, including **withdrawing your recordings**,
 - **stop emails**: use the unsubscribe link, or write to us.
 
-Email **hello@hoserof.org** from the address you used, and we'll respond within 30 days. When you withdraw a recording, we remove it from the collection and stop using it for future training. A model already trained with it can't "unlearn" one recording, but no copy of your recording is kept inside the model.
+Email **contact@hoserof.org** from the address you used, and we'll respond within 30 days. When you withdraw a recording, we remove it from the collection and stop using it for future training. A model already trained with it can't "unlearn" one recording, but no copy of your recording is kept inside the model.
 
 ## 7. Children
-Contributors must be **13 or older**. A parent or guardian may submit recordings in which their child sings, as can a church servant who has the parent's permission. We don't knowingly collect personal information from children under 13. If we learn that we have, we'll delete it. Parents can contact us at hello@hoserof.org.
+Contributors must be **13 or older**. A parent or guardian may submit recordings in which their child sings, as can a church servant who has the parent's permission. We don't knowingly collect personal information from children under 13. If we learn that we have, we'll delete it. Parents can contact us at contact@hoserof.org.
 
 ## 8. Security
 We protect information with encrypted connections, access controls, database row-level security, limited-access keys and encrypted backups kept in a separate account. No service is perfectly secure. If a breach affects you, we'll tell you as the law requires.
@@ -81,4 +81,4 @@ We're based in the United States, and our providers store data in the United Sta
 If we change this policy, we'll update the date at the top. If a change materially affects how we use information we already have, we'll tell contributors and subscribers by email before it takes effect.
 
 ## 11. Contact
-**hello@hoserof.org** · [OPERATOR LEGAL NAME], [MAILING ADDRESS]
+**contact@hoserof.org** · [OPERATOR LEGAL NAME], [MAILING ADDRESS]

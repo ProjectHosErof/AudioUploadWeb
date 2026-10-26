@@ -42,7 +42,7 @@ Drafts for hoserof.org. They're written from a scan of the code as of `developme
 
 ## Open items for the operator
 - **A. Legal operator.** `[OPERATOR LEGAL NAME]` and `[MAILING ADDRESS]` appear in all three documents. The DMCA agent registration and CAN-SPAM footer also need them. A registered agent's address works.
-- **B. Contact addresses.** The drafts use `hello@hoserof.org` (general and privacy) and `copyright@hoserof.org` (DMCA). Both need Cloudflare Email Routing rules.
+- **B. Contact addresses.** Done: `contact@hoserof.org` (general and privacy) forwards to the project Gmail, and `legal@hoserof.org` (DMCA) forwards via `admin@hoserof.org`. Send a test to `legal@` to confirm the two-hop forward actually arrives.
 - **C. Effective date.** Set it on launch day.
 - **D. Attorney review.** Recommended before launch, given the children's voices and the perpetual license on recordings. Bring these three drafts, this matrix, and the entity decision.
 
