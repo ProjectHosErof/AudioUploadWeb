@@ -52,6 +52,11 @@
     "MAX_UPLOAD_BYTES": "209715200",
     // Presigned URL lifetime.
     "PRESIGN_TTL_SECONDS": "900",
+    // Kill switch for the janitor's orphan sweep (src/lib/sweepGuard.ts). Set
+    // to "false" and deploy BEFORE restoring the database — otherwise every
+    // upload newer than the dump looks orphaned and is deleted. Anything other
+    // than "true" disables it. See DEPLOY.md.
+    "JANITOR_SWEEP_ENABLED": "true",
     // Where links in outbound email send a human. Defaults to the first
     // ALLOWED_ORIGINS entry when unset; must be the real site in production.
     "SITE_URL": "http://localhost:5173",
