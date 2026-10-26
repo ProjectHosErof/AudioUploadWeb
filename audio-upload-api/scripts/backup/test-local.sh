@@ -30,6 +30,9 @@ P <<SQL
 INSERT INTO auth.users VALUES ('$AUTH', 'a@example.com');
 INSERT INTO services VALUES ('liturgy','Liturgy'); INSERT INTO seasons VALUES ('annual','Annual');
 INSERT INTO hymns VALUES ('intro-to-doxologies','Intro to Doxologies',NULL); INSERT INTO languages VALUES ('lang-coptic','Coptic');
+INSERT INTO hymn_types VALUES ('doxology','Doxology'); INSERT INTO tunes VALUES ('adam','Adam');
+INSERT INTO hymn_type_links VALUES ('intro-to-doxologies','doxology'); INSERT INTO hymn_tunes VALUES ('intro-to-doxologies','adam');
+INSERT INTO hymn_placements VALUES ('intro-to-doxologies','annual','liturgy',1);
 INSERT INTO contributors (id, auth_user_id, email) VALUES ('22222222-2222-2222-2222-222222222222','$AUTH','a@example.com');
 INSERT INTO contributors (email) VALUES ('b@example.com');
 INSERT INTO admins (email, auth_user_id) VALUES ('a@example.com','$AUTH');

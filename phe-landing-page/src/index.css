@@ -286,6 +286,20 @@ body {
 
 .rs-dark .react-select__menu-list { padding: 0; }
 
+/* Hymn list is grouped by hymn type (Doxology, Psalm Response, …). */
+.rs-dark .react-select__group { padding: 0; }
+.rs-dark .react-select__group-heading {
+  color: var(--gold-muted);
+  font-family: var(--font-ui);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin: 0;
+  padding: 0.625rem 0.75rem 0.25rem;
+  border-top: 1px solid var(--ink-mid);
+}
+.rs-dark .react-select__group:first-child .react-select__group-heading { border-top: none; }
+
 .rs-dark .react-select__option {
   background-color: transparent;
   color: var(--parchment-dim);

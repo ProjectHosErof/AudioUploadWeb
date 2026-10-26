@@ -35,7 +35,7 @@ sha256() { { sha256sum "$1" 2>/dev/null || shasum -a 256 "$1"; } | awk '{print $
 
 # --- 0. Every RLS table must be readable by backup_reader -------------------
 # Without a policy, pg_dump --enable-row-security would back the table up
-# EMPTY and nothing would look wrong. See migration 0008.
+# EMPTY and nothing would look wrong. See migration 0009.
 uncovered="$(db <<'SQL'
 SELECT string_agg(c.relname, ', ')
 FROM pg_class c

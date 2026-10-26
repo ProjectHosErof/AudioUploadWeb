@@ -42,7 +42,7 @@ The corpus is the project's one irreplaceable asset. Code can be rewritten and a
 - Dataset manifests stay indefinitely. They contain no personal data (ADR-011), and they're the long-term record of which labels each model saw.
 
 ### 3. Database: encrypted nightly dump of `public`
-- `pg_dump --format=custom --schema=public --enable-row-security`, run as **`backup_reader`** (migration 0008), encrypted with **`age`** before it's written anywhere. Only the public key is in CI. The private key is kept offline (password manager plus a printed copy).
+- `pg_dump --format=custom --schema=public --enable-row-security`, run as **`backup_reader`** (migration 0009), encrypted with **`age`** before it's written anywhere. Only the public key is in CI. The private key is kept offline (password manager plus a printed copy).
 - **Row access is through per-table policies, not `BYPASSRLS`.** Every `public` table has RLS on, and creating a `BYPASSRLS` role needs superuser before PG16. A read-all policy per table is narrower and works on any version.
   - The catch: a new RLS table without a `backup_reader` policy would be backed up empty. **The backup checks for this and fails the run**, naming the table.
 - **The `auth` schema isn't dumped.** It belongs to Supabase's auth service, and Supabase's own backups cover it. The restore handles identity links whose auth user is gone (§6).
@@ -103,7 +103,7 @@ The runbook is in `audio-upload-api/DEPLOY.md`:
 - Every new RLS table needs a `backup_reader` policy. It's enforced by the backup failing, which is loud but still a chore.
 
 ### Neutral
-- Migration 0008 adds the `backup_reader` role; its password is set by hand.
+- Migration 0009 adds the `backup_reader` role; its password is set by hand. It runs after the hymn-catalogue tables (0008), so its policy loop covers them too.
 - Bucket names and the Supabase project come from secrets, so the custom-domain move doesn't touch the code.
 
 ## Quality attributes

@@ -1,5 +1,5 @@
 {
-  "id": "5170f1cc-787e-436a-87b6-506c72382da4",
+  "id": "1bb570a8-cc3d-4f6d-8688-fc118c6fbd1d",
   "prevId": "ae6d51fc-7e33-4c02-8810-18b2fd2237e8",
   "version": "7",
   "dialect": "postgresql",
@@ -47,17 +47,17 @@
       "uniqueConstraints": {
         "admins_email_unique": {
           "name": "admins_email_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "email"
-          ],
-          "nullsNotDistinct": false
+          ]
         },
         "admins_auth_user_id_unique": {
           "name": "admins_auth_user_id_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "auth_user_id"
-          ],
-          "nullsNotDistinct": false
+          ]
         }
       },
       "policies": {},
@@ -107,19 +107,272 @@
       "uniqueConstraints": {
         "contributors_auth_user_id_unique": {
           "name": "contributors_auth_user_id_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "auth_user_id"
-          ],
-          "nullsNotDistinct": false
+          ]
         },
         "contributors_email_unique": {
           "name": "contributors_email_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "email"
-          ],
-          "nullsNotDistinct": false
+          ]
         }
       },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.hymn_placements": {
+      "name": "hymn_placements",
+      "schema": "",
+      "columns": {
+        "hymn_slug": {
+          "name": "hymn_slug",
+          "type": "varchar(200)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "season_slug": {
+          "name": "season_slug",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "service_slug": {
+          "name": "service_slug",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "hymn_placements_season_service_idx": {
+          "name": "hymn_placements_season_service_idx",
+          "columns": [
+            {
+              "expression": "season_slug",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "service_slug",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "hymn_placements_hymn_slug_hymns_slug_fk": {
+          "name": "hymn_placements_hymn_slug_hymns_slug_fk",
+          "tableFrom": "hymn_placements",
+          "tableTo": "hymns",
+          "columnsFrom": [
+            "hymn_slug"
+          ],
+          "columnsTo": [
+            "slug"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "hymn_placements_season_slug_seasons_slug_fk": {
+          "name": "hymn_placements_season_slug_seasons_slug_fk",
+          "tableFrom": "hymn_placements",
+          "tableTo": "seasons",
+          "columnsFrom": [
+            "season_slug"
+          ],
+          "columnsTo": [
+            "slug"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "hymn_placements_service_slug_services_slug_fk": {
+          "name": "hymn_placements_service_slug_services_slug_fk",
+          "tableFrom": "hymn_placements",
+          "tableTo": "services",
+          "columnsFrom": [
+            "service_slug"
+          ],
+          "columnsTo": [
+            "slug"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "hymn_placements_hymn_slug_season_slug_service_slug_pk": {
+          "name": "hymn_placements_hymn_slug_season_slug_service_slug_pk",
+          "columns": [
+            "hymn_slug",
+            "season_slug",
+            "service_slug"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.hymn_tunes": {
+      "name": "hymn_tunes",
+      "schema": "",
+      "columns": {
+        "hymn_slug": {
+          "name": "hymn_slug",
+          "type": "varchar(200)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tune_slug": {
+          "name": "tune_slug",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "hymn_tunes_hymn_slug_hymns_slug_fk": {
+          "name": "hymn_tunes_hymn_slug_hymns_slug_fk",
+          "tableFrom": "hymn_tunes",
+          "tableTo": "hymns",
+          "columnsFrom": [
+            "hymn_slug"
+          ],
+          "columnsTo": [
+            "slug"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "hymn_tunes_tune_slug_tunes_slug_fk": {
+          "name": "hymn_tunes_tune_slug_tunes_slug_fk",
+          "tableFrom": "hymn_tunes",
+          "tableTo": "tunes",
+          "columnsFrom": [
+            "tune_slug"
+          ],
+          "columnsTo": [
+            "slug"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "hymn_tunes_hymn_slug_tune_slug_pk": {
+          "name": "hymn_tunes_hymn_slug_tune_slug_pk",
+          "columns": [
+            "hymn_slug",
+            "tune_slug"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.hymn_type_links": {
+      "name": "hymn_type_links",
+      "schema": "",
+      "columns": {
+        "hymn_slug": {
+          "name": "hymn_slug",
+          "type": "varchar(200)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type_slug": {
+          "name": "type_slug",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "hymn_type_links_hymn_slug_hymns_slug_fk": {
+          "name": "hymn_type_links_hymn_slug_hymns_slug_fk",
+          "tableFrom": "hymn_type_links",
+          "tableTo": "hymns",
+          "columnsFrom": [
+            "hymn_slug"
+          ],
+          "columnsTo": [
+            "slug"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "hymn_type_links_type_slug_hymn_types_slug_fk": {
+          "name": "hymn_type_links_type_slug_hymn_types_slug_fk",
+          "tableFrom": "hymn_type_links",
+          "tableTo": "hymn_types",
+          "columnsFrom": [
+            "type_slug"
+          ],
+          "columnsTo": [
+            "slug"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "hymn_type_links_hymn_slug_type_slug_pk": {
+          "name": "hymn_type_links_hymn_slug_type_slug_pk",
+          "columns": [
+            "hymn_slug",
+            "type_slug"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.hymn_types": {
+      "name": "hymn_types",
+      "schema": "",
+      "columns": {
+        "slug": {
+          "name": "slug",
+          "type": "varchar(100)",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "label": {
+          "name": "label",
+          "type": "varchar(200)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -140,11 +393,36 @@
           "primaryKey": false,
           "notNull": true
         },
+        "label_ar": {
+          "name": "label_ar",
+          "type": "varchar(300)",
+          "primaryKey": false,
+          "notNull": false
+        },
         "rhythm": {
           "name": "rhythm",
           "type": "varchar(30)",
           "primaryKey": false,
           "notNull": false
+        },
+        "hazzat_id": {
+          "name": "hazzat_id",
+          "type": "varchar(200)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_url": {
+          "name": "source_url",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
         }
       },
       "indexes": {},
@@ -240,25 +518,25 @@
         "ml_feature_artifacts_recording_id_recordings_id_fk": {
           "name": "ml_feature_artifacts_recording_id_recordings_id_fk",
           "tableFrom": "ml_feature_artifacts",
+          "tableTo": "recordings",
           "columnsFrom": [
             "recording_id"
           ],
-          "tableTo": "recordings",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "ml_feature_artifacts_r2_feature_key_unique": {
           "name": "ml_feature_artifacts_r2_feature_key_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "r2_feature_key"
-          ],
-          "nullsNotDistinct": false
+          ]
         }
       },
       "policies": {},
@@ -464,9 +742,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "recordings_upload_status_idx": {
           "name": "recordings_upload_status_idx",
@@ -479,9 +757,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "recordings_review_status_idx": {
           "name": "recordings_review_status_idx",
@@ -494,9 +772,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "recordings_contributor_id_idx": {
           "name": "recordings_contributor_id_idx",
@@ -509,9 +787,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "recordings_unique_active_hash": {
           "name": "recordings_unique_active_hash",
@@ -524,74 +802,74 @@
             }
           ],
           "isUnique": true,
-          "with": {},
-          "method": "btree",
           "where": "\"recordings\".\"content_hash\" is not null and \"recordings\".\"review_status\" <> 'rejected'",
-          "concurrently": false
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
         "recordings_service_slug_services_slug_fk": {
           "name": "recordings_service_slug_services_slug_fk",
           "tableFrom": "recordings",
+          "tableTo": "services",
           "columnsFrom": [
             "service_slug"
           ],
-          "tableTo": "services",
           "columnsTo": [
             "slug"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "recordings_season_slug_seasons_slug_fk": {
           "name": "recordings_season_slug_seasons_slug_fk",
           "tableFrom": "recordings",
+          "tableTo": "seasons",
           "columnsFrom": [
             "season_slug"
           ],
-          "tableTo": "seasons",
           "columnsTo": [
             "slug"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "recordings_hymn_slug_hymns_slug_fk": {
           "name": "recordings_hymn_slug_hymns_slug_fk",
           "tableFrom": "recordings",
+          "tableTo": "hymns",
           "columnsFrom": [
             "hymn_slug"
           ],
-          "tableTo": "hymns",
           "columnsTo": [
             "slug"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "recordings_contributor_id_contributors_id_fk": {
           "name": "recordings_contributor_id_contributors_id_fk",
           "tableFrom": "recordings",
+          "tableTo": "contributors",
           "columnsFrom": [
             "contributor_id"
           ],
-          "tableTo": "contributors",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "recordings_r2_key_unique": {
           "name": "recordings_r2_key_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "r2_key"
-          ],
-          "nullsNotDistinct": false
+          ]
         }
       },
       "policies": {},
@@ -613,6 +891,18 @@
           "type": "varchar(200)",
           "primaryKey": false,
           "notNull": true
+        },
+        "label_ar": {
+          "name": "label_ar",
+          "type": "varchar(200)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -638,6 +928,12 @@
           "type": "varchar(200)",
           "primaryKey": false,
           "notNull": true
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -705,19 +1001,44 @@
       "uniqueConstraints": {
         "subscribers_email_unique": {
           "name": "subscribers_email_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "email"
-          ],
-          "nullsNotDistinct": false
+          ]
         },
         "subscribers_token_unique": {
           "name": "subscribers_token_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "token"
-          ],
-          "nullsNotDistinct": false
+          ]
         }
       },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.tunes": {
+      "name": "tunes",
+      "schema": "",
+      "columns": {
+        "slug": {
+          "name": "slug",
+          "type": "varchar(100)",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "label": {
+          "name": "label",
+          "type": "varchar(200)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -745,10 +1066,10 @@
     }
   },
   "schemas": {},
-  "views": {},
   "sequences": {},
   "roles": {},
   "policies": {},
+  "views": {},
   "_meta": {
     "columns": {},
     "schemas": {},
