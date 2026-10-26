@@ -1,15 +1,15 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Upload, Music } from "lucide-react";
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import type { AudioFile } from "../App";
 import Select, { type MultiValue, type SingleValue } from "react-select";
 import {
-  hymn_options,
+  hymnsFor,
   language_options,
   service_options,
   season_options,
 } from "../options.data";
-import type { SelectOption } from "../options.data";
+import type { HymnGroup, SelectOption } from "../options.data";
 import { TURNSTILE_SITE_KEY } from "../config";
 import { resolveContentType, uploadRecording, UploadError } from "../services/uploadApi";
 
@@ -71,6 +71,25 @@ export function UploadForm({ onUpload }: UploadFormProps) {
 
   const isHymnDisabled = !selectedService || !selectedSeason;
   const isLanguageDisabled = !selectedService || !selectedSeason;
+
+  // Only the hymns said in the chosen season + service (the API enforces the
+  // same rule), grouped by hymn type.
+  const hymnChoices = useMemo(
+    () => (selectedSeason && selectedService ? hymnsFor(selectedSeason.value, selectedService.value) : null),
+    [selectedSeason, selectedService],
+  );
+
+  /** After a season/service change, keep the hymn only if it is still listed. */
+  function keepHymnIfListed(season: SelectOption | null, service: SelectOption | null) {
+    const stillListed =
+      season && service && selectedHymn &&
+      hymnsFor(season.value, service.value).groups.some((g) => g.options.some((o) => o.value === selectedHymn.value));
+    if (!stillListed) {
+      setSelectedHymn(null);
+      setTitle("");
+    }
+    if (!season || !service) setSelectedLanguage([]);
+  }
 
   function isValidEmail(e: string): boolean {
     if (!e || e.length === 0 || e.length > 254) return false;
@@ -352,11 +371,7 @@ export function UploadForm({ onUpload }: UploadFormProps) {
                     value={selectedService}
                     onChange={(option: SingleValue<SelectOption>) => {
                       setSelectedService(option);
-                      if (!option) {
-                        setSelectedHymn(null);
-                        setSelectedLanguage([]);
-                        setTitle("");
-                      }
+                      keepHymnIfListed(selectedSeason, option);
                     }}
                     placeholder="Select service"
                     isClearable
@@ -372,11 +387,7 @@ export function UploadForm({ onUpload }: UploadFormProps) {
                     value={selectedSeason}
                     onChange={(option: SingleValue<SelectOption>) => {
                       setSelectedSeason(option);
-                      if (!option) {
-                        setSelectedHymn(null);
-                        setSelectedLanguage([]);
-                        setTitle("");
-                      }
+                      keepHymnIfListed(option, selectedService);
                     }}
                     placeholder="Select season"
                     isClearable
@@ -390,15 +401,15 @@ export function UploadForm({ onUpload }: UploadFormProps) {
               <div>
                 <label className="codex-label">Hymn / Response Title *</label>
                 <div className="rs-dark">
-                  <Select
+                  <Select<SelectOption, false, HymnGroup>
                     classNamePrefix="react-select"
-                    options={hymn_options}
+                    options={hymnChoices?.groups ?? []}
                     value={selectedHymn}
                     onChange={(option: SingleValue<SelectOption>) => {
                       setSelectedHymn(option);
                       setTitle(option?.label ?? "");
                     }}
-                    placeholder="Select hymn/response"
+                    placeholder="Select or type a hymn/response"
                     isClearable
                     isDisabled={isHymnDisabled}
                   />
@@ -422,6 +433,22 @@ export function UploadForm({ onUpload }: UploadFormProps) {
                 </div>
               </div>
             </div>
+
+            {/* How many hymns the season + service unlocked */}
+            {hymnChoices && selectedSeason && selectedService && (
+              <p style={{
+                fontFamily: 'var(--font-ui)',
+                fontSize: '0.6875rem',
+                letterSpacing: '0.06em',
+                fontStyle: 'italic',
+                color: 'var(--gold-muted)',
+                margin: '-0.75rem 0 1.5rem',
+              }}>
+                {hymnChoices.filtered
+                  ? `Showing ${hymnChoices.count} hymns for ${selectedSeason.label} · ${selectedService.label}.`
+                  : `No hymn list for this season and service yet, so all ${hymnChoices.count} hymns are shown.`}
+              </p>
+            )}
 
             {/* Locked-field hint */}
             {isHymnDisabled && (

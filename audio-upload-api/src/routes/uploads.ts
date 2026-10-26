@@ -2,6 +2,7 @@ import { Hono, type Context } from 'hono';
 import { getSupabase } from '../lib/supabase';
 import { optionalUser } from '../lib/auth';
 import { getVocab } from '../lib/vocab';
+import { checkPlacement } from '../lib/placement';
 import { CONTENT_TYPE_TO_EXT, UUID_RE, initiateSchema } from '../lib/validation';
 import { verifyTurnstile } from '../middleware/turnstile';
 import { rateLimit } from '../middleware/rateLimit';
@@ -58,6 +59,17 @@ uploads.post('/initiate', rateLimit(), async (c) => {
   if (badLangs.length) invalid.push(`languages: ${badLangs.join(', ')}`);
   if (invalid.length) {
     return c.json({ error: 'Unknown selection', fields: invalid }, 400);
+  }
+
+  // The hymn must be one that is said in the chosen season + service, so the
+  // corpus isn't mislabelled. See checkPlacement for the escape hatches.
+  const placement = checkPlacement(vocab, body.season_slug, body.service_slug, body.hymn_slug);
+  if (!placement.ok) {
+    const error =
+      placement.reason === 'retired'
+        ? 'This hymn has been replaced; please pick it again from the list.'
+        : 'Hymn is not used in that season/service';
+    return c.json({ error, fields: ['hymn_slug'] }, 400);
   }
 
   const recordingId = crypto.randomUUID();
