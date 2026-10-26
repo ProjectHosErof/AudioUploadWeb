@@ -84,6 +84,22 @@ The import fails on any hazzat season or service with no mapping. Review
 `import-report.md` before seeding. The seed never deletes a hymn, season or
 service; drop one from the form by listing it under `retired` instead.
 
+### ⚠️ Deploy order: database first, then the Worker, then the frontend
+
+The Worker reads `hymn_placements` and `hymns.is_active` on every upload. If
+it is deployed **before** migration 0008 is applied, loading the vocabulary
+fails and **every `POST /uploads/initiate` returns 500**. The other way round
+is safe: an older Worker ignores the new tables and columns. So:
+
+1. `npm run db:migrate` (confirm it actually applied, see below), then `npm run seed`
+2. `npm run deploy` (the Worker)
+3. Deploy the frontend last. Its bundled hymn list can name hymns the database
+   doesn't know until the seed has run.
+
+After a seed, a warm Worker can keep the old vocabulary for up to 10 minutes
+(the cache in `src/lib/vocab.ts`), so a newly added hymn may be refused
+briefly.
+
 ## ⚠️ `db:migrate` on an IPv4-only network
 
 `DIRECT_URL` (`db.<ref>.supabase.co`) is **IPv6-only**. On a network without

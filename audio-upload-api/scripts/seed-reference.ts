@@ -9,8 +9,10 @@
  * replaced wholesale inside one transaction. Running the seed twice is a no-op.
  *
  * Usage: npm run seed
- * Connects directly via Postgres (DIRECT_URL in .env) — this is a Node-side
- * one-off, so it doesn't use supabase-js (which needs a WebSocket on Node < 22).
+ * Connects directly via Postgres — this is a Node-side one-off, so it doesn't
+ * use supabase-js (which needs a WebSocket on Node < 22). Prefers MIGRATE_URL
+ * (the IPv4 session pooler) like drizzle.config.ts: DIRECT_URL is IPv6-only and
+ * unreachable from IPv4-only networks. See DEPLOY.md.
  */
 import * as dotenv from 'dotenv';
 import postgres from 'postgres';
@@ -18,9 +20,9 @@ import { vocab } from '../src/data/options';
 
 dotenv.config({ path: '.env' });
 
-const url = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
+const url = process.env.MIGRATE_URL ?? process.env.DIRECT_URL ?? process.env.DATABASE_URL;
 if (!url) {
-  console.error('Missing DIRECT_URL / DATABASE_URL (expected in .env).');
+  console.error('Missing MIGRATE_URL / DIRECT_URL / DATABASE_URL (expected in .env).');
   process.exit(1);
 }
 
