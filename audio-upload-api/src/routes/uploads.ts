@@ -106,6 +106,7 @@ uploads.post('/initiate', rateLimit(), async (c) => {
     languages: body.languages,
     submitter_email: body.email ?? null,
     wants_updates: body.wants_updates,
+    terms_version: body.accepted_terms_version,
     upload_status: 'pending',
     contributor_id: contributorId,
   });

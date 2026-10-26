@@ -267,6 +267,10 @@ export const recordings = pgTable(
     }),
     submitterEmail: varchar('submitter_email', { length: 255 }),
     wantsUpdates: boolean('wants_updates').default(false).notNull(),
+    // Version of the Terms / Contributor License accepted at upload
+    // (ACCEPTED_TERMS_VERSIONS in src/lib/validation.ts). Null only for
+    // recordings that predate the Terms (before migration 0010).
+    termsVersion: varchar('terms_version', { length: 20 }),
 
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),

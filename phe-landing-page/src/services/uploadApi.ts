@@ -18,6 +18,8 @@ export interface InitiateRequest {
   wants_updates: boolean;
   email?: string;
   turnstile_token: string;
+  /** Version of the Terms the contributor agreed to (src/legal/terms.ts). */
+  accepted_terms_version: string;
 }
 
 interface InitiateResponse {

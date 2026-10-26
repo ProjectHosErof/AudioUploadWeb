@@ -4,9 +4,9 @@ Drafts for hoserof.org. They're written from a scan of the code as of `developme
 
 | Document | Draft | Site route |
 |---|---|---|
-| Privacy Policy | [privacy-policy.md](privacy-policy.md) | `/privacy` |
-| Terms of Service, including the Contributor License | [terms-of-service.md](terms-of-service.md) | `/terms` |
-| Copyright / DMCA Policy | [dmca-policy.md](dmca-policy.md) | `/dmca` |
+| Privacy Policy | [privacy-policy.md](../../phe-landing-page/src/legal/privacy-policy.md) | `/privacy` |
+| Terms of Service, including the Contributor License | [terms-of-service.md](../../phe-landing-page/src/legal/terms-of-service.md) | `/terms` |
+| Copyright / DMCA Policy | [dmca-policy.md](../../phe-landing-page/src/legal/dmca-policy.md) | `/dmca` |
 
 ## Track
 **Non-commercial.** There are no payment SDKs, ads, paid tiers or data sales (`audio-upload-api/package.json`, `phe-landing-page/package.json`). The Terms use a plain-language, no-fee structure with a $100 liability cap.

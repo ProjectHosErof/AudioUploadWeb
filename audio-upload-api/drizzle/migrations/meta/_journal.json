@@ -71,6 +71,13 @@
       "when": 1793045001829,
       "tag": "0009_backup_reader",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793052491808,
+      "tag": "0010_recording_terms_version",
+      "breakpoints": true
     }
   ]
 }

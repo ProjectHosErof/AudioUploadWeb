@@ -52,9 +52,9 @@ export function Footer() {
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
               {[
-                { label: 'About', href: '#about' },
-                { label: 'Upload a Recording', href: '#upload' },
-                { label: 'Stay Informed', href: '#notify' },
+                { label: 'About', href: '/#about' },
+                { label: 'Upload a Recording', href: '/#upload' },
+                { label: 'Stay Informed', href: '/#notify' },
               ].map(({ label, href }) => (
                 <a
                   key={label}
@@ -84,7 +84,7 @@ export function Footer() {
                   Contact
                 </p>
                 <a
-                  href="mailto:contact@projecthoserof.com"
+                  href="mailto:hello@hoserof.org"
                   style={{
                     fontFamily: 'var(--font-ui)',
                     fontSize: '1rem',
@@ -95,7 +95,7 @@ export function Footer() {
                   onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--gold)')}
                   onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
                 >
-                  contact@projecthoserof.com
+                  hello@hoserof.org
                 </a>
               </div>
             </div>
@@ -121,6 +121,19 @@ export function Footer() {
             letterSpacing: '0.04em',
           }}>
             © 2026 Project Hos Erof. All rights reserved.
+            {' · '}
+            {[
+              { label: 'Privacy', href: '/privacy' },
+              { label: 'Terms', href: '/terms' },
+              { label: 'Copyright', href: '/dmca' },
+            ].map(({ label, href }, i) => (
+              <span key={href}>
+                {i > 0 && ' · '}
+                <a href={href} style={{ color: 'var(--text-muted)', textDecoration: 'underline', textUnderlineOffset: '3px' }}>
+                  {label}
+                </a>
+              </span>
+            ))}
           </p>
           <p style={{
             fontFamily: 'var(--font-ui)',

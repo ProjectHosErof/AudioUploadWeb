@@ -356,3 +356,74 @@ body {
   opacity: 0.5;
   pointer-events: none;
 }
+
+/* ─── Legal pages (/privacy, /terms, /dmca) ───────────────── */
+/* Long-form reading: narrower measure, parchment on ink, gold rules. */
+
+.legal-prose {
+  max-width: 720px;
+  margin: 0 auto;
+  font-family: var(--font-ui);
+  font-size: 1.0625rem;
+  line-height: 1.75;
+  color: var(--parchment-dim);
+}
+.legal-prose h1 {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(2.25rem, 5vw, 3rem);
+  color: var(--parchment);
+  margin: 0 0 0.5rem;
+}
+.legal-prose h2 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.625rem;
+  color: var(--gold-light);
+  margin: 2.75rem 0 0.75rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--ink-mid);
+}
+.legal-prose h3 {
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--crimson-label);
+  margin: 1.75rem 0 0.5rem;
+}
+.legal-prose p,
+.legal-prose ul,
+.legal-prose ol { margin: 0 0 1rem; }
+.legal-prose ul,
+.legal-prose ol { padding-left: 1.5rem; }
+.legal-prose ul { list-style: disc; }
+.legal-prose ol { list-style: decimal; }
+.legal-prose li { margin: 0.25rem 0; }
+.legal-prose strong { color: var(--parchment); font-weight: 500; }
+.legal-prose a { color: var(--gold); text-decoration: underline; text-underline-offset: 3px; }
+.legal-prose a:hover { color: var(--gold-light); }
+.legal-prose blockquote {
+  margin: 1.5rem 0;
+  padding: 1rem 1.25rem;
+  border-left: 3px solid var(--gold);
+  background-color: var(--ink-soft);
+  color: var(--parchment);
+}
+.legal-prose blockquote p:last-child { margin-bottom: 0; }
+.legal-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 1.25rem;
+  font-size: 0.9375rem;
+  display: block;
+  overflow-x: auto;
+}
+.legal-prose th,
+.legal-prose td {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--ink-mid);
+  vertical-align: top;
+}
+.legal-prose th { color: var(--parchment); font-weight: 500; }

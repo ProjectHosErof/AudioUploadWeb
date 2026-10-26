@@ -11,6 +11,7 @@ import {
 } from "../options.data";
 import type { HymnGroup, SelectOption } from "../options.data";
 import { TURNSTILE_SITE_KEY } from "../config";
+import { TERMS_VERSION } from "../legal/terms";
 import { resolveContentType, uploadRecording, UploadError } from "../services/uploadApi";
 
 interface UploadFormProps {
@@ -62,6 +63,9 @@ export function UploadForm({ onUpload }: UploadFormProps) {
   const [selectedHymn, setSelectedHymn] = useState<SelectOption | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState<readonly SelectOption[]>([]);
   const [checked, setChecked] = useState(false);
+  // Agreement to the Terms + Contributor License; required, and sent with the
+  // upload so the recording records which license version it was given under.
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState("");
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
@@ -105,6 +109,11 @@ export function UploadForm({ onUpload }: UploadFormProps) {
       return;
     }
 
+    if (!agreedToTerms) {
+      setSubmitError("Please confirm you agree to the Terms and Contributor License.");
+      return;
+    }
+
     if (checked && (!email || !isValidEmail(email))) {
       setEmailError("Please enter a valid email address");
       return;
@@ -140,6 +149,7 @@ export function UploadForm({ onUpload }: UploadFormProps) {
           wants_updates: checked,
           email: checked && email ? email : undefined,
           turnstile_token: turnstileToken,
+          accepted_terms_version: TERMS_VERSION,
           file,
         },
         (pct) => setUploadProgress(pct),
@@ -155,6 +165,7 @@ export function UploadForm({ onUpload }: UploadFormProps) {
       setSelectedLanguage([]);
       setFile(null);
       setChecked(false);
+      setAgreedToTerms(false);
       setEmail("");
       setEmailError("");
       setUploadProgress(null);
@@ -531,6 +542,41 @@ export function UploadForm({ onUpload }: UploadFormProps) {
             }}>
               Any quality is welcome — WAV and FLAC preferred where possible.
             </p>
+
+            {/* Consent: Terms + Contributor License (required) */}
+            <div style={{ marginBottom: '1.75rem' }}>
+              <label className="codex-checkbox-row">
+                <input
+                  type="checkbox"
+                  className="codex-checkbox"
+                  checked={agreedToTerms}
+                  onChange={(e) => setAgreedToTerms(e.target.checked)}
+                  required
+                />
+                <div>
+                  <p style={{
+                    fontFamily: 'var(--font-ui)',
+                    fontSize: '1.0625rem',
+                    fontWeight: 500,
+                    color: 'var(--parchment)',
+                    margin: '0 0 0.3rem',
+                  }}>
+                    I agree to the{' '}
+                    <a href="/terms" target="_blank" rel="noopener" style={{ color: 'var(--gold)' }}>Terms and Contributor License</a> *
+                  </p>
+                  <p style={{
+                    fontFamily: 'var(--font-ui)',
+                    fontSize: '1.0625rem',
+                    color: 'var(--text-muted)',
+                    margin: 0,
+                  }}>
+                    I'm 13 or older, I have the right to share this recording, and everyone who can be heard in it
+                    (or a parent, for anyone under 18) agreed to it being used by Project Hos Erof as the Terms describe.
+                    See our <a href="/privacy" target="_blank" rel="noopener" style={{ color: 'var(--gold)' }}>Privacy Policy</a>.
+                  </p>
+                </div>
+              </label>
+            </div>
 
             {/* Newsletter opt-in */}
             <div style={{ marginBottom: '1.75rem' }}>

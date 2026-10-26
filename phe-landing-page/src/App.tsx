@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
 import { Nav } from "./components/Nav";
 import { Hero } from "./components/Hero";
@@ -13,6 +13,14 @@ import { AdminPage } from "./components/AdminPage";
 import { SubscriptionResultPage } from "./components/SubscriptionResultPage";
 import { ProtectedRoute } from "./auth/ProtectedRoute";
 import { AdminRoute } from "./auth/AdminRoute";
+
+// Legal pages pull in a Markdown parser; load them only when visited.
+const LegalPage = lazy(() => import("./components/LegalPage"));
+const legal = (doc: "privacy" | "terms" | "dmca") => (
+  <Suspense fallback={<div style={{ minHeight: "100vh", backgroundColor: "var(--ink)" }} />}>
+    <LegalPage doc={doc} />
+  </Suspense>
+);
 // import { AudioGallery } from "./components/AudioGallery";
 // import { Contact } from "./components/Contact";
 
@@ -85,6 +93,9 @@ export default function App() {
       {/* Where the confirm / unsubscribe links in an email land. */}
       <Route path="/subscribed" element={<SubscriptionResultPage variant="confirmed" />} />
       <Route path="/unsubscribed" element={<SubscriptionResultPage variant="unsubscribed" />} />
+      <Route path="/privacy" element={legal("privacy")} />
+      <Route path="/terms" element={legal("terms")} />
+      <Route path="/dmca" element={legal("dmca")} />
       {/* Unknown paths fall back to the landing page. */}
       <Route path="*" element={<LandingPage />} />
     </Routes>

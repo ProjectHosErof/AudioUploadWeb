@@ -82,6 +82,7 @@ The Service is offered free of charge by volunteers. We may change, suspend or e
 We may update these Terms. Each version has a version number. **A recording stays under the version you agreed to when you uploaded it**, unless you agree to a newer one. For other changes, continuing to use the Service after the effective date means you accept them. We'll email contributors and subscribers about material changes.
 
 ## 12. General
+- **Transfer to a successor.** We may transfer these Terms, and the licenses you grant under them, to an organization that continues the Project Hos Erof mission (for example, a nonprofit formed to run it), as long as it keeps the commitments in section 3. We'll announce any such transfer on the Service.
 - If any part of these Terms can't be enforced, the rest still applies.
 - Not enforcing a term isn't a waiver of it.
 - These Terms and the Privacy Policy are the whole agreement between you and us about the Service.
