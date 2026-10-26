@@ -59,6 +59,31 @@ Invitations are keyed on **email**, so you can add someone before they have ever
 signed in; their `auth_user_id` resolves on their first request. Grants and
 revocations take effect within ~60s (the admin cache TTL). No deploy required.
 
+## Hymn vocabulary (hazzat.com)
+
+Seasons, services, hymns, hymn types, tunes and which hymns belong to which
+season + service all come from `data/hazzat/`:
+
+- `Coptic_Hymns_hazzat.xlsx`: the source catalogue (sheet "Hymns by Season").
+- `mappings.json`: hand-kept rules (hazzat season/service → app slugs,
+  occasions, existing-hymn crosswalk, retired duplicates, needs-review list).
+- `legacy-vocab.json`: the vocabulary before the import. Its slugs are
+  permanent, since recordings reference them.
+
+To change the vocabulary, edit those files (never `vocab.generated.json`), then:
+
+```bash
+pip install -r scripts/requirements.txt   # once
+npm run import:hazzat     # writes src/data/ + phe-landing-page/src/vocab.generated.json and data/hazzat/import-report.md
+npm run check:vocab       # links, drift between the two copies, mappings
+npm run check:placement   # the upload rule, and that form and API agree
+npm run seed              # upserts vocabulary, rebuilds the link tables
+```
+
+The import fails on any hazzat season or service with no mapping. Review
+`import-report.md` before seeding. The seed never deletes a hymn, season or
+service; drop one from the form by listing it under `retired` instead.
+
 ## ⚠️ `db:migrate` on an IPv4-only network
 
 `DIRECT_URL` (`db.<ref>.supabase.co`) is **IPv6-only**. On a network without
@@ -93,8 +118,9 @@ the DB and the bucket disagree before re-enabling anything.
 ## Every deploy
 
 ```bash
-npm run check:vocab   # fail fast on bad vocabulary
-npm run deploy        # uploads the Worker; registers the cron trigger + rate-limit binding
+npm run check:vocab       # fail fast on bad vocabulary
+npm run check:placement   # upload rule matches the form
+npm run deploy            # uploads the Worker; registers the cron trigger + rate-limit binding
 ```
 
 `wrangler.jsonc` already declares the **cron trigger** (janitor, every 15 min)
