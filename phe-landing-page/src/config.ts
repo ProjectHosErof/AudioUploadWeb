@@ -3,9 +3,9 @@
  * Every value here is public and safe to ship in the browser bundle.
  */
 
-// Default to the deployed Worker; override with VITE_API_BASE_URL for local dev.
+// Default to the production API; override with VITE_API_BASE_URL for local dev.
 export const API_BASE_URL = (
-  import.meta.env.VITE_API_BASE_URL ?? "https://audio-upload-api.dev-anthonyriad.workers.dev"
+  import.meta.env.VITE_API_BASE_URL ?? "https://api.hoserof.org"
 ).replace(/\/$/, "");
 
 // Public Turnstile site key. Empty string until configured — the form guards on it.

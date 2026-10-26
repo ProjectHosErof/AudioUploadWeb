@@ -12,9 +12,19 @@ R2 is reached over its S3 API (no `r2_buckets` binding), so **Workers R2
 Storage: Edit is not needed to deploy the Worker** — but it *is* needed to set
 the bucket CORS policy (below).
 
-## ⚠️ Origins live in TWO places — miss either and browser uploads break
+## ⚠️ The site's origin lives in FOUR places — miss one and things break oddly
 
-A browser upload fails unless the frontend's origin is allowed in **both**:
+The production site is `https://hoserof.org`. Changing or adding an origin
+means updating all four:
+
+1. **Worker CORS** — `ALLOWED_ORIGINS` in `wrangler.jsonc`, then deploy.
+2. **R2 bucket CORS** — see below.
+3. **Supabase Auth → URL Configuration** — Site URL, plus the redirect
+   allowlist (`https://hoserof.org/**` and the localhost ones).
+4. **Google Cloud Console → OAuth client** — Authorized JavaScript origin.
+   The redirect URI stays Supabase's callback, never the site.
+
+Uploads specifically need **both** 1 and 2:
 
 1. **Worker CORS** — `ALLOWED_ORIGINS` in `wrangler.jsonc` (the API responses).
 2. **R2 bucket CORS** — the direct browser `PUT` to `*.r2.cloudflarestorage.com`.
@@ -23,7 +33,7 @@ A browser upload fails unless the frontend's origin is allowed in **both**:
 
    ```bash
    CLOUDFLARE_API_TOKEN=<token w/ R2 Storage: Edit> \
-     npm run cors:set -- "https://app.projecthoserof.org,http://localhost:5173"
+     npm run cors:set -- "https://hoserof.org,http://localhost:5173,http://localhost:4173"
    ```
 
    The setter **replaces** the whole policy — pass every origin (prod + dev) in
@@ -144,10 +154,77 @@ and the **rate-limit binding** — both take effect automatically on deploy.
 
 ## Deployed resources (current)
 
-- Worker: `https://audio-upload-api.dev-anthonyriad.workers.dev`
+- Site: `https://hoserof.org` (Cloudflare Pages, built from `main`; `www` redirects to the apex)
+- API: `https://api.hoserof.org` (Worker custom domain). The old
+  `https://audio-upload-api.dev-anthonyriad.workers.dev` stays enabled because
+  emails already sent link to it.
 - R2 bucket: `audio-uploads-dev`
 - Supabase project: `rnlxoisifqsfcralgarb`
 - Backup bucket: `phe-corpus-backup` in the **separate backup Cloudflare account** (ADR-012)
+
+## Production
+
+The current stack **is** production: this Worker, the `audio-uploads-dev`
+bucket (the name is historical) and the Supabase project. There is no separate
+staging, so `wrangler dev` talks to real data — and because `SITE_URL` is now
+the live site, emails sent from a local run link to `https://hoserof.org`.
+Override `SITE_URL` in `.dev.vars` if that matters for what you're testing.
+
+### Release order
+
+Database changes are additive and go first; the Worker after; the site last.
+
+1. `npm run db:migrate` — **confirm it actually applied** (see the IPv4 note).
+   Migration 0010 (`recordings.terms_version`) must be in place before the
+   Worker that writes it is deployed, or every upload fails.
+2. `npm run seed` if the vocabulary changed.
+3. Pre-flight: `npm run check:vocab && npm run check:placement && npm test && npx tsc --noEmit`,
+   then `npm run deploy`.
+4. Merge to `main` — Cloudflare Pages builds and publishes the site.
+
+### Rollback
+
+- **Worker:** `npx wrangler deployments list`, then
+  `npx wrangler rollback <version-id>`. (The pre-launch hotfix was
+  `77e93080-4a21-457d-955d-ae305acedc66`.)
+- **Site:** Pages → Deployments → the last good one → "Rollback to this deployment".
+- **Database:** migrations are additive, so an older Worker runs fine against a
+  newer schema; nothing needs undoing.
+
+### Terms of Service versions
+
+Uploads must send a Terms version the Worker accepts
+(`ACCEPTED_TERMS_VERSIONS` in `src/lib/validation.ts`; the site sends
+`TERMS_VERSION` from `phe-landing-page/src/legal/terms.ts`). When the Terms
+change: add the new version to the Worker list and **deploy the Worker first**,
+then update the site. Keep the old version in the list until no deployed site
+can still send it.
+
+### Taking a recording down (DMCA notice, withdrawal, consent problem)
+
+There is no admin button for a recording that is already `ready` yet. Until
+there is, in the Supabase SQL editor:
+
+```sql
+-- Look it up first.
+SELECT id, hymn_label, review_status, r2_key, submitter_email, created_at
+FROM public.recordings WHERE id = '<recording id>';
+
+-- Pull it from the collection; keeps the row (and the audio, for a
+-- counter-notice) but excludes it from datasets. The contributor's dashboard
+-- shows it as "Not added". No new email goes out: the digest only covers
+-- decisions it hasn't already reported.
+UPDATE public.recordings
+SET review_status = 'rejected',
+    review_reason = 'Removed: <DMCA notice | withdrawn by contributor | …> on <date>'
+WHERE id = '<recording id>';
+```
+
+For a **withdrawal** (rather than a DMCA notice, which may need restoring),
+also delete the audio object from R2 (`r2_key`) and then the row. Its backup
+copy expires out of the locked backup bucket — the privacy policy promises
+removal from backups within 45 days, so purge it from `phe-corpus-backup`
+once its 30-day lock ends.
 
 ## Corpus backup
 
