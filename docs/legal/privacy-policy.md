@@ -42,7 +42,7 @@ We use a small number of providers, each only to deliver the service:
 
 | Provider | What they do | Where |
 |---|---|---|
-| Cloudflare | Hosting, the API, recording storage (R2), bot protection (Turnstile), email forwarding | Global network; recordings stored in [R2 BUCKET REGION] |
+| Cloudflare | Hosting, the API, recording storage (R2), bot protection (Turnstile), email forwarding | Global network; recordings stored in Western North America |
 | Supabase | Database and sign-in | Canada |
 | Resend | Sending email | United States |
 | Google | Sign-in, only if you choose "Sign in with Google" | Global |

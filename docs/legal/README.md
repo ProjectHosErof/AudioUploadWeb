@@ -44,7 +44,6 @@ Drafts for hoserof.org. They're written from a scan of the code as of `developme
 - **A. Legal operator.** `[OPERATOR LEGAL NAME]` and `[MAILING ADDRESS]` appear in all three documents. The DMCA agent registration and CAN-SPAM footer also need them. A registered agent's address works.
 - **B. Contact addresses.** The drafts use `hello@hoserof.org` (general and privacy) and `copyright@hoserof.org` (DMCA). Both need Cloudflare Email Routing rules.
 - **C. Effective date.** Set it on launch day.
-- **E. Recording storage region.** Check the `audio-uploads-dev` bucket's location in the Cloudflare dashboard (R2 → bucket → Settings) and fill in `[R2 BUCKET REGION]` in the Privacy Policy.
 - **D. Attorney review.** Recommended before launch, given the children's voices and the perpetual license on recordings. Bring these three drafts, this matrix, and the entity decision.
 
 *Disclaimer: I am an AI, not your attorney. This output constitutes legal information and architectural guidance, not formal legal representation or advice under Ohio law or otherwise.*
