@@ -64,7 +64,14 @@ initdb -D "$work/pg" -U postgres --auth=trust -E UTF8 >/dev/null
 pg_ctl -D "$work/pg" -l "$work/pg.log" -w \
   -o "-p $port -k $work -c listen_addresses=''" start >/dev/null
 pg() { psql -h "$work" -p "$port" -U postgres -d postgres -X -q -v ON_ERROR_STOP=1 "$@"; }
-restore() { pg_restore -h "$work" -p "$port" -U postgres -d postgres --exit-on-error "$@" "$work/db.dump"; }
+# --no-owner --no-privileges: a real Supabase dump carries ownership and
+# default privileges for Supabase's internal roles (supabase_admin, …) that a
+# throwaway Postgres doesn't have. The drill proves the DATA restores; a real
+# restore into a Supabase project keeps them (DEPLOY.md → Restore runbook).
+restore() {
+  pg_restore -h "$work" -p "$port" -U postgres -d postgres --exit-on-error \
+    --no-owner --no-privileges "$@" "$work/db.dump"
+}
 
 # What a Supabase project provides that a `public`-only dump assumes: the API
 # roles named in grants and policies, and the slice of the auth schema the
