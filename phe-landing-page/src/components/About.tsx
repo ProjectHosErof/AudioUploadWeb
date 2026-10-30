@@ -34,7 +34,7 @@ export function About() {
           <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <p style={{
               fontFamily: 'var(--font-ui)',
-              fontSize: '0.625rem',
+              fontSize: '0.75rem',
               letterSpacing: '0.22em',
               textTransform: 'uppercase',
               color: 'var(--crimson-label)',

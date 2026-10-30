@@ -43,7 +43,7 @@ function technicalLine(item: QueueItem): string {
 
 const eyebrowStyle: React.CSSProperties = {
   fontFamily: 'var(--font-ui)',
-  fontSize: '0.625rem',
+  fontSize: '0.75rem',
   letterSpacing: '0.22em',
   textTransform: 'uppercase',
   color: 'var(--crimson-label)',
@@ -58,7 +58,7 @@ const metaStyle: React.CSSProperties = {
 
 const buttonBase: React.CSSProperties = {
   fontFamily: 'var(--font-ui)',
-  fontSize: '0.6875rem',
+  fontSize: '0.75rem',
   letterSpacing: '0.18em',
   textTransform: 'uppercase',
   padding: '0.625rem 1.5rem',
@@ -160,7 +160,7 @@ function ReviewCard({ item, onResolved, onError }: CardProps) {
           {!item.isEnriched && (
             <p style={{
               margin: '0.5rem 0 0',
-              fontSize: '0.625rem',
+              fontSize: '0.75rem',
               letterSpacing: '0.14em',
               textTransform: 'uppercase',
               color: 'var(--crimson-label)',
@@ -207,7 +207,7 @@ function ReviewCard({ item, onResolved, onError }: CardProps) {
           </button>
         )}
         {item.originalFilename && (
-          <p style={{ ...metaStyle, fontSize: '0.6875rem', marginTop: '0.5rem', opacity: 0.7 }}>
+          <p style={{ ...metaStyle, fontSize: '0.75rem', marginTop: '0.5rem', opacity: 0.7 }}>
             {item.originalFilename}
           </p>
         )}
@@ -335,6 +335,7 @@ export function AdminPage() {
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--ink)' }}>
       <Nav />
+      <main id="main">
 
       <header style={{
         paddingTop: 'calc(56px + clamp(3rem, 6vw, 4.5rem))',
@@ -485,6 +486,7 @@ export function AdminPage() {
           )}
         </div>
       </section>
+      </main>
     </div>
   );
 }

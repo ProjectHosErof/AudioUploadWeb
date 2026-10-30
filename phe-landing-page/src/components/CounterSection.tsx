@@ -1,14 +1,19 @@
 import { useState, useEffect, useRef } from 'react';
+import { fetchCommunityStats } from '../services/recordings';
 
-// Swap CURRENT_COUNT for a live API value when the backend is ready
-const CURRENT_COUNT = 0;
 const GOAL = 500;
+
+/** Users who asked for less motion get the number straight away. */
+const prefersReducedMotion = () =>
+  typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
 function useCountUp(target: number, duration: number, triggered: boolean) {
   const [count, setCount] = useState(0);
 
+  const reduced = prefersReducedMotion();
+
   useEffect(() => {
-    if (!triggered || target === 0) return;
+    if (!triggered || target === 0 || reduced) return;
     let current = 0;
     const increment = Math.max(1, Math.ceil(target / (duration / 16)));
     const timer = setInterval(() => {
@@ -21,13 +26,23 @@ function useCountUp(target: number, duration: number, triggered: boolean) {
       }
     }, 16);
     return () => clearInterval(timer);
-  }, [triggered, target, duration]);
+  }, [triggered, target, duration, reduced]);
 
-  return count;
+  return reduced ? target : count;
 }
 
 export function CounterSection() {
   const [triggered, setTriggered] = useState(false);
+  // Recordings approved into the collection, from GET /stats/community.
+  // null while loading or if the API can't be reached.
+  const [collected, setCollected] = useState<number | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    fetchCommunityStats().then((s) => { if (active && s) setCollected(s.readyRecordings); });
+    return () => { active = false; };
+  }, []);
+  const CURRENT_COUNT = collected ?? 0;
   const ref = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -56,13 +71,13 @@ export function CounterSection() {
         {/* Overline */}
         <p style={{
           fontFamily: 'var(--font-ui)',
-          fontSize: '0.625rem',
+          fontSize: '0.75rem',
           letterSpacing: '0.22em',
           textTransform: 'uppercase',
           color: 'var(--crimson-label)',
           marginBottom: '1.5rem',
         }}>
-          Recordings Collected
+          Recordings in the Collection
         </p>
 
         {/* Count */}
@@ -75,7 +90,7 @@ export function CounterSection() {
           margin: '0 0 2rem',
           letterSpacing: '-0.02em',
         }}>
-          {count.toLocaleString()}
+          {collected === null ? '—' : count.toLocaleString()}
         </p>
 
         {/* Progress bar */}

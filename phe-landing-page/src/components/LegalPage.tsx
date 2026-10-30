@@ -42,7 +42,7 @@ export default function LegalPage({ doc }: { doc: LegalDoc }) {
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "var(--ink)", display: "flex", flexDirection: "column" }}>
       <Nav />
-      <main style={{ flex: 1, padding: "calc(56px + 3rem) 1.5rem 4rem" }}>
+      <main id="main" style={{ flex: 1, padding: "calc(56px + 3rem) 1.5rem 4rem" }}>
         <article className="legal-prose" dangerouslySetInnerHTML={{ __html: render(DOCS[doc]) }} />
       </main>
       <Footer />

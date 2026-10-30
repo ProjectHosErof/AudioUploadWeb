@@ -64,6 +64,7 @@ export function SubscriptionResultPage({ variant }: { variant: 'confirmed' | 'un
       <Nav />
 
       <main
+        id="main"
         style={{
           flex: 1,
           display: 'flex',
@@ -91,7 +92,7 @@ export function SubscriptionResultPage({ variant }: { variant: 'confirmed' | 'un
           <p
             style={{
               fontFamily: 'var(--font-ui)',
-              fontSize: '0.625rem',
+              fontSize: '0.75rem',
               letterSpacing: '0.22em',
               textTransform: 'uppercase',
               color: 'var(--crimson-label)',
