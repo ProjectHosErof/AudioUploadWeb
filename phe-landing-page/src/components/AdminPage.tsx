@@ -167,8 +167,10 @@ function ReviewCard({ item, onResolved, onError }: CardProps) {
               border: '1px solid var(--crimson)',
               padding: '0.2rem 0.5rem',
               display: 'inline-block',
-            }}>
-              Not yet analysed
+            }}
+              title="Automatic checks (duplicates, unreadable files, duration) run every hour. Consider waiting before approving."
+            >
+              Not yet analysed · checks run hourly
             </p>
           )}
         </div>

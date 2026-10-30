@@ -1,0 +1,51 @@
+# Hourly enrichment: probe newly uploaded recordings (ffprobe), fingerprint
+# them, and reject duplicates and unreadable files before an admin reviews
+# them. Also backfills technical fields on recordings approved before they were
+# probed. See audio-upload-api/enrichment/README.md and DEPLOY.md.
+#
+# THIS REPOSITORY IS PUBLIC, SO THESE LOGS ARE PUBLIC. enrich.py prints
+# recording IDs, durations and codecs only — never emails or filenames.
+
+name: Enrichment
+
+on:
+  schedule:
+    - cron: "17 * * * *" # hourly, off the top of the hour
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: enrichment
+  cancel-in-progress: false
+
+jobs:
+  enrich:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: audio-upload-api/enrichment/requirements.txt
+
+      - name: Install ffmpeg and dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg >/dev/null
+          pip install -q -r audio-upload-api/enrichment/requirements.txt
+
+      - name: Enrich new recordings and backfill approved ones
+        env:
+          # Least-privilege role from migration 0012, via the session pooler.
+          ENRICH_DB_URL: ${{ secrets.ENRICH_DB_URL }}
+          # Enrichment only downloads, so the backup's read-only key is enough.
+          R2_ACCOUNT_ID: ${{ secrets.SRC_R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.SRC_R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.SRC_R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME: audio-uploads-dev
+        run: python audio-upload-api/enrichment/enrich.py --limit 50

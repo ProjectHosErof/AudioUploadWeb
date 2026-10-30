@@ -67,7 +67,10 @@ import psycopg2.extras
 ENV_PATH = Path(__file__).resolve().parent.parent / ".env"
 load_dotenv(ENV_PATH)
 
-DIRECT_URL = os.environ.get("DIRECT_URL")
+# ENRICH_DB_URL: the scheduled GitHub Action, as the least-privilege
+# enrichment_worker role (migration 0012) through the IPv4 session pooler.
+# MIGRATE_URL / DIRECT_URL: running by hand from a laptop, as before.
+DB_URL = os.environ.get("ENRICH_DB_URL") or os.environ.get("MIGRATE_URL") or os.environ.get("DIRECT_URL")
 R2_ACCOUNT_ID = os.environ.get("R2_ACCOUNT_ID")
 R2_ACCESS_KEY_ID = os.environ.get("R2_ACCESS_KEY_ID")
 R2_SECRET_ACCESS_KEY = os.environ.get("R2_SECRET_ACCESS_KEY")
@@ -81,7 +84,7 @@ def require_config() -> None:
     missing = [
         name
         for name, val in {
-            "DIRECT_URL": DIRECT_URL,
+            "ENRICH_DB_URL / MIGRATE_URL / DIRECT_URL": DB_URL,
             "R2_ACCOUNT_ID": R2_ACCOUNT_ID,
             "R2_ACCESS_KEY_ID": R2_ACCESS_KEY_ID,
             "R2_SECRET_ACCESS_KEY": R2_SECRET_ACCESS_KEY,
@@ -90,7 +93,7 @@ def require_config() -> None:
         if not val
     ]
     if missing:
-        sys.exit(f"Missing required config in {ENV_PATH}: {', '.join(missing)}")
+        sys.exit(f"Missing required config (environment or {ENV_PATH}): {', '.join(missing)}")
 
 
 # --- clients ----------------------------------------------------------------
@@ -107,8 +110,8 @@ def make_s3():
 
 
 def connect_db():
-    # Supabase requires SSL; DIRECT_URL (port 5432) is the direct connection.
-    dsn = DIRECT_URL
+    # Supabase requires SSL on both the direct host and the pooler.
+    dsn = DB_URL
     if "sslmode=" not in dsn:
         dsn += ("&" if "?" in dsn else "?") + "sslmode=require"
     conn = psycopg2.connect(dsn)
@@ -182,6 +185,21 @@ SELECT_BATCH = """
     LIMIT %s
 """
 
+# Recordings an admin approved before enrichment had run on them. They need
+# their technical fields (duration etc.) for the ML export, but their review
+# decision is a human's and must not change. A recording whose audio turned out
+# unreadable is marked in error_message so it isn't retried every run.
+SELECT_BACKFILL = """
+    SELECT id, r2_key, file_size_bytes
+    FROM recordings
+    WHERE upload_status = 'completed'
+      AND sample_rate_hz IS NULL
+      AND review_status = 'ready'
+      AND (error_message IS NULL OR error_message NOT LIKE 'enrichment failed%%')
+    ORDER BY created_at ASC
+    LIMIT %s
+"""
+
 FIND_DUPLICATE = """
     SELECT id
     FROM recordings
@@ -242,7 +260,7 @@ def process_row(conn, s3, row: dict, dry_run: bool) -> str:
             original_id = dup[0]
             reason = f"duplicate of {original_id}"
             if not dry_run:
-                _update_rejected(conn, rec_id, content_hash, reason, meta=meta)
+                _update_rejected(conn, rec_id, content_hash, reason, meta=meta, duplicate_of=original_id)
             print(f"  {rec_id}  REJECTED ({reason})")
             return "duplicate"
 
@@ -300,7 +318,7 @@ def _update_enriched(conn, rec_id, content_hash, meta, review_status):
     conn.commit()
 
 
-def _update_rejected(conn, rec_id, content_hash, reason, meta=None):
+def _update_rejected(conn, rec_id, content_hash, reason, meta=None, duplicate_of=None):
     # Record technical fields when we have them (dup case), but for an
     # unreadable object leave sample_rate_hz NULL — the review_status='rejected'
     # move is what keeps it out of the next batch.
@@ -315,6 +333,7 @@ def _update_rejected(conn, rec_id, content_hash, reason, meta=None):
                 codec = %s,
                 review_status = 'rejected',
                 error_message = %s,
+                duplicate_of_id = %s,
                 updated_at = now()
             WHERE id = %s
             """,
@@ -325,10 +344,93 @@ def _update_rejected(conn, rec_id, content_hash, reason, meta=None):
                 (meta or {}).get("channels"),
                 (meta or {}).get("codec"),
                 reason,
+                duplicate_of,
                 rec_id,
             ),
         )
     conn.commit()
+
+
+def backfill_row(conn, s3, row: dict, dry_run: bool) -> str:
+    """Fill technical fields on an already-approved recording. Never changes
+    review_status: the approval was a human decision."""
+    rec_id = row["id"]
+    tmp = None
+    try:
+        try:
+            tmp = download_to_temp(s3, row["r2_key"])
+        except (ClientError, BotoCoreError) as e:
+            print(f"  {rec_id}  SKIP (download failed: {e})")
+            return "skipped"
+        content_hash = hash_file(tmp)
+        try:
+            meta = ffprobe(tmp)
+        except ProbeError as e:
+            # Approved but unreadable: flag it for a human, don't reject it.
+            if not dry_run:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "UPDATE recordings SET error_message = %s, updated_at = now() WHERE id = %s",
+                        (f"enrichment failed: {e}", rec_id),
+                    )
+                conn.commit()
+            print(f"  {rec_id}  APPROVED BUT UNREADABLE ({e}) — needs a human look")
+            return "unreadable"
+        if not dry_run:
+            try:
+                _update_technical(conn, rec_id, content_hash, meta)
+            except psycopg2.errors.UniqueViolation:
+                # Another active recording already has this audio. Keep the
+                # approval, record the fields without the hash, and flag it.
+                conn.rollback()
+                _update_technical(conn, rec_id, None, meta)
+                print(f"  {rec_id}  BACKFILLED, but its audio duplicates another active recording")
+                return "backfilled-duplicate"
+        print(f"  {rec_id}  BACKFILLED dur={meta['duration_seconds']}s codec={meta['codec']}")
+        return "backfilled"
+    finally:
+        if tmp and os.path.exists(tmp):
+            os.remove(tmp)
+
+
+def _update_technical(conn, rec_id, content_hash, meta):
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            UPDATE recordings SET
+                content_hash = COALESCE(%s, content_hash),
+                duration_seconds = %s,
+                sample_rate_hz = %s,
+                channels = %s,
+                codec = %s,
+                updated_at = now()
+            WHERE id = %s
+            """,
+            (
+                content_hash,
+                meta["duration_seconds"],
+                meta["sample_rate_hz"],
+                meta["channels"],
+                meta["codec"],
+                rec_id,
+            ),
+        )
+    conn.commit()
+
+
+def run_backfill(conn, s3, limit: int, dry_run: bool) -> int:
+    with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute(SELECT_BACKFILL, (limit,))
+        rows = cur.fetchall()
+    if not rows:
+        return 0
+    print(f"Backfilling {len(rows)} approved recording(s){' (dry-run)' if dry_run else ''}...")
+    counts: dict[str, int] = {}
+    for row in rows:
+        outcome = backfill_row(conn, s3, row, dry_run)
+        counts[outcome] = counts.get(outcome, 0) + 1
+    print("Backfill complete: " + ", ".join(f"{k}={v}" for k, v in sorted(counts.items())))
+    return len(rows)
 
 
 def run_once(conn, s3, limit: int, dry_run: bool) -> int:
@@ -373,6 +475,7 @@ def main():
                 time.sleep(args.loop)
         else:
             run_once(conn, s3, args.limit, args.dry_run)
+            run_backfill(conn, s3, args.limit, args.dry_run)
     except KeyboardInterrupt:
         print("\nInterrupted.")
     finally:
