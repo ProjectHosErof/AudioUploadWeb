@@ -75,6 +75,10 @@ export const ACCEPTED_AUDIO = [
   ...ALLOWED_BROWSER_TYPES,
 ].join(",");
 
+/** Matches the Worker's MAX_UPLOAD_BYTES (wrangler.jsonc): 200 MB. Checked
+ *  as soon as a file is chosen; the Worker enforces it either way. */
+export const MAX_UPLOAD_BYTES = 209_715_200;
+
 /** Human-readable list for labels and error messages. */
 export const ACCEPTED_AUDIO_LABEL = "M4A, MP3, WAV, FLAC, AIFF, OGG or WebM";
 
@@ -167,17 +171,32 @@ function putToStorage(
   });
 }
 
+/**
+ * Confirm the upload with the Worker. By now the file is safely in storage, so
+ * a hiccup here shouldn't send the contributor back to upload it all again:
+ * retry a few times with backoff. Safe because /complete is idempotent.
+ * A 409 ("not in storage yet") is also worth retrying — storage can lag a
+ * moment behind the PUT.
+ */
 async function complete(recordingId: string): Promise<void> {
-  let res: Response;
-  try {
-    res = await fetch(`${API_BASE_URL}/uploads/${recordingId}/complete`, { method: "POST" });
-  } catch {
-    throw new UploadError("Uploaded, but couldn't confirm with the server. Please try again.");
-  }
-  if (!res.ok) {
+  const delays = [0, 1000, 3000, 7000];
+  let lastError: UploadError | null = null;
+  for (const delay of delays) {
+    if (delay) await new Promise((r) => setTimeout(r, delay));
+    let res: Response;
+    try {
+      res = await fetch(`${API_BASE_URL}/uploads/${recordingId}/complete`, { method: "POST" });
+    } catch {
+      lastError = new UploadError("Uploaded, but couldn't confirm with the server.");
+      continue;
+    }
+    if (res.ok) return;
     const data = await res.json().catch(() => ({}));
-    throw new UploadError(messageFrom(data, "Could not finalize the upload."), res.status);
+    lastError = new UploadError(messageFrom(data, "Could not finalize the upload."), res.status);
+    // Only transient failures are worth another try.
+    if (res.status !== 409 && res.status < 500) break;
   }
+  throw lastError ?? new UploadError("Could not finalize the upload.");
 }
 
 /**

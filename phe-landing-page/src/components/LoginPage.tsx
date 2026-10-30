@@ -137,7 +137,7 @@ export function LoginPage() {
               onClick={() => { setLinkSent(false); setEmail(''); }}
               style={{
                 fontFamily: 'var(--font-ui)',
-                fontSize: '0.6875rem',
+                fontSize: '0.75rem',
                 letterSpacing: '0.18em',
                 textTransform: 'uppercase',
                 color: 'var(--gold-muted)',
@@ -220,7 +220,7 @@ export function LoginPage() {
               <div style={{ flex: 1, height: '1px', background: 'var(--ink-mid)' }} />
               <span style={{
                 fontFamily: 'var(--font-ui)',
-                fontSize: '0.625rem',
+                fontSize: '0.75rem',
                 letterSpacing: '0.2em',
                 textTransform: 'uppercase',
                 color: 'var(--gold-muted)',
@@ -295,7 +295,7 @@ export function LoginPage() {
         {/* Heritage note */}
         <p className="anim-5" style={{
           fontFamily: 'var(--font-ui)',
-          fontSize: '0.6875rem',
+          fontSize: '0.75rem',
           fontStyle: 'italic',
           color: 'var(--gold-muted)',
           margin: '1.75rem 0 0',

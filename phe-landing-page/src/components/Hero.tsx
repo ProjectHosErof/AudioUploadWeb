@@ -33,7 +33,7 @@ export function Hero() {
           <span style={{
             display: 'inline-block',
             fontFamily: 'var(--font-ui)',
-            fontSize: '0.5875rem',
+            fontSize: '0.75rem',
             letterSpacing: '0.28em',
             textTransform: 'uppercase',
             color: 'var(--gold)',
@@ -73,7 +73,7 @@ export function Hero() {
 
         {/* Ornament */}
         <div className="anim-3" style={{ textAlign: 'center', margin: '1.75rem 0' }}>
-          <span style={{
+          <span aria-hidden="true" style={{
             color: 'var(--gold)',
             fontSize: '0.8125rem',
             letterSpacing: '0.5em',

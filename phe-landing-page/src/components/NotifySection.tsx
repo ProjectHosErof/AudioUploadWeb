@@ -53,7 +53,7 @@ export function NotifySection() {
 
         <p style={{
           fontFamily: 'var(--font-ui)',
-          fontSize: '0.625rem',
+          fontSize: '0.75rem',
           letterSpacing: '0.22em',
           textTransform: 'uppercase',
           color: 'var(--crimson-label)',
@@ -107,15 +107,20 @@ export function NotifySection() {
               Don't have a recording to share yet? Enter your email and we'll keep you updated as the project grows.
             </p>
 
-            <form onSubmit={handleSubmit}>
-              <div style={{ display: 'flex', gap: '0.75rem', marginBottom: error ? '0.5rem' : 0 }}>
+            <form onSubmit={handleSubmit} noValidate>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginBottom: error ? '0.5rem' : 0 }}>
+                <label htmlFor="notify-email" className="sr-only">Email address</label>
                 <input
+                  id="notify-email"
                   type="email"
+                  autoComplete="email"
+                  aria-invalid={error ? true : undefined}
+                  aria-describedby={error ? 'notify-error' : undefined}
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); if (error) setError(''); }}
                   className={`codex-input${error ? ' codex-input--error' : ''}`}
                   placeholder="your.email@example.com"
-                  style={{ flex: 1 }}
+                  style={{ flex: '1 1 220px', minWidth: 0 }}
                   disabled={submitting}
                 />
                 <button
@@ -128,7 +133,7 @@ export function NotifySection() {
                 </button>
               </div>
               {error && (
-                <p style={{
+                <p id="notify-error" role="alert" style={{
                   fontFamily: 'var(--font-ui)',
                   fontSize: '0.875rem',
                   color: 'var(--crimson-label)',

@@ -77,7 +77,7 @@ function StatCard({ value, label }: StatCardProps) {
       </p>
       <p style={{
         fontFamily: 'var(--font-ui)',
-        fontSize: '0.625rem',
+        fontSize: '0.75rem',
         letterSpacing: '0.22em',
         textTransform: 'uppercase',
         color: 'var(--text-muted)',
@@ -125,6 +125,7 @@ export function DashboardPage() {
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--ink)' }}>
       <Nav />
+      <main id="main">
 
       {/* Page header */}
       <header style={{
@@ -137,7 +138,7 @@ export function DashboardPage() {
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <p style={{
             fontFamily: 'var(--font-ui)',
-            fontSize: '0.625rem',
+            fontSize: '0.75rem',
             letterSpacing: '0.22em',
             textTransform: 'uppercase',
             color: 'var(--crimson-label)',
@@ -232,7 +233,7 @@ export function DashboardPage() {
 
           <p style={{
             fontFamily: 'var(--font-ui)',
-            fontSize: '0.625rem',
+            fontSize: '0.75rem',
             letterSpacing: '0.22em',
             textTransform: 'uppercase',
             color: 'var(--crimson-label)',
@@ -276,7 +277,7 @@ export function DashboardPage() {
                     {['Title', 'Service', 'Season', 'Length', 'Uploaded', 'Status'].map(col => (
                       <th key={col} style={{
                         fontFamily: 'var(--font-ui)',
-                        fontSize: '0.625rem',
+                        fontSize: '0.75rem',
                         letterSpacing: '0.2em',
                         textTransform: 'uppercase',
                         color: 'var(--text-muted)',
@@ -363,7 +364,7 @@ export function DashboardPage() {
                         <td style={{ padding: '1.125rem 0 1.125rem 0' }}>
                           <span style={{
                             fontFamily: 'var(--font-ui)',
-                            fontSize: '0.625rem',
+                            fontSize: '0.75rem',
                             letterSpacing: '0.16em',
                             textTransform: 'uppercase',
                             fontWeight: 500,
@@ -379,7 +380,7 @@ export function DashboardPage() {
                             <span style={{
                               display: 'block',
                               fontFamily: 'var(--font-ui)',
-                              fontSize: '0.6875rem',
+                              fontSize: '0.75rem',
                               lineHeight: 1.5,
                               color: 'var(--text-muted)',
                               marginTop: '0.5rem',
@@ -444,6 +445,7 @@ export function DashboardPage() {
           )}
         </div>
       </section>
+      </main>
     </div>
   );
 }

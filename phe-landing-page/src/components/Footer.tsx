@@ -9,7 +9,7 @@ export function Footer() {
 
         {/* Ornament */}
         <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-          <span style={{ color: 'var(--gold-muted)', fontSize: '0.625rem', letterSpacing: '0.5em' }}>◆ ◆ ◆</span>
+          <span aria-hidden="true" style={{ color: 'var(--gold-muted)', fontSize: '0.625rem', letterSpacing: '0.5em' }}>◆ ◆ ◆</span>
         </div>
 
         {/* Main columns */}
@@ -42,7 +42,7 @@ export function Footer() {
           <div>
             <p style={{
               fontFamily: 'var(--font-ui)',
-              fontSize: '0.625rem',
+              fontSize: '0.75rem',
               letterSpacing: '0.22em',
               textTransform: 'uppercase',
               color: 'var(--crimson-label)',
@@ -75,7 +75,7 @@ export function Footer() {
               <div style={{ borderTop: '1px solid var(--ink-mid)', paddingTop: '0.875rem', marginTop: '0.125rem' }}>
                 <p style={{
                   fontFamily: 'var(--font-ui)',
-                  fontSize: '0.625rem',
+                  fontSize: '0.75rem',
                   letterSpacing: '0.22em',
                   textTransform: 'uppercase',
                   color: 'var(--crimson-label)',
