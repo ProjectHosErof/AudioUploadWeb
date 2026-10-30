@@ -49,7 +49,10 @@ function LandingPage() {
       <main id="main">
         {/* Ordered around the one action we want: understand it, then do it.
             Background (FAQ, About) and the fallback for people without a
-            recording yet (Stay informed) come after the form. */}
+            recording yet (Stay informed) come after the form.
+            Backgrounds alternate --ink / --ink-soft down the page (the
+            --ink-soft bands carry thin borders) so each section reads as its
+            own band — keep that rhythm when adding or moving sections. */}
         <Hero />
         <HowItWorks />
         {/* The placeholder keeps the #upload anchor (nav, hero button, the

@@ -25,7 +25,12 @@ const faqs = [
 
 export function Faq() {
   return (
-    <section id="faq" style={{ backgroundColor: 'var(--ink)', padding: 'clamp(3rem, 6vw, 4.5rem) 2rem' }}>
+    <section id="faq" style={{
+      backgroundColor: 'var(--ink-soft)',
+      borderTop: '1px solid var(--ink-mid)',
+      borderBottom: '1px solid var(--ink-mid)',
+      padding: 'clamp(3rem, 6vw, 4.5rem) 2rem',
+    }}>
       <div style={{ maxWidth: '760px', margin: '0 auto' }}>
         <p style={{
           fontFamily: 'var(--font-ui)',
