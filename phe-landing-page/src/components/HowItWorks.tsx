@@ -20,7 +20,7 @@ const steps = [
   {
     numeral: 'III',
     title: 'Preserve',
-    text: "A reviewer listens, then it joins the collection. We'll email you when it does.",
+    text: "A reviewer listens, then it joins the collection — leave your email and we'll let you know.",
   },
 ];
 

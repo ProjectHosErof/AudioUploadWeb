@@ -10,6 +10,7 @@ import { Footer } from "./components/Footer";
 import { SubscriptionResultPage } from "./components/SubscriptionResultPage";
 import { ProtectedRoute } from "./auth/ProtectedRoute";
 import { AdminRoute } from "./auth/AdminRoute";
+import { usePageTitle } from "./lib/usePageTitle";
 
 // Pages most visitors never open — sign-in, the contributor dashboard, the
 // review queue and the legal text (which pulls in a Markdown parser) — load
@@ -33,6 +34,7 @@ function Loading({ children }: { children: ReactNode }) {
 
 function LandingPage() {
   const { hash } = useLocation();
+  usePageTitle(null);
 
   // Arriving from another route (e.g. the dashboard's "Upload New Recording")
   // only changes history state, so the browser won't scroll to the anchor

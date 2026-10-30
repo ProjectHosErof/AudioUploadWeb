@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "./AuthProvider";
+import { useAuth } from './useAuth';
 
 /**
  * Gate for the moderation queue. Signed-out users go to /login; signed-in

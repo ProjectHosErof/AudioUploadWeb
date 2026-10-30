@@ -1,4 +1,5 @@
 import { Link, useSearchParams } from 'react-router-dom';
+import { usePageTitle } from '../lib/usePageTitle';
 import { Nav } from './Nav';
 import { Footer } from './Footer';
 
@@ -54,6 +55,7 @@ const UNSUBSCRIBED: Record<string, Copy> = {
 };
 
 export function SubscriptionResultPage({ variant }: { variant: 'confirmed' | 'unsubscribed' }) {
+  usePageTitle(variant === 'confirmed' ? 'Subscription confirmed' : 'Unsubscribed');
   const [params] = useSearchParams();
   const status = params.get('status') ?? 'ok';
   const table = variant === 'confirmed' ? CONFIRMED : UNSUBSCRIBED;
@@ -102,7 +104,7 @@ export function SubscriptionResultPage({ variant }: { variant: 'confirmed' | 'un
             {copy.eyebrow}
           </p>
 
-          <p
+          <h1
             style={{
               fontFamily: 'var(--font-display)',
               fontSize: 'clamp(1.75rem, 4vw, 2.25rem)',
@@ -113,7 +115,7 @@ export function SubscriptionResultPage({ variant }: { variant: 'confirmed' | 'un
             }}
           >
             {copy.heading}
-          </p>
+          </h1>
 
           <p
             style={{
@@ -128,7 +130,7 @@ export function SubscriptionResultPage({ variant }: { variant: 'confirmed' | 'un
           </p>
 
           <Link to="/" className="hero-cta" style={{ display: 'inline-block' }}>
-            Return to the Archive
+            Return to Project Hos Erof
           </Link>
         </div>
       </main>

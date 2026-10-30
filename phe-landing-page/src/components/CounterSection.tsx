@@ -92,7 +92,7 @@ export function CommunityCounter() {
             Be one of the first contributors
           </p>
           <p style={{ fontFamily: 'var(--font-ui)', fontSize: '1rem', lineHeight: 1.7, color: 'var(--text-muted)', margin: 0 }}>
-            The archive is just opening. The voices who start it shape what it becomes.
+            The collection is just opening. The voices who start it shape what it becomes.
           </p>
         </>
       ) : (

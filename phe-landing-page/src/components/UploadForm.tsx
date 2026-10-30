@@ -12,7 +12,7 @@ import type { HymnGroup, SelectOption } from "../options.data";
 import { TURNSTILE_SITE_KEY } from "../config";
 import { TERMS_VERSION } from "../legal/terms";
 import { ACCEPTED_AUDIO, ACCEPTED_AUDIO_LABEL, MAX_UPLOAD_BYTES, resolveContentType, uploadRecording, UploadError } from "../services/uploadApi";
-import { useAuth } from "../auth/AuthProvider";
+import { useAuth } from '../auth/useAuth';
 
 const serviceTypes = [
   'St. Basil / St. Gregory / St. Cyril Divine Liturgy',
@@ -482,7 +482,7 @@ export function UploadForm() {
               color: 'var(--gold-muted)',
               margin: '-0.75rem 0 1.75rem',
             }}>
-              Any quality is welcome — WAV and FLAC preferred where possible.
+              WAV or FLAC are welcome too, but not needed.
             </p>
 
             {/* Consent: Terms + Contributor License (required) */}
@@ -660,7 +660,7 @@ export function UploadForm() {
                 ? uploadProgress !== null && uploadProgress < 100
                   ? `Uploading… ${uploadProgress}%`
                   : 'Finishing…'
-                : 'Upload Track'}
+                : 'Share Recording'}
             </button>
 
           </form>

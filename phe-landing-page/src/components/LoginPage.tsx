@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { usePageTitle } from '../lib/usePageTitle';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../auth/AuthProvider';
+import { useAuth } from '../auth/useAuth';
 
 export function LoginPage() {
+  usePageTitle('Sign in');
   const { session, loading, enabled, signInWithGoogle, signInWithMagicLink } = useAuth();
   const location = useLocation();
   const [email, setEmail] = useState('');

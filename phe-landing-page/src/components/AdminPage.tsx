@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { usePageTitle } from '../lib/usePageTitle';
 import { Nav } from './Nav';
 import {
   ModerationError,
@@ -299,6 +300,7 @@ function ReviewCard({ item, onResolved, onError }: CardProps) {
 }
 
 export function AdminPage() {
+  usePageTitle('Review queue');
   const [items, setItems] = useState<QueueItem[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
