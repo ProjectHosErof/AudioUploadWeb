@@ -137,3 +137,6 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# ui-ux-pro-max search tool bytecode
+.claude/skills/ui-ux-pro-max/scripts/__pycache__/
