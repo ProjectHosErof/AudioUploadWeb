@@ -4,6 +4,8 @@ import { sendEmail } from '../lib/email';
 import { background } from '../lib/background';
 import { confirmSubscription } from '../emails/templates';
 import { subscribeSchema } from '../lib/validation';
+import { shouldSendConfirmation } from '../lib/subscribeCooldown';
+import { verifyTurnstile } from '../middleware/turnstile';
 import { subscribeRateLimit } from '../middleware/rateLimit';
 import { apiUrl, siteUrl } from '../lib/urls';
 
@@ -29,13 +31,19 @@ subscribe.post('/', subscribeRateLimit(), async (c) => {
     return c.json({ error: 'Invalid request', details: parsed.error.flatten() }, 400);
   }
 
+  // Bot check before touching the database or sending anything.
+  const ip = c.req.header('cf-connecting-ip') ?? undefined;
+  if (!(await verifyTurnstile(c.env, parsed.data.turnstile_token, ip))) {
+    return c.json({ error: 'Verification failed. Please retry the challenge.' }, 403);
+  }
+
   const email = parsed.data.email.trim().toLowerCase();
   const source = parsed.data.source ?? 'landing';
   const supabase = getSupabase(c.env);
 
   const existing = await supabase
     .from('subscribers')
-    .select('id, token, confirmed_at')
+    .select('id, token, confirmed_at, confirmation_sent_at')
     .eq('email', email)
     .maybeSingle();
 
@@ -75,9 +83,27 @@ subscribe.post('/', subscribeRateLimit(), async (c) => {
     token = created.data.token as string;
   }
 
-  // Don't re-confirm someone who already did. They still get the same response
-  // below, so the endpoint reveals nothing either way.
-  if (token && !alreadyConfirmed) {
+  // Don't re-confirm someone who already did, and send at most one confirmation
+  // per address per day. Either way the caller gets the same response below,
+  // so the endpoint reveals nothing.
+  const sendConfirmation =
+    Boolean(token) &&
+    shouldSendConfirmation({
+      alreadyConfirmed,
+      lastSentAt: (existing.data?.confirmation_sent_at as string | null | undefined) ?? null,
+      now: Date.now(),
+    });
+  if (token && sendConfirmation) {
+    // Stamp before sending: a failed stamp must not turn into unlimited sends.
+    const stamped = await supabase
+      .from('subscribers')
+      .update({ confirmation_sent_at: new Date().toISOString() })
+      .eq('token', token);
+    if (stamped.error) {
+      console.error('subscriber confirmation stamp failed', stamped.error);
+      return c.json(GENERIC_OK);
+    }
+
     // Points at THIS Worker — the confirm route below, not the frontend.
     const built = confirmSubscription(`${apiUrl(c)}/subscribe/confirm/${token}`);
     background(

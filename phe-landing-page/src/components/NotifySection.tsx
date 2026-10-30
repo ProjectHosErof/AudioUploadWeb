@@ -1,11 +1,16 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile';
 import { subscribeEmail } from '../services/subscribe';
+import { TURNSTILE_SITE_KEY } from '../config';
 
 export function NotifySection() {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  // Bot check: the API refuses to send a confirmation email without it.
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileInstance>(null);
 
   function isValidEmail(e: string) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
@@ -18,14 +23,21 @@ export function NotifySection() {
       setError('Please enter a valid email address.');
       return;
     }
+    if (!turnstileToken) {
+      setError('Please complete the verification check below.');
+      return;
+    }
     setError('');
     setSubmitting(true);
     try {
-      await subscribeEmail(email);
+      await subscribeEmail(email, turnstileToken);
       setSubmitted(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
     } finally {
+      // Tokens are single-use: reset for a retry.
+      turnstileRef.current?.reset();
+      setTurnstileToken(null);
       setSubmitting(false);
     }
   };
@@ -125,6 +137,18 @@ export function NotifySection() {
                 }}>
                   {error}
                 </p>
+              )}
+              {TURNSTILE_SITE_KEY && (
+                <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1rem' }}>
+                  <Turnstile
+                    ref={turnstileRef}
+                    siteKey={TURNSTILE_SITE_KEY}
+                    onSuccess={(token) => setTurnstileToken(token)}
+                    onExpire={() => setTurnstileToken(null)}
+                    onError={() => setTurnstileToken(null)}
+                    options={{ theme: 'dark', size: 'compact', action: 'subscribe' }}
+                  />
+                </div>
               )}
             </form>
 

@@ -12,7 +12,7 @@ import {
 import type { HymnGroup, SelectOption } from "../options.data";
 import { TURNSTILE_SITE_KEY } from "../config";
 import { TERMS_VERSION } from "../legal/terms";
-import { resolveContentType, uploadRecording, UploadError } from "../services/uploadApi";
+import { ACCEPTED_AUDIO, ACCEPTED_AUDIO_LABEL, resolveContentType, uploadRecording, UploadError } from "../services/uploadApi";
 
 interface UploadFormProps {
   onUpload: (file: Omit<AudioFile, "id" | "uploadedAt">) => void;
@@ -122,7 +122,7 @@ export function UploadForm({ onUpload }: UploadFormProps) {
 
     const contentType = resolveContentType(file);
     if (!contentType) {
-      setSubmitError("Unsupported file type. Please use WAV, MP3, FLAC, AIFF, or OGG.");
+      setSubmitError(`Unsupported file type. Please use ${ACCEPTED_AUDIO_LABEL}.`);
       return;
     }
     if (!TURNSTILE_SITE_KEY) {
@@ -478,7 +478,7 @@ export function UploadForm({ onUpload }: UploadFormProps) {
             {/* File drop zone */}
             <div style={{ marginBottom: '1.5rem' }}>
               <label className="codex-label">
-                Audio File (WAV, MP3, FLAC, AIFF, OGG) *
+                Audio File ({ACCEPTED_AUDIO_LABEL}) *
               </label>
               <div
                 className={`file-zone${isDragging ? ' file-zone--active' : ''}`}
@@ -497,7 +497,7 @@ export function UploadForm({ onUpload }: UploadFormProps) {
                   id="file-input"
                   style={{ display: 'none' }}
                   onChange={(e) => setFile(e.target.files?.[0] || null)}
-                  accept=".wav,.mp3,.aiff,.flac,.ogg,audio/wav,audio/wave,audio/x-wav,audio/mpeg,audio/mp3,audio/x-aiff,audio/aiff,audio/flac,audio/x-flac,audio/ogg,audio/vorbis,application/ogg"
+                  accept={ACCEPTED_AUDIO}
                   required
                 />
                 {file ? (
@@ -525,7 +525,7 @@ export function UploadForm({ onUpload }: UploadFormProps) {
                       color: 'var(--gold-muted)',
                       margin: 0,
                     }}>
-                      WAV · MP3 · FLAC · AIFF · OGG
+                      M4A · MP3 · WAV · FLAC · AIFF · OGG · WebM
                     </p>
                   </>
                 )}

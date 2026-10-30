@@ -50,6 +50,12 @@ const EXT_TO_CONTENT_TYPE: Record<string, string> = {
   aif: "audio/aiff",
   flac: "audio/flac",
   ogg: "audio/ogg",
+  // Phone recorders (iPhone Voice Memos, most Android apps).
+  m4a: "audio/mp4",
+  aac: "audio/aac",
+  // WhatsApp voice notes and browser recorders.
+  webm: "audio/webm",
+  opus: "audio/opus",
 };
 
 const ALLOWED_BROWSER_TYPES = new Set([
@@ -58,7 +64,19 @@ const ALLOWED_BROWSER_TYPES = new Set([
   "audio/aiff", "audio/x-aiff",
   "audio/flac", "audio/x-flac",
   "audio/ogg", "application/ogg", "audio/vorbis",
+  "audio/mp4", "audio/x-m4a", "audio/m4a",
+  "audio/aac", "audio/x-aac",
+  "audio/webm", "audio/opus",
 ]);
+
+/** For the file input's `accept`: every extension and MIME type above. */
+export const ACCEPTED_AUDIO = [
+  ...Object.keys(EXT_TO_CONTENT_TYPE).map((ext) => `.${ext}`),
+  ...ALLOWED_BROWSER_TYPES,
+].join(",");
+
+/** Human-readable list for labels and error messages. */
+export const ACCEPTED_AUDIO_LABEL = "M4A, MP3, WAV, FLAC, AIFF, OGG or WebM";
 
 /**
  * Resolve a content-type the Worker will accept. Prefer the file extension

@@ -6,7 +6,7 @@ import { checkPlacement } from '../lib/placement';
 import { CONTENT_TYPE_TO_EXT, UUID_RE, initiateSchema } from '../lib/validation';
 import { verifyTurnstile } from '../middleware/turnstile';
 import { rateLimit } from '../middleware/rateLimit';
-import { buildObjectKey, headObject, presignPut } from '../storage/r2';
+import { buildObjectKey, deleteObject, headObject, presignPut } from '../storage/r2';
 import { sendEmail } from '../lib/email';
 import { background } from '../lib/background';
 import { confirmSubscription } from '../emails/templates';
@@ -148,7 +148,7 @@ uploads.post('/:id/complete', async (c) => {
   const supabase = getSupabase(c.env);
   const { data: rec, error } = await supabase
     .from('recordings')
-    .select('id, r2_key, upload_status')
+    .select('id, r2_key, upload_status, review_status')
     .eq('id', id)
     .maybeSingle();
   if (error) {
@@ -157,6 +157,16 @@ uploads.post('/:id/complete', async (c) => {
   }
   if (!rec) return c.json({ error: 'Not found' }, 404);
 
+  // Idempotent: a retry, a double-click or a replayed request must never touch
+  // a recording that is already complete — doing so would reset an admin's
+  // approve/reject decision back to 'processing'.
+  if (rec.upload_status === 'completed') {
+    return c.json({ recordingId: id, uploadStatus: 'completed', reviewStatus: rec.review_status });
+  }
+  if (rec.upload_status !== 'pending') {
+    return c.json({ error: 'This upload can no longer be completed.' }, 409);
+  }
+
   const head = await headObject(c.env, rec.r2_key);
   if (!head) {
     return c.json({ error: 'Upload not found in storage yet.' }, 409);
@@ -164,6 +174,13 @@ uploads.post('/:id/complete', async (c) => {
 
   const maxBytes = Number(c.env.MAX_UPLOAD_BYTES);
   if (head.sizeBytes !== null && head.sizeBytes > maxBytes) {
+    // Delete the object: the janitor only sweeps objects with no row, and this
+    // row stays (as 'failed'), so nothing else would ever remove it.
+    try {
+      await deleteObject(c.env, rec.r2_key);
+    } catch (e) {
+      console.error('oversized object delete failed', rec.r2_key, e);
+    }
     await supabase
       .from('recordings')
       .update({
@@ -184,7 +201,9 @@ uploads.post('/:id/complete', async (c) => {
       etag: head.etag,
       updated_at: new Date().toISOString(),
     })
-    .eq('id', id);
+    .eq('id', id)
+    // Guard against a concurrent /complete: only a still-pending row moves.
+    .eq('upload_status', 'pending');
   if (updateErr) {
     console.error('recordings complete update failed', updateErr);
     return c.json({ error: 'Could not finalize submission.' }, 500);
@@ -247,7 +266,8 @@ async function addToMailingList(c: Context<{ Bindings: Env }>, rawEmail: string)
 
   const created = await supabase
     .from('subscribers')
-    .insert({ email, source: 'upload' })
+    // Stamped so the landing form's 24 h cooldown also counts this send.
+    .insert({ email, source: 'upload', confirmation_sent_at: new Date().toISOString() })
     .select('token')
     .maybeSingle();
   if (created.error || !created.data) {
