@@ -13,6 +13,8 @@ import '@fontsource/jost/latin-300.css'
 import '@fontsource/jost/latin-400.css'
 import '@fontsource/jost/latin-500.css'
 import '@fontsource/jost/latin-600.css'
+// Coptic script for the hero's ϩⲱⲥ ⲉⲣⲟϥ — the site's fonts have no Coptic glyphs.
+import '@fontsource/noto-sans-coptic/coptic-400.css'
 import './index.css'
 import App from './App.tsx'
 import { AuthProvider } from './auth/AuthProvider'

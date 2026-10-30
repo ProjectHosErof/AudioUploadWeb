@@ -521,11 +521,12 @@ body {
   display: flex;
   align-items: center;
 }
-@media (max-width: 767px) {
+@media (max-width: 1023px) {
   .nav-links-inline { display: none; }
   .nav-menu-button { display: inline-flex; }
 }
-@media (min-width: 768px) {
+/* Signed in, the bar holds up to six links (~980px), so fold below 1024px. */
+@media (min-width: 1024px) {
   .nav-menu-panel { display: none; }
 }
 
@@ -534,4 +535,44 @@ body {
 .file-zone:focus-within {
   outline: 2px solid var(--gold-light);
   outline-offset: 3px;
+}
+
+/* ─── Disclosures (<details>): FAQ and upload guidelines ──── */
+
+.codex-details > summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  min-height: 44px;
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  color: var(--gold);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.codex-details > summary::-webkit-details-marker { display: none; }
+/* A plus that turns into a minus — no rotation, so it reads under reduced motion too. */
+.codex-details > summary::after {
+  content: '+';
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--gold-muted);
+  text-decoration: none;
+}
+.codex-details[open] > summary::after { content: '−'; }
+
+.codex-details--faq {
+  border-top: 1px solid var(--ink-mid);
+  padding: 0.75rem 0 1rem;
+}
+.codex-details--faq > summary {
+  font-family: var(--font-display);
+  font-size: 1.3125rem;
+  font-weight: 400;
+  color: var(--parchment);
+  text-decoration: none;
 }

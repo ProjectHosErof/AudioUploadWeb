@@ -22,30 +22,7 @@ const serviceTypes = [
   'Melodies',
   'Ceremonies (Baptism, Crowning, Ordination)',
   'Venerations',
-  '...and more',
-];
-
-const faqs = [
-  {
-    q: 'What happens to my recording?',
-    a: 'Your recording becomes part of a curated dataset used to train and develop the technology behind a future Coptic Orthodox platform currently in development. This is Phase 1 of that larger initiative — contributions made here are foundational to what the community will eventually access.',
-  },
-  {
-    q: 'Is contributing free?',
-    a: 'Completely free. Your recording is a gift to the community, and this project will always remain open and free to access.',
-  },
-  {
-    q: 'Will my personal information be shared?',
-    a: 'No. We never sell your information or use it for advertising. An email address is only used to tell you about your recording and, if you opt in, for project updates. A few service providers handle it on our behalf — see the Privacy Policy.',
-  },
-];
-
-const uploadSteps = [
-  'Select the type of service and the season the hymn/response is said',
-  'Select the hymn/response and the language(s) used in the audio file',
-  `Select your hymn audio file — phone recordings work: ${ACCEPTED_AUDIO_LABEL}`,
-  'Optionally enter your email to receive project updates and become a tester',
-  'Click Upload Track',
+  'and more',
 ];
 
 /** Bytes → "12.3 MB". */
@@ -229,7 +206,7 @@ export function UploadForm() {
       <div style={{ maxWidth: '760px', margin: '0 auto' }}>
 
         {/* Section header — h2 size intentionally unchanged */}
-        <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <p style={{
             fontFamily: 'var(--font-ui)',
             fontSize: '0.75rem',
@@ -253,151 +230,39 @@ export function UploadForm() {
           <div style={{ width: '2.5rem', height: '1px', background: 'var(--crimson)', margin: '0 auto' }} />
         </div>
 
-        {/* What we need */}
-        <div style={{
-          border: '1px solid var(--ink-mid)',
-          padding: '2.25rem',
-          marginBottom: '2.5rem',
-          backgroundColor: 'var(--ink-soft)',
+        {/* What we need — the short version, then the full guidelines on demand */}
+        <p style={{
+          fontFamily: 'var(--font-ui)',
+          fontSize: '1.0625rem',
+          lineHeight: 1.75,
+          color: 'var(--text-muted)',
+          textAlign: 'center',
+          maxWidth: '36rem',
+          margin: '0 auto 1rem',
         }}>
-          <p style={{
-            fontFamily: 'var(--font-ui)',
-            fontSize: '0.75rem',
-            letterSpacing: '0.2em',
-            textTransform: 'uppercase',
-            color: 'var(--crimson-label)',
-            marginBottom: '1.25rem',
-          }}>
-            What We Need
-          </p>
-          <p style={{
-            fontFamily: 'var(--font-ui)',
-            fontSize: '1.0625rem',
-            lineHeight: 1.8,
-            color: 'var(--text-muted)',
-            marginBottom: '0.75rem',
-          }}>
-            These recordings will form a training dataset for a future platform currently in development for the Coptic Orthodox community.
-          </p>
-          <p style={{
-            fontFamily: 'var(--font-ui)',
-            fontSize: '1.0625rem',
-            lineHeight: 1.8,
-            color: 'var(--text-muted)',
-            marginBottom: '1.5rem',
-          }}>
-            We are looking for hymns and responses across different feasts,
-            seasons, and tunes. Please do{' '}
-            <em style={{ color: 'var(--parchment-dim)' }}>not</em>{' '}
-            submit entire liturgies or full service recordings.
-          </p>
-          <div style={{ textAlign: 'center' }}>
-            {serviceTypes.map((s, i) => (
-              <p key={i} style={{
-                fontFamily: 'var(--font-ui)',
-                fontSize: '1.0625rem',
-                color: s === '...and more' ? 'var(--gold-muted)' : 'var(--text-muted)',
-                fontStyle: s === '...and more' ? 'italic' : 'normal',
-                margin: '0 0 0.5rem',
-              }}>
-                {s}
-              </p>
-            ))}
+          Short hymns and responses from any season or service — please, not full liturgies.
+          Any audio quality is welcome; phone recordings are perfect.
+        </p>
+        <details className="codex-details" style={{ margin: '0 auto 2.5rem', maxWidth: '36rem' }}>
+          <summary>What to record — full guidelines</summary>
+          <div style={{ paddingTop: '1rem' }}>
+            <p style={{ fontFamily: 'var(--font-ui)', fontSize: '1.0625rem', lineHeight: 1.75, color: 'var(--text-muted)', margin: '0 0 0.75rem' }}>
+              These recordings will form a training dataset for a future platform currently in development for the Coptic Orthodox community.
+            </p>
+            <p style={{ fontFamily: 'var(--font-ui)', fontSize: '1.0625rem', lineHeight: 1.75, color: 'var(--text-muted)', margin: '0 0 1rem' }}>
+              We are looking for hymns and responses across different feasts, seasons, and tunes. Please do{' '}
+              <em style={{ color: 'var(--parchment-dim)' }}>not</em> submit entire liturgies or full service recordings.
+              Hymns and responses from services such as:
+            </p>
+            <ul style={{ margin: 0, paddingLeft: '1.25rem', listStyle: 'disc' }}>
+              {serviceTypes.map((s) => (
+                <li key={s} style={{ fontFamily: 'var(--font-ui)', fontSize: '1rem', lineHeight: 1.7, color: 'var(--text-muted)' }}>
+                  {s}
+                </li>
+              ))}
+            </ul>
           </div>
-        </div>
-
-        {/* FAQ */}
-        <div style={{ marginBottom: '2.5rem' }}>
-          <p style={{
-            fontFamily: 'var(--font-ui)',
-            fontSize: '0.75rem',
-            letterSpacing: '0.2em',
-            textTransform: 'uppercase',
-            color: 'var(--crimson-label)',
-            marginBottom: '1.25rem',
-          }}>
-            Common Questions
-          </p>
-          {faqs.map((item, i) => (
-            <div key={i} style={{
-              borderTop: '1px solid var(--ink-mid)',
-              padding: '1.25rem 0',
-              display: 'grid',
-              gridTemplateColumns: '1fr 1.5fr',
-              gap: '2rem',
-              alignItems: 'start',
-            }}>
-              <p style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: '1.25rem',
-                fontWeight: 400,
-                color: 'var(--parchment)',
-                margin: 0,
-                lineHeight: 1.3,
-              }}>
-                {item.q}
-              </p>
-              <p style={{
-                fontFamily: 'var(--font-ui)',
-                fontSize: '1.0625rem',
-                lineHeight: 1.75,
-                color: 'var(--text-muted)',
-                margin: 0,
-              }}>
-                {item.a}
-              </p>
-            </div>
-          ))}
-          <div style={{ borderTop: '1px solid var(--ink-mid)' }} />
-        </div>
-
-        {/* Steps */}
-        <div style={{ marginBottom: '3rem' }}>
-          <p style={{
-            fontFamily: 'var(--font-ui)',
-            fontSize: '0.75rem',
-            letterSpacing: '0.2em',
-            textTransform: 'uppercase',
-            color: 'var(--crimson-label)',
-            marginBottom: '1.25rem',
-          }}>
-            Steps to Upload
-          </p>
-          {uploadSteps.map((step, i) => (
-            <div
-              key={i}
-              style={{
-                display: 'flex',
-                gap: '1.25rem',
-                alignItems: 'flex-start',
-                borderTop: '1px solid var(--ink-mid)',
-                padding: '1rem 0',
-              }}
-            >
-              <span style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: '1.375rem',
-                fontWeight: 300,
-                color: 'var(--crimson-label)',
-                lineHeight: 1.1,
-                minWidth: '1.25rem',
-                paddingTop: '0.05rem',
-              }}>
-                {i + 1}
-              </span>
-              <p style={{
-                fontFamily: 'var(--font-ui)',
-                fontSize: '1.0625rem',
-                lineHeight: 1.7,
-                color: 'var(--text-muted)',
-                margin: 0,
-              }}>
-                {step}
-              </p>
-            </div>
-          ))}
-          <div style={{ borderTop: '1px solid var(--ink-mid)' }} />
-        </div>
+        </details>
 
         {/* Form panel with corner accents */}
         <div style={{

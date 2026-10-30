@@ -3,7 +3,8 @@ import { Route, Routes, useLocation } from "react-router-dom";
 import { Nav } from "./components/Nav";
 import { Hero } from "./components/Hero";
 import { About } from "./components/About";
-import { CounterSection } from "./components/CounterSection";
+import { HowItWorks } from "./components/HowItWorks";
+import { Faq } from "./components/Faq";
 import { NotifySection } from "./components/NotifySection";
 import { Footer } from "./components/Footer";
 import { SubscriptionResultPage } from "./components/SubscriptionResultPage";
@@ -46,15 +47,19 @@ function LandingPage() {
     <div className="min-h-screen" style={{ backgroundColor: "var(--ink)" }}>
       <Nav />
       <main id="main">
+        {/* Ordered around the one action we want: understand it, then do it.
+            Background (FAQ, About) and the fallback for people without a
+            recording yet (Stay informed) come after the form. */}
         <Hero />
-        <About />
-        <CounterSection />
-        <NotifySection />
+        <HowItWorks />
         {/* The placeholder keeps the #upload anchor (nav, hero button, the
             dashboard's "Upload New Recording") working while the form loads. */}
         <Suspense fallback={<section id="upload" style={{ minHeight: "100vh", backgroundColor: "var(--ink)" }} />}>
           <UploadForm />
         </Suspense>
+        <Faq />
+        <About />
+        <NotifySection />
       </main>
       <Footer />
     </div>

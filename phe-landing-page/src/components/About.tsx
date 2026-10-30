@@ -79,7 +79,7 @@ export function About() {
               color: 'var(--text-muted)',
               margin: 0,
             }}>
-              This is Phase 1 of a larger initiative — your recordings are building the dataset that will power what comes next.
+              This is Phase 1: gathering the voices of our parishes. What we build from them will always serve the Church and the people learning its hymns.
             </p>
           </div>
 
