@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { usePageTitle } from '../lib/usePageTitle';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Link, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 
 export function LoginPage() {
@@ -48,16 +48,35 @@ export function LoginPage() {
   };
 
   return (
-    <div style={{
+    <main id="main" style={{
       minHeight: '100vh',
       backgroundColor: 'var(--ink)',
       display: 'flex',
+      flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '2rem',
+      padding: '4.5rem 1rem 2rem',
       position: 'relative',
       overflow: 'hidden',
     }}>
+      {/* A way back: this page has no site nav. */}
+      <Link
+        to="/"
+        style={{
+          position: 'absolute',
+          top: '1rem',
+          left: '1rem',
+          zIndex: 1,
+          padding: '0.5rem',
+          fontFamily: 'var(--font-ui)',
+          fontSize: '0.9375rem',
+          color: 'var(--parchment-dim)',
+          textDecoration: 'none',
+        }}
+      >
+        ← Back to Project Hos Erof
+      </Link>
+
       {/* Ambient glow */}
       <div style={{
         position: 'absolute',
@@ -71,7 +90,7 @@ export function LoginPage() {
         position: 'relative',
         width: '100%',
         maxWidth: '400px',
-        padding: '3.5rem 3rem 3rem',
+        padding: 'clamp(2.5rem, 6vw, 3.5rem) clamp(1.5rem, 6vw, 3rem) clamp(2rem, 5vw, 3rem)',
         backgroundColor: 'var(--ink-soft)',
         border: '1px solid var(--ink-mid)',
         textAlign: 'center',
@@ -82,14 +101,14 @@ export function LoginPage() {
         <span className="codex-corner codex-corner--br" />
 
         {/* Gold ornament */}
-        <p className="anim-1" style={{
+        <p className="anim-1" aria-hidden="true" style={{
           fontFamily: 'var(--font-display)',
           fontSize: '0.75rem',
           color: 'var(--gold)',
           letterSpacing: '0.55em',
           margin: '0 0 1.75rem',
         }}>
-          ✦ ✦ ✦
+          ◆ ◆ ◆
         </p>
 
         {/* Brand mark */}
@@ -305,6 +324,20 @@ export function LoginPage() {
           Your contributions are preserved for the community.
         </p>
       </div>
-    </div>
+
+      <p style={{
+        position: 'relative',
+        fontFamily: 'var(--font-ui)',
+        fontSize: '0.875rem',
+        color: 'var(--text-muted)',
+        margin: '1.5rem 0 0',
+        textAlign: 'center',
+      }}>
+        By signing in you agree to our{' '}
+        <Link to="/terms" style={{ color: 'var(--gold)', textDecoration: 'underline', textUnderlineOffset: '3px' }}>Terms</Link>
+        {' · '}
+        <Link to="/privacy" style={{ color: 'var(--gold)', textDecoration: 'underline', textUnderlineOffset: '3px' }}>Privacy Policy</Link>
+      </p>
+    </main>
   );
 }

@@ -32,6 +32,9 @@ function formatSize(bytes: number): string {
 
 export function UploadForm() {
   const { session } = useAuth();
+  // Signed-in contributors get their account email prefilled; typing replaces it.
+  const accountEmail = session?.user?.email ?? "";
+  const [emailEdited, setEmailEdited] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState("");
   const [isDragging, setIsDragging] = useState(false);
@@ -45,6 +48,9 @@ export function UploadForm() {
   // upload so the recording records which license version it was given under.
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [email, setEmail] = useState("");
+  // What the field shows and what gets sent: the typed value once edited,
+  // otherwise the signed-in account's email.
+  const emailValue = emailEdited ? email : email || accountEmail;
   const [emailError, setEmailError] = useState("");
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
@@ -137,9 +143,9 @@ export function UploadForm() {
       fail("Please confirm you agree to the Terms and Contributor License.");
       return;
     }
-    if (checked && (!email || !isValidEmail(email))) {
+    if (emailValue.trim() && !isValidEmail(emailValue.trim())) {
       setEmailError("Please enter a valid email address.");
-      fail("Please enter a valid email address, or untick the updates box.");
+      fail("Please enter a valid email address, or leave it empty.");
       return;
     }
     setEmailError("");
@@ -170,8 +176,10 @@ export function UploadForm() {
           content_type: contentType,
           size_bytes: file!.size,
           original_filename: file!.name,
-          wants_updates: checked,
-          email: checked && email ? email : undefined,
+          // The email is sent whenever it's given, so the contributor hears
+          // about the review; the newsletter is only joined if they also ticked.
+          wants_updates: checked && Boolean(emailValue.trim()),
+          email: emailValue.trim() || undefined,
           turnstile_token: turnstileToken,
           accepted_terms_version: TERMS_VERSION,
           file: file!,
@@ -187,6 +195,7 @@ export function UploadForm() {
       setChecked(false);
       setAgreedToTerms(false);
       setEmail("");
+      setEmailEdited(false);
       setEmailError("");
       setUploadProgress(null);
       setSubmitted({ reference: recordingId.slice(0, 8).toUpperCase() });
@@ -520,13 +529,60 @@ export function UploadForm() {
               </label>
             </div>
 
-            {/* Newsletter opt-in */}
+            {/* Email (optional): hear back about this recording. Kept separate
+                from the newsletter, which is its own opt-in below. */}
+            <div style={{ marginBottom: '1.25rem' }}>
+              <label className="codex-label" htmlFor="upload-email">Email (optional)</label>
+              <input
+                id="upload-email"
+                type="email"
+                autoComplete="email"
+                aria-invalid={emailError ? true : undefined}
+                aria-describedby={emailError ? 'upload-email-hint upload-email-error' : 'upload-email-hint'}
+                value={emailValue}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setEmailEdited(true);
+                  if (emailError) setEmailError("");
+                  if (!e.target.value.trim()) setChecked(false);
+                }}
+                onBlur={() => {
+                  if (emailValue && !isValidEmail(emailValue)) {
+                    setEmailError("Please enter a valid email address.");
+                  }
+                }}
+                className={`codex-input${emailError ? ' codex-input--error' : ''}`}
+                placeholder="your.email@example.com"
+              />
+              <p id="upload-email-hint" style={{
+                fontFamily: 'var(--font-ui)',
+                fontSize: '0.875rem',
+                color: 'var(--text-muted)',
+                margin: '0.5rem 0 0',
+              }}>
+                We'll let you know when your recording has been reviewed.
+              </p>
+              {emailError && (
+                <p id="upload-email-error" role="alert" style={{
+                  fontFamily: 'var(--font-ui)',
+                  fontSize: '0.9375rem',
+                  color: 'var(--crimson-label)',
+                  margin: '0.5rem 0 0',
+                }}>
+                  {emailError}
+                </p>
+              )}
+            </div>
+
+            {/* Newsletter opt-in: needs an email to send to. */}
             <div style={{ marginBottom: '1.75rem' }}>
-              <label className="codex-checkbox-row">
+              <label className="codex-checkbox-row" style={{ opacity: emailValue.trim() ? 1 : 0.6 }}>
                 <input
                   type="checkbox"
                   className="codex-checkbox"
                   checked={checked}
+                  disabled={!emailValue.trim()}
+                  aria-describedby="upload-updates-hint"
                   onChange={(e) => setChecked(e.target.checked)}
                 />
                 <div>
@@ -537,63 +593,20 @@ export function UploadForm() {
                     color: 'var(--parchment)',
                     margin: '0 0 0.3rem',
                   }}>
-                    Get Updates & Become a Tester
+                    Also send me project updates — and an invitation to test new features
                   </p>
-                  <p style={{
+                  <p id="upload-updates-hint" style={{
                     fontFamily: 'var(--font-ui)',
-                    fontSize: '1.0625rem',
+                    fontSize: '0.9375rem',
                     color: 'var(--text-muted)',
-                    margin: '0 0 0.25rem',
-                  }}>
-                    Hear what happens to your recording, receive project updates, and sign up to become a future tester.
-                  </p>
-                  <p style={{
-                    fontFamily: 'var(--font-ui)',
-                    fontSize: '0.875rem',
-                    color: 'var(--gold-muted)',
-                    fontStyle: 'italic',
                     margin: 0,
                   }}>
-                    Already signed up? No need to re-enter your email.
+                    {emailValue.trim()
+                      ? "We'll send a link to confirm first. Unsubscribe anytime."
+                      : 'Add your email above to get updates.'}
                   </p>
                 </div>
               </label>
-
-              {checked && (
-                <div style={{ marginTop: '1rem' }}>
-                  <label className="codex-label" htmlFor="upload-email">Email Address *</label>
-                  <input
-                    id="upload-email"
-                    type="email"
-                    autoComplete="email"
-                    aria-invalid={emailError ? true : undefined}
-                    aria-describedby={emailError ? 'upload-email-error' : undefined}
-                    value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value);
-                      if (emailError) setEmailError("");
-                    }}
-                    onBlur={() => {
-                      if (email && !isValidEmail(email)) {
-                        setEmailError("Please enter a valid email address.");
-                      }
-                    }}
-                    className={`codex-input${emailError ? ' codex-input--error' : ''}`}
-                    placeholder="your.email@example.com"
-                    required={checked}
-                  />
-                  {emailError && (
-                    <p id="upload-email-error" role="alert" style={{
-                      fontFamily: 'var(--font-ui)',
-                      fontSize: '0.9375rem',
-                      color: 'var(--crimson-label)',
-                      margin: '0.5rem 0 0',
-                    }}>
-                      {emailError}
-                    </p>
-                  )}
-                </div>
-              )}
             </div>
 
             {/* Bot verification */}

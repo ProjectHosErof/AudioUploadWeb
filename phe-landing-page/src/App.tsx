@@ -8,6 +8,7 @@ import { Faq } from "./components/Faq";
 import { NotifySection } from "./components/NotifySection";
 import { Footer } from "./components/Footer";
 import { SubscriptionResultPage } from "./components/SubscriptionResultPage";
+import { NotFoundPage } from "./components/NotFoundPage";
 import { ProtectedRoute } from "./auth/ProtectedRoute";
 import { AdminRoute } from "./auth/AdminRoute";
 import { usePageTitle } from "./lib/usePageTitle";
@@ -98,8 +99,8 @@ export default function App() {
       <Route path="/privacy" element={<Loading><LegalPage doc="privacy" /></Loading>} />
       <Route path="/terms" element={<Loading><LegalPage doc="terms" /></Loading>} />
       <Route path="/dmca" element={<Loading><LegalPage doc="dmca" /></Loading>} />
-      {/* Unknown paths fall back to the landing page. */}
-      <Route path="*" element={<LandingPage />} />
+      {/* Unknown paths: a real "page not found", marked noindex. */}
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }
