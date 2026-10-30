@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { usePageTitle } from "../lib/usePageTitle";
 import { marked } from "marked";
 import { Nav } from "./Nav";
 import { Footer } from "./Footer";
@@ -34,8 +35,8 @@ function render(markdown: string): string {
 }
 
 export default function LegalPage({ doc }: { doc: LegalDoc }) {
+  usePageTitle(TITLES[doc]);
   useEffect(() => {
-    document.title = `${TITLES[doc]} · Project Hos Erof`;
     window.scrollTo(0, 0);
   }, [doc]);
 

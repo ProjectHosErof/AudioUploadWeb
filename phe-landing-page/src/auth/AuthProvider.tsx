@@ -1,31 +1,12 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import type { Session, User } from "@supabase/supabase-js";
+import type { Session } from "@supabase/supabase-js";
+import { AuthContext } from "./useAuth";
 import { supabase } from "../lib/supabaseClient";
 import { AUTH_ENABLED, API_BASE_URL } from "../config";
 import { fetchIsAdmin } from "../services/moderation";
 
-interface AuthContextValue {
-  session: Session | null;
-  user: User | null;
-  /** True until the initial session lookup settles — guards protected routes from flashing. */
-  loading: boolean;
-  /** False when Supabase env vars are absent; the UI degrades instead of crashing. */
-  enabled: boolean;
-  /**
-   * Whether this user may moderate. Presentation only — it decides whether the
-   * queue is *offered*. The Worker re-checks on every admin request, so a
-   * tampered value here buys nothing but a 403.
-   */
-  isAdmin: boolean;
-  /** True until the admin check settles, so AdminRoute doesn't bounce prematurely. */
-  adminLoading: boolean;
-  signInWithGoogle: () => Promise<void>;
-  signInWithMagicLink: (email: string) => Promise<void>;
-  signOut: () => Promise<void>;
-}
 
-const AuthContext = createContext<AuthContextValue | null>(null);
 
 /**
  * Tell the Worker this user just signed in: it creates the `contributors` row
@@ -164,10 +145,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth(): AuthContextValue {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used within an AuthProvider");
-  return ctx;
 }

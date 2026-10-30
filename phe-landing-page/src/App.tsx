@@ -8,8 +8,10 @@ import { Faq } from "./components/Faq";
 import { NotifySection } from "./components/NotifySection";
 import { Footer } from "./components/Footer";
 import { SubscriptionResultPage } from "./components/SubscriptionResultPage";
+import { NotFoundPage } from "./components/NotFoundPage";
 import { ProtectedRoute } from "./auth/ProtectedRoute";
 import { AdminRoute } from "./auth/AdminRoute";
+import { usePageTitle } from "./lib/usePageTitle";
 
 // Pages most visitors never open — sign-in, the contributor dashboard, the
 // review queue and the legal text (which pulls in a Markdown parser) — load
@@ -33,6 +35,7 @@ function Loading({ children }: { children: ReactNode }) {
 
 function LandingPage() {
   const { hash } = useLocation();
+  usePageTitle(null);
 
   // Arriving from another route (e.g. the dashboard's "Upload New Recording")
   // only changes history state, so the browser won't scroll to the anchor
@@ -96,8 +99,8 @@ export default function App() {
       <Route path="/privacy" element={<Loading><LegalPage doc="privacy" /></Loading>} />
       <Route path="/terms" element={<Loading><LegalPage doc="terms" /></Loading>} />
       <Route path="/dmca" element={<Loading><LegalPage doc="dmca" /></Loading>} />
-      {/* Unknown paths fall back to the landing page. */}
-      <Route path="*" element={<LandingPage />} />
+      {/* Unknown paths: a real "page not found", marked noindex. */}
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }

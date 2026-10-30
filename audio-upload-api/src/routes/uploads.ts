@@ -115,9 +115,9 @@ uploads.post('/initiate', rateLimit(), async (c) => {
     return c.json({ error: 'Could not create submission.' }, 500);
   }
 
-  // The opt-in checkbox promises project updates, so the address has to reach
-  // the mailing list — otherwise it lands in submitter_email and goes nowhere,
-  // which is the same broken promise the landing-page form used to make.
+  // An email on its own (submitter_email) gets the review digest. The separate
+  // "also send me project updates" opt-in additionally puts it on the mailing
+  // list — unconfirmed until they click the double-opt-in link.
   if (body.wants_updates && body.email) {
     background(c, addToMailingList(c, body.email));
   }

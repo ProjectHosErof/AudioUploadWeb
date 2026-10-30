@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
+import { usePageTitle } from '../lib/usePageTitle';
 import { Link } from 'react-router-dom';
 import { Nav } from './Nav';
-import { useAuth } from '../auth/AuthProvider';
+import { useAuth } from '../auth/useAuth';
 import {
   describeStatus,
   fetchCommunityStats,
@@ -90,28 +91,33 @@ function StatCard({ value, label }: StatCardProps) {
 }
 
 export function DashboardPage() {
+  usePageTitle('My contributions');
   const { user } = useAuth();
-  const [tracks, setTracks] = useState<MyRecording[]>([]);
   const [community, setCommunity] = useState<CommunityStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  // The last result, tagged with the user it belongs to. "Loading" is derived
+  // (no result yet for *this* user) rather than set inside the effect, so a
+  // change of user can't flash the previous person's recordings.
+  const userId = user?.id ?? null;
+  const [result, setResult] = useState<{ userId: string | null; rows: MyRecording[]; error: string } | null>(null);
+  const loading = result?.userId !== userId;
+  const tracks = useMemo(() => (loading ? [] : result?.rows ?? []), [loading, result]);
+  const error = loading ? '' : result?.error ?? '';
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    setError('');
 
     fetchMyRecordings()
-      .then((rows) => { if (active) setTracks(rows); })
+      .then((rows) => { if (active) setResult({ userId, rows, error: '' }); })
       .catch((err) => {
-        if (active) setError(err instanceof Error ? err.message : 'Could not load your recordings.');
-      })
-      .finally(() => { if (active) setLoading(false); });
+        if (active) {
+          setResult({ userId, rows: [], error: err instanceof Error ? err.message : 'Could not load your recordings.' });
+        }
+      });
 
     fetchCommunityStats().then((s) => { if (active) setCommunity(s); });
 
     return () => { active = false; };
-  }, [user?.id]);
+  }, [userId]);
 
   const stats = useMemo(() => ({
     total: tracks.length,
@@ -165,7 +171,7 @@ export function DashboardPage() {
                 color: 'var(--text-muted)',
                 margin: 0,
               }}>
-                {hasTracks ? 'Your archive is growing.' : 'Your archive begins with a single hymn.'}
+                {hasTracks ? 'Your collection is growing.' : 'Your collection begins with a single hymn.'}
               </p>
             </div>
             <Link
@@ -211,7 +217,7 @@ export function DashboardPage() {
               Together, {community.contributors}{' '}
               {community.contributors === 1 ? 'contributor has' : 'contributors have'} given{' '}
               <span style={{ color: 'var(--gold)' }}>{community.totalRecordings}</span>{' '}
-              {community.totalRecordings === 1 ? 'recording' : 'recordings'} to the archive
+              {community.totalRecordings === 1 ? 'recording' : 'recordings'} to the collection
               {community.readyRecordings > 0 && (
                 <>
                   {' '}·{' '}
