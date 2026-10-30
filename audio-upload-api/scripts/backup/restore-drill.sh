@@ -73,14 +73,20 @@ restore() {
     --no-owner --no-privileges "$@" "$work/db.dump"
 }
 
-# What a Supabase project provides that a `public`-only dump assumes: the API
-# roles named in grants and policies, and the slice of the auth schema the
-# migrations reference (auth.users for foreign keys, auth.uid() in policies).
+# What a Supabase project provides that a `public`-only dump assumes: every
+# role the dump names (in policies — e.g. anon, authenticated, backup_reader,
+# enrichment_worker — and in grants/ownership), and the slice of the auth
+# schema the migrations reference (auth.users for foreign keys, auth.uid() in
+# policies). Roles are read from the dump itself, so a migration that adds a
+# new role can't silently break the drill.
+roles="$(pg_restore -f - "$work/db.dump" \
+  | grep -oE ' TO [a-z_][a-z0-9_]*(, *[a-z_][a-z0-9_]*)*' \
+  | sed -E 's/^ TO //; s/, */\n/g' | sort -u)"
+for role in $roles; do
+  pg -c "DO \$\$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '$role') THEN CREATE ROLE \"$role\" NOLOGIN; END IF; END \$\$;"
+done
+log "roles from the dump: $(echo "$roles" | tr '\n' ' ')"
 pg <<'SQL'
-CREATE ROLE anon NOLOGIN;
-CREATE ROLE authenticated NOLOGIN;
-CREATE ROLE service_role NOLOGIN;
-CREATE ROLE backup_reader NOLOGIN;
 CREATE SCHEMA auth;
 CREATE TABLE auth.users (id uuid PRIMARY KEY);
 CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS 'SELECT NULL::uuid';
