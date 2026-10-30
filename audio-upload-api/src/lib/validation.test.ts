@@ -32,3 +32,15 @@ describe('initiateSchema: Terms consent', () => {
     assert.equal(parsed.success, false);
   });
 });
+
+describe('initiateSchema: phone recording formats', () => {
+  for (const contentType of ['audio/mp4', 'audio/x-m4a', 'audio/m4a', 'audio/aac', 'audio/webm', 'audio/opus']) {
+    it(`accepts ${contentType}`, () => {
+      assert.equal(initiateSchema.safeParse({ ...valid, content_type: contentType }).success, true);
+    });
+  }
+
+  it('still rejects non-audio types', () => {
+    assert.equal(initiateSchema.safeParse({ ...valid, content_type: 'video/mp4' }).success, false);
+  });
+});

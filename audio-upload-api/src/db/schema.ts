@@ -196,6 +196,10 @@ export const subscribers = pgTable('subscribers', {
   token: uuid('token').defaultRandom().notNull().unique(),
   confirmedAt: timestamp('confirmed_at', { withTimezone: true }),
   unsubscribedAt: timestamp('unsubscribed_at', { withTimezone: true }),
+  // When the last confirmation email was sent. POST /subscribe sends at most
+  // one per address per day (src/lib/subscribeCooldown.ts), so the public form
+  // can't be used to flood an inbox.
+  confirmationSentAt: timestamp('confirmation_sent_at', { withTimezone: true }),
   // Where the signup came from: 'landing' (the Stay Informed form) or
   // 'upload' (the opt-in checkbox on the upload form).
   source: varchar('source', { length: 30 }).default('landing').notNull(),

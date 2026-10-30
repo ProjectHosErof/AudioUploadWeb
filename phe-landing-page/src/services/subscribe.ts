@@ -18,18 +18,21 @@ export class SubscribeError extends Error {
   }
 }
 
-export async function subscribeEmail(email: string): Promise<string> {
+export async function subscribeEmail(email: string, turnstileToken: string): Promise<string> {
   let res: Response;
   try {
     res = await fetch(`${API_BASE_URL}/subscribe`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email, turnstile_token: turnstileToken }),
     });
   } catch {
     throw new SubscribeError("Couldn't reach the server. Check your connection and try again.");
   }
 
+  if (res.status === 403) {
+    throw new SubscribeError("Verification failed. Please complete the check and try again.", 403);
+  }
   if (res.status === 429) {
     throw new SubscribeError("Too many attempts. Please wait a moment and try again.", 429);
   }
