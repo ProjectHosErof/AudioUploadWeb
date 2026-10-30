@@ -4,9 +4,9 @@ import { Menu, X } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
 
 /**
- * Site navigation. Wide screens show the links inline; below 768px they fold
- * into a menu button, because six links (when signed in) can't fit beside the
- * wordmark on a phone without scrolling the page sideways.
+ * Site navigation. Wide screens show the links inline; below 1024px they fold
+ * into a menu button, because six links (when signed in) need about 980px —
+ * on anything narrower they'd push the page sideways.
  *
  * Every page that renders <Nav /> must have a <main id="main"> for the skip
  * link to land on.
@@ -58,7 +58,7 @@ export function Nav() {
     <>
       {/* Section anchors only resolve on the landing page. */}
       {onLanding &&
-        [{ label: 'About', href: '#about' }, { label: 'Stay Informed', href: '#notify' }, { label: 'Upload', href: '#upload' }].map(({ label, href }) => (
+        [{ label: 'How It Works', href: '#how-it-works' }, { label: 'Upload', href: '#upload' }, { label: 'About', href: '#about' }].map(({ label, href }) => (
           <a
             key={label}
             href={href}

@@ -52,8 +52,9 @@ export function Footer() {
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
               {[
-                { label: 'About', href: '/#about' },
+                { label: 'How It Works', href: '/#how-it-works' },
                 { label: 'Upload a Recording', href: '/#upload' },
+                { label: 'About', href: '/#about' },
                 { label: 'Stay Informed', href: '/#notify' },
               ].map(({ label, href }) => (
                 <a

@@ -104,7 +104,7 @@ export function NotifySection() {
               color: 'var(--text-muted)',
               margin: '0 0 2.5rem',
             }}>
-              Don't have a recording to share yet? Enter your email and we'll keep you updated as the project grows.
+              Not ready to share a recording yet? Enter your email and we'll keep you updated as the project grows.
             </p>
 
             <form onSubmit={handleSubmit} noValidate>
