@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { usePageTitle } from '../lib/usePageTitle';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Nav } from './Nav';
 import { useAuth } from '../auth/useAuth';
 import {
   describeStatus,
   fetchCommunityStats,
   fetchMyRecordings,
+  SessionExpiredError,
   type CommunityStats,
   type MyRecording,
   type StatusPresentation,
@@ -87,6 +88,15 @@ function DeclineReason({ track, maxWidth }: { track: MyRecording; maxWidth?: str
   );
 }
 
+/** Why the recordings didn't load: an expired sign-in, or anything else. */
+type LoadError = 'expired' | 'failed' | null;
+
+/** First sign-in: the account was created moments before this session began. */
+function isFirstVisit(createdAt: string | undefined, lastSignInAt: string | undefined): boolean {
+  if (!createdAt || !lastSignInAt) return true;
+  return Math.abs(Date.parse(lastSignInAt) - Date.parse(createdAt)) < 2 * 60 * 1000;
+}
+
 interface StatCardProps { value: string; label: string; }
 
 function StatCard({ value, label }: StatCardProps) {
@@ -115,8 +125,8 @@ function StatCard({ value, label }: StatCardProps) {
       </p>
       <p style={{
         fontFamily: 'var(--font-ui)',
-        fontSize: 'clamp(0.625rem, 2.6vw, 0.75rem)',
-        letterSpacing: 'clamp(0.06em, 0.5vw, 0.22em)',
+        fontSize: '0.75rem',
+        letterSpacing: 'clamp(0.04em, 0.5vw, 0.22em)',
         lineHeight: 1.4,
         textTransform: 'uppercase',
         color: 'var(--text-muted)',
@@ -130,32 +140,45 @@ function StatCard({ value, label }: StatCardProps) {
 
 export function DashboardPage() {
   usePageTitle('My contributions');
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const [community, setCommunity] = useState<CommunityStats | null>(null);
-  // The last result, tagged with the user it belongs to. "Loading" is derived
-  // (no result yet for *this* user) rather than set inside the effect, so a
-  // change of user can't flash the previous person's recordings.
+  // Bumped by "Try again" to re-run the load.
+  const [attempt, setAttempt] = useState(0);
+  // The last result, tagged with the user and attempt it belongs to. "Loading"
+  // is derived (no result yet for *this* request) rather than set inside the
+  // effect, so a change of user can't flash the previous person's recordings.
   const userId = user?.id ?? null;
-  const [result, setResult] = useState<{ userId: string | null; rows: MyRecording[]; error: string } | null>(null);
-  const loading = result?.userId !== userId;
+  const requestKey = `${userId}:${attempt}`;
+  const [result, setResult] = useState<{ key: string; rows: MyRecording[]; error: LoadError } | null>(null);
+  const loading = result?.key !== requestKey;
   const tracks = useMemo(() => (loading ? [] : result?.rows ?? []), [loading, result]);
-  const error = loading ? '' : result?.error ?? '';
+  const error: LoadError = loading ? null : result?.error ?? null;
 
   useEffect(() => {
     let active = true;
 
     fetchMyRecordings()
-      .then((rows) => { if (active) setResult({ userId, rows, error: '' }); })
+      .then((rows) => { if (active) setResult({ key: requestKey, rows, error: null }); })
       .catch((err) => {
         if (active) {
-          setResult({ userId, rows: [], error: err instanceof Error ? err.message : 'Could not load your recordings.' });
+          setResult({ key: requestKey, rows: [], error: err instanceof SessionExpiredError ? 'expired' : 'failed' });
         }
       });
 
-    fetchCommunityStats().then((s) => { if (active) setCommunity(s); });
-
     return () => { active = false; };
-  }, [userId]);
+  }, [requestKey]);
+
+  useEffect(() => {
+    let active = true;
+    fetchCommunityStats().then((s) => { if (active) setCommunity(s); });
+    return () => { active = false; };
+  }, []);
+
+  const signInAgain = async () => {
+    await signOut();
+    navigate('/login');
+  };
 
   const stats = useMemo(() => ({
     total: tracks.length,
@@ -201,16 +224,18 @@ export function DashboardPage() {
                 margin: '0 0 0.5rem',
                 letterSpacing: '-0.01em',
               }}>
-                Welcome back, {name}.
+                {isFirstVisit(user?.created_at, user?.last_sign_in_at) ? 'Welcome' : 'Welcome back'}, {name}.
               </h1>
-              <p className="anim-2" style={{
-                fontFamily: 'var(--font-ui)',
-                fontSize: '1.0625rem',
-                color: 'var(--text-muted)',
-                margin: 0,
-              }}>
-                {hasTracks ? 'Your collection is growing.' : 'Your collection begins with a single hymn.'}
-              </p>
+              {!loading && !error && (
+                <p className="anim-2" style={{
+                  fontFamily: 'var(--font-ui)',
+                  fontSize: '1.0625rem',
+                  color: 'var(--text-muted)',
+                  margin: 0,
+                }}>
+                  {hasTracks ? 'Your collection is growing.' : 'Your collection begins with a single hymn.'}
+                </p>
+              )}
             </div>
             <Link
               to="/#upload"
@@ -232,13 +257,13 @@ export function DashboardPage() {
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <div className="grid grid-cols-3 gap-px" style={{ backgroundColor: 'var(--ink-mid)' }}>
             <div style={{ backgroundColor: 'var(--ink-soft)' }}>
-              <StatCard value={loading ? '—' : String(stats.total)} label="Total Recordings" />
+              <StatCard value={loading || error ? '—' : String(stats.total)} label="Total Recordings" />
             </div>
             <div style={{ backgroundColor: 'var(--ink-soft)' }}>
-              <StatCard value={loading ? '—' : formatDuration(stats.seconds)} label="Duration Uploaded" />
+              <StatCard value={loading || error ? '—' : formatDuration(stats.seconds)} label="Duration Uploaded" />
             </div>
             <div style={{ backgroundColor: 'var(--ink-soft)' }}>
-              <StatCard value={loading ? '—' : String(stats.inCollection)} label="In the Collection" />
+              <StatCard value={loading || error ? '—' : String(stats.inCollection)} label="In the Collection" />
             </div>
           </div>
 
@@ -255,12 +280,13 @@ export function DashboardPage() {
               Together, {community.contributors}{' '}
               {community.contributors === 1 ? 'contributor has' : 'contributors have'} given{' '}
               <span style={{ color: 'var(--gold)' }}>{community.totalRecordings}</span>{' '}
-              {community.totalRecordings === 1 ? 'recording' : 'recordings'} to the collection
-              {community.readyRecordings > 0 && (
+              {community.totalRecordings === 1 ? 'recording' : 'recordings'}
+              {/* Durations arrive after processing; until then there's no figure to show. */}
+              {community.readySeconds > 0 && (
                 <>
                   {' '}·{' '}
                   <span style={{ color: 'var(--gold)' }}>{formatDuration(community.readySeconds)}</span>{' '}
-                  accepted into the collection
+                  now in the collection
                 </>
               )}
               .
@@ -301,15 +327,24 @@ export function DashboardPage() {
           )}
 
           {!loading && error && (
-            <div style={{ border: '1px solid var(--crimson)', padding: '2rem', textAlign: 'center' }}>
+            <div role="alert" style={{ border: '1px solid var(--crimson)', padding: '2rem', textAlign: 'center' }}>
               <p style={{
                 fontFamily: 'var(--font-ui)',
                 fontSize: '1rem',
                 color: 'var(--crimson-label)',
-                margin: 0,
+                margin: '0 0 1.25rem',
               }}>
-                {error}
+                {error === 'expired' ? 'Your sign-in has expired.' : "We couldn't load your recordings."}
               </p>
+              {error === 'expired' ? (
+                <button type="button" className="hero-cta" onClick={signInAgain}>
+                  Sign in again
+                </button>
+              ) : (
+                <button type="button" className="hero-cta" onClick={() => setAttempt((n) => n + 1)}>
+                  Try again
+                </button>
+              )}
             </div>
           )}
 

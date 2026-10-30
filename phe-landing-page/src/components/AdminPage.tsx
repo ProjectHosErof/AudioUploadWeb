@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { usePageTitle } from '../lib/usePageTitle';
 import { Nav } from './Nav';
+import { language_options } from '../options.data';
 import {
   ModerationError,
   REJECTION_REASONS,
@@ -49,6 +50,13 @@ const eyebrowStyle: React.CSSProperties = {
   textTransform: 'uppercase',
   color: 'var(--crimson-label)',
 };
+
+const LANGUAGE_LABELS = new Map(language_options.map((o) => [o.value, o.label]));
+
+/** "Coptic / Arabic" from the stored slugs; an unknown slug shows as itself. */
+function languageLabels(slugs: string[]): string {
+  return slugs.map((s) => LANGUAGE_LABELS.get(s) ?? s).join(' / ');
+}
 
 const metaStyle: React.CSSProperties = {
   fontFamily: 'var(--font-ui)',
@@ -147,7 +155,7 @@ function ReviewCard({ item, onResolved, onError }: CardProps) {
             {item.title}
           </h2>
           <p style={metaStyle}>
-            {[item.service, item.season].filter(Boolean).join(' · ') || '—'}
+            {[item.service, item.season, languageLabels(item.languages)].filter(Boolean).join(' · ') || '—'}
           </p>
           <p style={{ ...metaStyle, fontSize: '0.8125rem', marginTop: '0.25rem' }}>
             {formatLength(item.durationSeconds)}

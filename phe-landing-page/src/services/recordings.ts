@@ -79,6 +79,19 @@ async function getLanguageLabels(): Promise<Map<string, string>> {
   return languageLabels;
 }
 
+/** The saved sign-in is no longer accepted; signing in again fixes it. */
+export class SessionExpiredError extends Error {
+  constructor() {
+    super("Your sign-in has expired.");
+    this.name = "SessionExpiredError";
+  }
+}
+
+/** PostgREST's answer to an expired or invalid token (PGRST301/303 or a JWT message). */
+function isExpiredSession(error: { code?: string; message?: string }): boolean {
+  return error.code === "PGRST301" || error.code === "PGRST303" || /JWT/i.test(error.message ?? "");
+}
+
 /**
  * The signed-in contributor's own recordings, newest first. RLS does the
  * filtering, so this returns nothing at all when signed out.
@@ -97,7 +110,12 @@ export async function fetchMyRecordings(): Promise<MyRecording[]> {
     getLanguageLabels(),
   ]);
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    // Don't show the raw server text; it means nothing to a contributor.
+    console.error("recordings lookup failed", error);
+    if (isExpiredSession(error)) throw new SessionExpiredError();
+    throw new Error("We couldn't load your recordings.");
+  }
 
   return ((data ?? []) as unknown as RecordingRow[]).map((row) => ({
     id: row.id,

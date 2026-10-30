@@ -94,6 +94,8 @@ function savedSession() {
     user_metadata: { full_name: 'Mina Abadir' },
     app_metadata: { provider: 'google' },
     created_at: '2026-10-01T00:00:00Z',
+    // A returning contributor: signed in again well after signing up.
+    last_sign_in_at: '2026-10-08T00:00:00Z',
   };
   const accessToken = `${b64({ alg: 'HS256', typ: 'JWT' })}.${b64({ sub: user.id, exp, role: 'authenticated', email: user.email })}.sig`;
   return { access_token: accessToken, refresh_token: 'refresh', token_type: 'bearer', expires_in: 3600, expires_at: exp, user };

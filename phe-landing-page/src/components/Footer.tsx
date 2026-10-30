@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 export function Footer() {
   return (
     <footer style={{
@@ -92,6 +94,8 @@ export function Footer() {
                     color: 'var(--text-muted)',
                     textDecoration: 'none',
                     transition: 'color 0.2s',
+                    display: 'inline-block',
+                    padding: '0.375rem 0',
                   }}
                   onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--gold)')}
                   onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
@@ -130,9 +134,19 @@ export function Footer() {
             ].map(({ label, href }, i) => (
               <span key={href}>
                 {i > 0 && ' · '}
-                <a href={href} style={{ color: 'var(--text-muted)', textDecoration: 'underline', textUnderlineOffset: '3px' }}>
+                {/* Padded to a comfortable tap target without changing the line's look. */}
+                <Link
+                  to={href}
+                  style={{
+                    color: 'var(--text-muted)',
+                    textDecoration: 'underline',
+                    textUnderlineOffset: '3px',
+                    display: 'inline-block',
+                    padding: '0.375rem 0.25rem',
+                  }}
+                >
                   {label}
-                </a>
+                </Link>
               </span>
             ))}
           </p>

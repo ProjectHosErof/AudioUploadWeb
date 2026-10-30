@@ -19,6 +19,13 @@ import dmca from "../legal/dmca-policy.md?raw";
 const DOCS = { privacy, terms, dmca } as const;
 export type LegalDoc = keyof typeof DOCS;
 
+/** What each page is, for search results. */
+const DESCRIPTIONS: Record<LegalDoc, string> = {
+  privacy: "What Project Hos Erof collects when you share a recording, why, and how to have it removed.",
+  terms: "The terms for using Project Hos Erof and the license you give when you share a hymn recording.",
+  dmca: "How to report a recording you believe infringes your copyright, and how we respond.",
+};
+
 const TITLES: Record<LegalDoc, string> = {
   privacy: "Privacy Policy",
   terms: "Terms of Service",
@@ -35,7 +42,7 @@ function render(markdown: string): string {
 }
 
 export default function LegalPage({ doc }: { doc: LegalDoc }) {
-  usePageTitle(TITLES[doc]);
+  usePageTitle(TITLES[doc], DESCRIPTIONS[doc]);
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [doc]);
