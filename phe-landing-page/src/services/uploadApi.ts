@@ -5,7 +5,7 @@
  *   3. POST /uploads/:id/complete -> confirms the object, advances lifecycle
  */
 import { API_BASE_URL } from "../config";
-import { supabase } from "../lib/supabaseClient";
+import { getSupabase, hasStoredSessionOrAuthRedirect } from "../lib/supabaseClient";
 
 export interface InitiateRequest {
   service_slug: string;
@@ -108,8 +108,11 @@ function messageFrom(data: unknown, fallback: string): string {
  * contributor when one happens to be signed in.
  */
 async function currentAccessToken(): Promise<string | null> {
-  if (!supabase) return null;
+  // No saved session means signed out; don't load the auth library to learn that.
+  if (!hasStoredSessionOrAuthRedirect()) return null;
   try {
+    const supabase = await getSupabase();
+    if (!supabase) return null;
     const { data } = await supabase.auth.getSession();
     return data.session?.access_token ?? null;
   } catch {
@@ -140,6 +143,25 @@ async function initiate(req: InitiateRequest): Promise<InitiateResponse> {
     if (res.status === 413) {
       throw new UploadError("That file is too large.", 413);
     }
+    if (res.status === 429) {
+      throw new UploadError(
+        "You've sent several recordings in a short time — please wait a minute, then try again.",
+        429,
+      );
+    }
+    if (res.status >= 500) {
+      throw new UploadError(
+        "Something went wrong on our side and your recording wasn't sent. Please try again in a moment.",
+        res.status,
+      );
+    }
+    const fields = (data as { fields?: unknown }).fields;
+    if (res.status === 400 && Array.isArray(fields) && fields.includes("hymn_slug")) {
+      throw new UploadError(
+        "That hymn isn't listed for the season and service you chose — please pick it again from the list.",
+        400,
+      );
+    }
     throw new UploadError(messageFrom(data, "Could not start the upload."), res.status);
   }
   return data as InitiateResponse;
@@ -164,8 +186,9 @@ function putToStorage(
     xhr.onload = () =>
       xhr.status >= 200 && xhr.status < 300
         ? resolve()
-        : reject(new UploadError(`Storage upload failed (${xhr.status}).`, xhr.status));
-    xhr.onerror = () => reject(new UploadError("Network error during upload."));
+        : reject(new UploadError("Your file didn't finish uploading. Please try again.", xhr.status));
+    xhr.onerror = () =>
+      reject(new UploadError("The connection dropped while uploading. Please check your connection and try again."));
     xhr.onabort = () => reject(new UploadError("Upload was interrupted."));
     xhr.send(file);
   });

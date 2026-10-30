@@ -122,7 +122,7 @@ export function reviewDigest(
       ? `Thank you — “${trimTitle(accepted[0].hymnLabel)}” is now in the collection`
       : `Thank you — ${accepted.length} of your recordings are in the collection`;
     heading = onlyOne ? 'Your recording is in' : 'Your recordings are in';
-    preheader = 'We listened, and your singing is now part of the archive.';
+    preheader = 'We listened, and your singing is now part of the collection.';
   } else if (accepted.length === 0) {
     subject = onlyOne
       ? `About your recording of “${trimTitle(declined[0].hymnLabel)}”`
@@ -130,9 +130,9 @@ export function reviewDigest(
     heading = onlyOne ? 'Not this one — but thank you' : 'Not these ones — but thank you';
     preheader = 'We couldn’t add these — but please do send more.';
   } else {
-    subject = `${accepted.length} of your recordings are in the collection`;
+    subject = `${accepted.length} of your recordings ${accepted.length === 1 ? 'is' : 'are'} now in the collection`;
     heading = 'Your recordings have been reviewed';
-    preheader = `${accepted.length} added to the archive, ${declined.length} we couldn’t use.`;
+    preheader = `${accepted.length} added to the collection, ${declined.length} we couldn’t use.`;
   }
 
   // --- Body ---------------------------------------------------------------
@@ -142,8 +142,8 @@ export function reviewDigest(
     parts.push(
       paragraph(
         onlyOne && declined.length === 0
-          ? 'We listened to your recording, and it is now part of the archive:'
-          : `We listened to everything you sent. ${accepted.length === 1 ? 'This one is' : 'These are'} now part of the archive:`,
+          ? 'We listened to your recording, and it is now part of the collection:'
+          : `We listened to everything you sent. ${accepted.length === 1 ? 'This one is' : 'These are'} now part of the collection:`,
       ),
       acceptedList(accepted),
       paragraph('That might sound like a small thing. It isn’t. Hymns like these have travelled from voice to voice for generations, mostly without ever being written down — and yours will help teach a system to recognise them, so that one day someone who hears one can simply ask what it is.'),
@@ -172,8 +172,8 @@ export function reviewDigest(
     ...(accepted.length
       ? [
           accepted.length === 1 && declined.length === 0
-            ? 'We listened to your recording, and it is now part of the archive:'
-            : 'We listened to everything you sent. Now part of the archive:',
+            ? 'We listened to your recording, and it is now part of the collection:'
+            : 'We listened to everything you sent. Now part of the collection:',
           ...accepted.map((i) => `  * ${i.hymnLabel}`),
           '',
         ]

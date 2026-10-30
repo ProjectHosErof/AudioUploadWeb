@@ -1,5 +1,5 @@
 import { API_BASE_URL } from "../config";
-import { supabase } from "../lib/supabaseClient";
+import { getSupabase } from "../lib/supabaseClient";
 
 /**
  * Contributor-facing reads.
@@ -68,6 +68,7 @@ let languageLabels: Map<string, string> | null = null;
 
 async function getLanguageLabels(): Promise<Map<string, string>> {
   if (languageLabels) return languageLabels;
+  const supabase = await getSupabase();
   if (!supabase) return new Map();
   const { data, error } = await supabase.from("languages").select("slug, label");
   if (error) {
@@ -83,6 +84,7 @@ async function getLanguageLabels(): Promise<Map<string, string>> {
  * filtering, so this returns nothing at all when signed out.
  */
 export async function fetchMyRecordings(): Promise<MyRecording[]> {
+  const supabase = await getSupabase();
   if (!supabase) return [];
 
   const [{ data, error }, labels] = await Promise.all([

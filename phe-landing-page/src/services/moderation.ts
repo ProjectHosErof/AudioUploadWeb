@@ -8,7 +8,7 @@
  * admin check (ADR-010).
  */
 import { API_BASE_URL } from "../config";
-import { supabase } from "../lib/supabaseClient";
+import { getSupabase } from "../lib/supabaseClient";
 
 export interface QueueItem {
   id: string;
@@ -53,6 +53,7 @@ export class ModerationError extends Error {
 }
 
 async function authHeaders(): Promise<Record<string, string>> {
+  const supabase = await getSupabase();
   if (!supabase) throw new ModerationError("Sign-in is not configured.", 401);
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
