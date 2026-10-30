@@ -2,6 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Cormorant Garamond 300, the hero heading's face. Served from public/fonts
+   (not bundled) so index.html can preload it at a stable URL. */
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 300;
+  src: url(/fonts/cormorant-garamond-latin-300-normal.woff2) format('woff2');
+}
+
 /* ─── Design Tokens ───────────────────────────────────────── */
 
 :root {
@@ -575,4 +585,20 @@ body {
   font-weight: 400;
   color: var(--parchment);
   text-decoration: none;
+}
+
+/* Review queue: the date / contributor block sits to the right of the title on
+   wide screens and under it on phones — consistently, whether or not a
+   contributor name is present. */
+.queue-meta { text-align: left; }
+@media (min-width: 640px) {
+  .queue-meta { text-align: right; }
+}
+
+/* Dashboard: cards on phones, the table from 768px up (it needs 640px of
+   content width, and the page has 2rem side padding). */
+.recordings-table { display: none; }
+@media (min-width: 768px) {
+  .recordings-cards { display: none; }
+  .recordings-table { display: block; }
 }

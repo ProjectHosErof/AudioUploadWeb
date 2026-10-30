@@ -50,13 +50,50 @@ function displayNameFrom(email: string | null, metadata: Record<string, unknown>
   return 'friend';
 }
 
+function StatusBadge({ track }: { track: MyRecording }) {
+  const presented = describeStatus(track);
+  return (
+    <span style={{
+      fontFamily: 'var(--font-ui)',
+      fontSize: '0.75rem',
+      letterSpacing: '0.16em',
+      textTransform: 'uppercase',
+      fontWeight: 500,
+      padding: '0.25rem 0.625rem',
+      border: '1px solid',
+      whiteSpace: 'nowrap',
+      ...TONE_STYLES[presented.tone],
+    }}>
+      {presented.label}
+    </span>
+  );
+}
+
+/** A decline is explainable to the person who submitted it. */
+function DeclineReason({ track, maxWidth }: { track: MyRecording; maxWidth?: string }) {
+  if (!track.reviewReason || track.status !== 'rejected') return null;
+  return (
+    <span style={{
+      display: 'block',
+      fontFamily: 'var(--font-ui)',
+      fontSize: '0.75rem',
+      lineHeight: 1.5,
+      color: 'var(--text-muted)',
+      marginTop: '0.5rem',
+      maxWidth,
+    }}>
+      {track.reviewReason}
+    </span>
+  );
+}
+
 interface StatCardProps { value: string; label: string; }
 
 function StatCard({ value, label }: StatCardProps) {
   return (
     <div style={{
       position: 'relative',
-      padding: '2.25rem 1.75rem 2rem',
+      padding: 'clamp(1.25rem, 4vw, 2.25rem) clamp(0.5rem, 3vw, 1.75rem) clamp(1rem, 3.5vw, 2rem)',
       backgroundColor: 'var(--ink-soft)',
       border: '1px solid var(--ink-mid)',
       borderBottom: '2px solid var(--crimson)',
@@ -67,19 +104,20 @@ function StatCard({ value, label }: StatCardProps) {
     }}>
       <p style={{
         fontFamily: 'var(--font-display)',
-        fontSize: 'clamp(3.5rem, 6vw, 4.75rem)',
+        fontSize: 'clamp(2rem, 8vw, 4.75rem)',
         fontWeight: 300,
         lineHeight: 1,
         color: 'var(--parchment)',
-        margin: '0 0 1rem',
+        margin: '0 0 clamp(0.5rem, 2vw, 1rem)',
         letterSpacing: '-0.02em',
       }}>
         {value}
       </p>
       <p style={{
         fontFamily: 'var(--font-ui)',
-        fontSize: '0.75rem',
-        letterSpacing: '0.22em',
+        fontSize: 'clamp(0.625rem, 2.6vw, 0.75rem)',
+        letterSpacing: 'clamp(0.06em, 0.5vw, 0.22em)',
+        lineHeight: 1.4,
         textTransform: 'uppercase',
         color: 'var(--text-muted)',
         margin: 0,
@@ -192,7 +230,7 @@ export function DashboardPage() {
         padding: 'clamp(2.5rem, 5vw, 3.5rem) 2rem',
       }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-px" style={{ backgroundColor: 'var(--ink-mid)' }}>
+          <div className="grid grid-cols-3 gap-px" style={{ backgroundColor: 'var(--ink-mid)' }}>
             <div style={{ backgroundColor: 'var(--ink-soft)' }}>
               <StatCard value={loading ? '—' : String(stats.total)} label="Total Recordings" />
             </div>
@@ -275,8 +313,46 @@ export function DashboardPage() {
             </div>
           )}
 
+          {/* Phones get a card per recording, so the status is never off-screen.
+              CSS shows exactly one of the two views (display:none also hides
+              the other from screen readers). */}
           {!loading && !error && hasTracks && (
-            <div style={{ overflowX: 'auto' }}>
+            <ul className="recordings-cards" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+              {tracks.map((track) => (
+                <li key={track.id} style={{ borderTop: '1px solid var(--ink-mid)', padding: '1.125rem 0' }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '0.75rem' }}>
+                    <span style={{
+                      fontFamily: 'var(--font-display)',
+                      fontSize: '1.25rem',
+                      color: 'var(--parchment)',
+                      lineHeight: 1.2,
+                      minWidth: 0,
+                      overflowWrap: 'anywhere',
+                    }}>
+                      {track.title}
+                    </span>
+                    <StatusBadge track={track} />
+                  </div>
+                  <p style={{
+                    fontFamily: 'var(--font-ui)',
+                    fontSize: '0.875rem',
+                    lineHeight: 1.6,
+                    color: 'var(--text-muted)',
+                    margin: '0.375rem 0 0',
+                  }}>
+                    {[track.service, track.season, track.languages].filter(Boolean).join(' · ')}
+                    <br />
+                    <span style={{ fontVariantNumeric: 'tabular-nums' }}>{formatTrackLength(track.durationSeconds)}</span>
+                    {' · '}Uploaded {formatDate(track.uploadedAt)}
+                  </p>
+                  <DeclineReason track={track} />
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {!loading && !error && hasTracks && (
+            <div className="recordings-table">
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '640px' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--ink-mid)' }}>
@@ -298,7 +374,6 @@ export function DashboardPage() {
                 </thead>
                 <tbody>
                   {tracks.map((track, i) => {
-                    const presented = describeStatus(track);
                     return (
                       <tr
                         key={track.id}
@@ -368,33 +443,8 @@ export function DashboardPage() {
                         </td>
 
                         <td style={{ padding: '1.125rem 0 1.125rem 0' }}>
-                          <span style={{
-                            fontFamily: 'var(--font-ui)',
-                            fontSize: '0.75rem',
-                            letterSpacing: '0.16em',
-                            textTransform: 'uppercase',
-                            fontWeight: 500,
-                            padding: '0.25rem 0.625rem',
-                            border: '1px solid',
-                            whiteSpace: 'nowrap',
-                            ...TONE_STYLES[presented.tone],
-                          }}>
-                            {presented.label}
-                          </span>
-                          {/* A decline is explainable to the person who submitted it. */}
-                          {track.reviewReason && track.status === 'rejected' && (
-                            <span style={{
-                              display: 'block',
-                              fontFamily: 'var(--font-ui)',
-                              fontSize: '0.75rem',
-                              lineHeight: 1.5,
-                              color: 'var(--text-muted)',
-                              marginTop: '0.5rem',
-                              maxWidth: '200px',
-                            }}>
-                              {track.reviewReason}
-                            </span>
-                          )}
+                          <StatusBadge track={track} />
+                          <DeclineReason track={track} maxWidth="200px" />
                         </td>
                       </tr>
                     );

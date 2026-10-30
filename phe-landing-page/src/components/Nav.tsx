@@ -47,8 +47,10 @@ export function Nav() {
 
   const handleSignOut = async () => {
     setOpen(false);
-    await signOut();
+    // Leave first: signing out on a protected page would otherwise bounce to
+    // /login before this navigation runs.
     navigate('/');
+    await signOut();
   };
 
   const current = (path: string) => (location.pathname === path ? 'page' as const : undefined);

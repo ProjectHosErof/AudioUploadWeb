@@ -39,16 +39,17 @@ export function HowItWorks() {
         <div className="grid md:grid-cols-2 gap-14 md:gap-24" style={{ alignItems: 'center' }}>
 
           <div>
-            <p style={{
+            <h2 style={{
               fontFamily: 'var(--font-ui)',
               fontSize: '0.75rem',
               letterSpacing: '0.22em',
               textTransform: 'uppercase',
+              fontWeight: 400,
               color: 'var(--crimson-label)',
               margin: '0 0 1.25rem',
             }}>
               How It Works
-            </p>
+            </h2>
             <ol style={{ listStyle: 'none', margin: 0, padding: 0 }}>
               {steps.map((s) => (
                 <li key={s.numeral} style={{ borderTop: '1px solid var(--ink-mid)', padding: '1.25rem 0' }}>

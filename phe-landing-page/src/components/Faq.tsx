@@ -32,17 +32,18 @@ export function Faq() {
       padding: 'clamp(3rem, 6vw, 4.5rem) 2rem',
     }}>
       <div style={{ maxWidth: '760px', margin: '0 auto' }}>
-        <p style={{
+        <h2 style={{
           fontFamily: 'var(--font-ui)',
           fontSize: '0.75rem',
           letterSpacing: '0.22em',
           textTransform: 'uppercase',
+          fontWeight: 400,
           color: 'var(--crimson-label)',
           margin: '0 0 1.25rem',
           textAlign: 'center',
         }}>
           Common Questions
-        </p>
+        </h2>
         {faqs.map((item) => (
           <details key={item.q} className="codex-details codex-details--faq">
             <summary>{item.q}</summary>

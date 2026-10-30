@@ -4,7 +4,8 @@ import { BrowserRouter } from 'react-router-dom'
 // Fonts are self-hosted (bundled from @fontsource) rather than loaded from
 // Google Fonts, so visitors' browsers never contact Google just to view the
 // site. Latin subsets, only the weights the design uses.
-import '@fontsource/cormorant-garamond/latin-300.css'
+// Cormorant Garamond 300 (the hero heading) is served from public/fonts and
+// preloaded in index.html; its @font-face is in index.css.
 import '@fontsource/cormorant-garamond/latin-300-italic.css'
 import '@fontsource/cormorant-garamond/latin-400.css'
 import '@fontsource/cormorant-garamond/latin-400-italic.css'

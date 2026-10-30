@@ -155,7 +155,7 @@ function ReviewCard({ item, onResolved, onError }: CardProps) {
           </p>
         </div>
 
-        <div style={{ textAlign: 'right', fontFamily: 'var(--font-ui)', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+        <div className="queue-meta" style={{ fontFamily: 'var(--font-ui)', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
           <p style={{ margin: '0 0 0.25rem' }}>{formatDate(item.uploadedAt)}</p>
           {item.contributor && <p style={{ margin: 0, color: 'var(--gold-muted)' }}>{item.contributor}</p>}
           {!item.isEnriched && (
@@ -208,7 +208,7 @@ function ReviewCard({ item, onResolved, onError }: CardProps) {
           </button>
         )}
         {item.originalFilename && (
-          <p style={{ ...metaStyle, fontSize: '0.75rem', marginTop: '0.5rem', opacity: 0.7 }}>
+          <p style={{ ...metaStyle, fontSize: '0.75rem', marginTop: '0.5rem', color: 'var(--text-muted)' }}>
             {item.originalFilename}
           </p>
         )}
