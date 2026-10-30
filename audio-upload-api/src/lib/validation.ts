@@ -17,6 +17,16 @@ export const CONTENT_TYPE_TO_EXT: Record<string, string> = {
   'audio/ogg': 'ogg',
   'application/ogg': 'ogg',
   'audio/vorbis': 'ogg',
+  // Phone recorders: iPhone Voice Memos and most Android apps produce M4A
+  // (AAC in an MP4 container); browsers report it under several names.
+  'audio/mp4': 'm4a',
+  'audio/x-m4a': 'm4a',
+  'audio/m4a': 'm4a',
+  'audio/aac': 'aac',
+  'audio/x-aac': 'aac',
+  // WhatsApp voice notes and browser recorders.
+  'audio/webm': 'webm',
+  'audio/opus': 'opus',
 };
 
 export const ALLOWED_CONTENT_TYPES = Object.keys(CONTENT_TYPE_TO_EXT);
@@ -92,6 +102,8 @@ export type ReviewInput = z.infer<typeof reviewSchema>;
  */
 export const subscribeSchema = z.object({
   email: z.string().trim().email().max(254),
+  // Bot check: without it the form could be used to mail any address.
+  turnstile_token: z.string().min(1),
   source: z.enum(['landing', 'upload']).optional(),
 });
 

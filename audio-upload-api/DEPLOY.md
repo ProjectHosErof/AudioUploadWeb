@@ -175,8 +175,10 @@ Override `SITE_URL` in `.dev.vars` if that matters for what you're testing.
 Database changes are additive and go first; the Worker after; the site last.
 
 1. `npm run db:migrate` — **confirm it actually applied** (see the IPv4 note).
-   Migration 0010 (`recordings.terms_version`) must be in place before the
-   Worker that writes it is deployed, or every upload fails.
+   Migrations add columns the new Worker reads or writes, so they must be in
+   place before it deploys: 0010 (`recordings.terms_version`) or every upload
+   fails; 0011 (`subscribers.confirmation_sent_at`) or every newsletter
+   signup fails.
 2. `npm run seed` if the vocabulary changed.
 3. Pre-flight: `npm run check:vocab && npm run check:placement && npm test && npx tsc --noEmit`,
    then `npm run deploy`.
