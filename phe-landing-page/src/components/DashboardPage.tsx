@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { usePageTitle } from '../lib/usePageTitle';
+import { Link, useNavigate } from 'react-router-dom';
 import { Nav } from './Nav';
-import { useAuth } from '../auth/AuthProvider';
+import { useAuth } from '../auth/useAuth';
 import {
   describeStatus,
   fetchCommunityStats,
   fetchMyRecordings,
+  SessionExpiredError,
   type CommunityStats,
   type MyRecording,
   type StatusPresentation,
@@ -49,13 +51,59 @@ function displayNameFrom(email: string | null, metadata: Record<string, unknown>
   return 'friend';
 }
 
+function StatusBadge({ track }: { track: MyRecording }) {
+  const presented = describeStatus(track);
+  return (
+    <span style={{
+      fontFamily: 'var(--font-ui)',
+      fontSize: '0.75rem',
+      letterSpacing: '0.16em',
+      textTransform: 'uppercase',
+      fontWeight: 500,
+      padding: '0.25rem 0.625rem',
+      border: '1px solid',
+      whiteSpace: 'nowrap',
+      ...TONE_STYLES[presented.tone],
+    }}>
+      {presented.label}
+    </span>
+  );
+}
+
+/** A decline is explainable to the person who submitted it. */
+function DeclineReason({ track, maxWidth }: { track: MyRecording; maxWidth?: string }) {
+  if (!track.reviewReason || track.status !== 'rejected') return null;
+  return (
+    <span style={{
+      display: 'block',
+      fontFamily: 'var(--font-ui)',
+      fontSize: '0.75rem',
+      lineHeight: 1.5,
+      color: 'var(--text-muted)',
+      marginTop: '0.5rem',
+      maxWidth,
+    }}>
+      {track.reviewReason}
+    </span>
+  );
+}
+
+/** Why the recordings didn't load: an expired sign-in, or anything else. */
+type LoadError = 'expired' | 'failed' | null;
+
+/** First sign-in: the account was created moments before this session began. */
+function isFirstVisit(createdAt: string | undefined, lastSignInAt: string | undefined): boolean {
+  if (!createdAt || !lastSignInAt) return true;
+  return Math.abs(Date.parse(lastSignInAt) - Date.parse(createdAt)) < 2 * 60 * 1000;
+}
+
 interface StatCardProps { value: string; label: string; }
 
 function StatCard({ value, label }: StatCardProps) {
   return (
     <div style={{
       position: 'relative',
-      padding: '2.25rem 1.75rem 2rem',
+      padding: 'clamp(1.25rem, 4vw, 2.25rem) clamp(0.5rem, 3vw, 1.75rem) clamp(1rem, 3.5vw, 2rem)',
       backgroundColor: 'var(--ink-soft)',
       border: '1px solid var(--ink-mid)',
       borderBottom: '2px solid var(--crimson)',
@@ -66,19 +114,20 @@ function StatCard({ value, label }: StatCardProps) {
     }}>
       <p style={{
         fontFamily: 'var(--font-display)',
-        fontSize: 'clamp(3.5rem, 6vw, 4.75rem)',
+        fontSize: 'clamp(2rem, 8vw, 4.75rem)',
         fontWeight: 300,
         lineHeight: 1,
         color: 'var(--parchment)',
-        margin: '0 0 1rem',
+        margin: '0 0 clamp(0.5rem, 2vw, 1rem)',
         letterSpacing: '-0.02em',
       }}>
         {value}
       </p>
       <p style={{
         fontFamily: 'var(--font-ui)',
-        fontSize: '0.625rem',
-        letterSpacing: '0.22em',
+        fontSize: '0.75rem',
+        letterSpacing: 'clamp(0.04em, 0.5vw, 0.22em)',
+        lineHeight: 1.4,
         textTransform: 'uppercase',
         color: 'var(--text-muted)',
         margin: 0,
@@ -90,28 +139,46 @@ function StatCard({ value, label }: StatCardProps) {
 }
 
 export function DashboardPage() {
-  const { user } = useAuth();
-  const [tracks, setTracks] = useState<MyRecording[]>([]);
+  usePageTitle('My contributions');
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const [community, setCommunity] = useState<CommunityStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  // Bumped by "Try again" to re-run the load.
+  const [attempt, setAttempt] = useState(0);
+  // The last result, tagged with the user and attempt it belongs to. "Loading"
+  // is derived (no result yet for *this* request) rather than set inside the
+  // effect, so a change of user can't flash the previous person's recordings.
+  const userId = user?.id ?? null;
+  const requestKey = `${userId}:${attempt}`;
+  const [result, setResult] = useState<{ key: string; rows: MyRecording[]; error: LoadError } | null>(null);
+  const loading = result?.key !== requestKey;
+  const tracks = useMemo(() => (loading ? [] : result?.rows ?? []), [loading, result]);
+  const error: LoadError = loading ? null : result?.error ?? null;
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    setError('');
 
     fetchMyRecordings()
-      .then((rows) => { if (active) setTracks(rows); })
+      .then((rows) => { if (active) setResult({ key: requestKey, rows, error: null }); })
       .catch((err) => {
-        if (active) setError(err instanceof Error ? err.message : 'Could not load your recordings.');
-      })
-      .finally(() => { if (active) setLoading(false); });
-
-    fetchCommunityStats().then((s) => { if (active) setCommunity(s); });
+        if (active) {
+          setResult({ key: requestKey, rows: [], error: err instanceof SessionExpiredError ? 'expired' : 'failed' });
+        }
+      });
 
     return () => { active = false; };
-  }, [user?.id]);
+  }, [requestKey]);
+
+  useEffect(() => {
+    let active = true;
+    fetchCommunityStats().then((s) => { if (active) setCommunity(s); });
+    return () => { active = false; };
+  }, []);
+
+  const signInAgain = async () => {
+    await signOut();
+    navigate('/login');
+  };
 
   const stats = useMemo(() => ({
     total: tracks.length,
@@ -125,6 +192,7 @@ export function DashboardPage() {
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--ink)' }}>
       <Nav />
+      <main id="main">
 
       {/* Page header */}
       <header style={{
@@ -137,7 +205,7 @@ export function DashboardPage() {
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <p style={{
             fontFamily: 'var(--font-ui)',
-            fontSize: '0.625rem',
+            fontSize: '0.75rem',
             letterSpacing: '0.22em',
             textTransform: 'uppercase',
             color: 'var(--crimson-label)',
@@ -156,16 +224,18 @@ export function DashboardPage() {
                 margin: '0 0 0.5rem',
                 letterSpacing: '-0.01em',
               }}>
-                Welcome back, {name}.
+                {isFirstVisit(user?.created_at, user?.last_sign_in_at) ? 'Welcome' : 'Welcome back'}, {name}.
               </h1>
-              <p className="anim-2" style={{
-                fontFamily: 'var(--font-ui)',
-                fontSize: '1.0625rem',
-                color: 'var(--text-muted)',
-                margin: 0,
-              }}>
-                {hasTracks ? 'Your archive is growing.' : 'Your archive begins with a single hymn.'}
-              </p>
+              {!loading && !error && (
+                <p className="anim-2" style={{
+                  fontFamily: 'var(--font-ui)',
+                  fontSize: '1.0625rem',
+                  color: 'var(--text-muted)',
+                  margin: 0,
+                }}>
+                  {hasTracks ? 'Your collection is growing.' : 'Your collection begins with a single hymn.'}
+                </p>
+              )}
             </div>
             <Link
               to="/#upload"
@@ -185,15 +255,15 @@ export function DashboardPage() {
         padding: 'clamp(2.5rem, 5vw, 3.5rem) 2rem',
       }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-px" style={{ backgroundColor: 'var(--ink-mid)' }}>
+          <div className="grid grid-cols-3 gap-px" style={{ backgroundColor: 'var(--ink-mid)' }}>
             <div style={{ backgroundColor: 'var(--ink-soft)' }}>
-              <StatCard value={loading ? '—' : String(stats.total)} label="Total Recordings" />
+              <StatCard value={loading || error ? '—' : String(stats.total)} label="Total Recordings" />
             </div>
             <div style={{ backgroundColor: 'var(--ink-soft)' }}>
-              <StatCard value={loading ? '—' : formatDuration(stats.seconds)} label="Duration Uploaded" />
+              <StatCard value={loading || error ? '—' : formatDuration(stats.seconds)} label="Duration Uploaded" />
             </div>
             <div style={{ backgroundColor: 'var(--ink-soft)' }}>
-              <StatCard value={loading ? '—' : String(stats.inCollection)} label="In the Collection" />
+              <StatCard value={loading || error ? '—' : String(stats.inCollection)} label="In the Collection" />
             </div>
           </div>
 
@@ -210,12 +280,13 @@ export function DashboardPage() {
               Together, {community.contributors}{' '}
               {community.contributors === 1 ? 'contributor has' : 'contributors have'} given{' '}
               <span style={{ color: 'var(--gold)' }}>{community.totalRecordings}</span>{' '}
-              {community.totalRecordings === 1 ? 'recording' : 'recordings'} to the archive
-              {community.readyRecordings > 0 && (
+              {community.totalRecordings === 1 ? 'recording' : 'recordings'}
+              {/* Durations arrive after processing; until then there's no figure to show. */}
+              {community.readySeconds > 0 && (
                 <>
                   {' '}·{' '}
                   <span style={{ color: 'var(--gold)' }}>{formatDuration(community.readySeconds)}</span>{' '}
-                  accepted into the collection
+                  now in the collection
                 </>
               )}
               .
@@ -232,7 +303,7 @@ export function DashboardPage() {
 
           <p style={{
             fontFamily: 'var(--font-ui)',
-            fontSize: '0.625rem',
+            fontSize: '0.75rem',
             letterSpacing: '0.22em',
             textTransform: 'uppercase',
             color: 'var(--crimson-label)',
@@ -256,27 +327,74 @@ export function DashboardPage() {
           )}
 
           {!loading && error && (
-            <div style={{ border: '1px solid var(--crimson)', padding: '2rem', textAlign: 'center' }}>
+            <div role="alert" style={{ border: '1px solid var(--crimson)', padding: '2rem', textAlign: 'center' }}>
               <p style={{
                 fontFamily: 'var(--font-ui)',
                 fontSize: '1rem',
                 color: 'var(--crimson-label)',
-                margin: 0,
+                margin: '0 0 1.25rem',
               }}>
-                {error}
+                {error === 'expired' ? 'Your sign-in has expired.' : "We couldn't load your recordings."}
               </p>
+              {error === 'expired' ? (
+                <button type="button" className="hero-cta" onClick={signInAgain}>
+                  Sign in again
+                </button>
+              ) : (
+                <button type="button" className="hero-cta" onClick={() => setAttempt((n) => n + 1)}>
+                  Try again
+                </button>
+              )}
             </div>
           )}
 
+          {/* Phones get a card per recording, so the status is never off-screen.
+              CSS shows exactly one of the two views (display:none also hides
+              the other from screen readers). */}
           {!loading && !error && hasTracks && (
-            <div style={{ overflowX: 'auto' }}>
+            <ul className="recordings-cards" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+              {tracks.map((track) => (
+                <li key={track.id} style={{ borderTop: '1px solid var(--ink-mid)', padding: '1.125rem 0' }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '0.75rem' }}>
+                    <span style={{
+                      fontFamily: 'var(--font-display)',
+                      fontSize: '1.25rem',
+                      color: 'var(--parchment)',
+                      lineHeight: 1.2,
+                      minWidth: 0,
+                      overflowWrap: 'anywhere',
+                    }}>
+                      {track.title}
+                    </span>
+                    <StatusBadge track={track} />
+                  </div>
+                  <p style={{
+                    fontFamily: 'var(--font-ui)',
+                    fontSize: '0.875rem',
+                    lineHeight: 1.6,
+                    color: 'var(--text-muted)',
+                    margin: '0.375rem 0 0',
+                  }}>
+                    {[track.service, track.season, track.languages].filter(Boolean).join(' · ')}
+                    <br />
+                    <span style={{ fontVariantNumeric: 'tabular-nums' }}>{formatTrackLength(track.durationSeconds)}</span>
+                    {' · '}Uploaded {formatDate(track.uploadedAt)}
+                  </p>
+                  <DeclineReason track={track} />
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {!loading && !error && hasTracks && (
+            <div className="recordings-table">
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '640px' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--ink-mid)' }}>
                     {['Title', 'Service', 'Season', 'Length', 'Uploaded', 'Status'].map(col => (
                       <th key={col} style={{
                         fontFamily: 'var(--font-ui)',
-                        fontSize: '0.625rem',
+                        fontSize: '0.75rem',
                         letterSpacing: '0.2em',
                         textTransform: 'uppercase',
                         color: 'var(--text-muted)',
@@ -291,7 +409,6 @@ export function DashboardPage() {
                 </thead>
                 <tbody>
                   {tracks.map((track, i) => {
-                    const presented = describeStatus(track);
                     return (
                       <tr
                         key={track.id}
@@ -361,33 +478,8 @@ export function DashboardPage() {
                         </td>
 
                         <td style={{ padding: '1.125rem 0 1.125rem 0' }}>
-                          <span style={{
-                            fontFamily: 'var(--font-ui)',
-                            fontSize: '0.625rem',
-                            letterSpacing: '0.16em',
-                            textTransform: 'uppercase',
-                            fontWeight: 500,
-                            padding: '0.25rem 0.625rem',
-                            border: '1px solid',
-                            whiteSpace: 'nowrap',
-                            ...TONE_STYLES[presented.tone],
-                          }}>
-                            {presented.label}
-                          </span>
-                          {/* A decline is explainable to the person who submitted it. */}
-                          {track.reviewReason && track.status === 'rejected' && (
-                            <span style={{
-                              display: 'block',
-                              fontFamily: 'var(--font-ui)',
-                              fontSize: '0.6875rem',
-                              lineHeight: 1.5,
-                              color: 'var(--text-muted)',
-                              marginTop: '0.5rem',
-                              maxWidth: '200px',
-                            }}>
-                              {track.reviewReason}
-                            </span>
-                          )}
+                          <StatusBadge track={track} />
+                          <DeclineReason track={track} maxWidth="200px" />
                         </td>
                       </tr>
                     );
@@ -444,6 +536,7 @@ export function DashboardPage() {
           )}
         </div>
       </section>
+      </main>
     </div>
   );
 }

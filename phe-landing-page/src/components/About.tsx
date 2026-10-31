@@ -21,9 +21,7 @@ export function About() {
     <section
       id="about"
       style={{
-        backgroundColor: 'var(--ink-soft)',
-        borderTop: '1px solid var(--ink-mid)',
-        borderBottom: '1px solid var(--ink-mid)',
+        backgroundColor: 'var(--ink)',
         padding: 'clamp(4rem, 8vw, 6.5rem) 2rem',
       }}
     >
@@ -34,7 +32,7 @@ export function About() {
           <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <p style={{
               fontFamily: 'var(--font-ui)',
-              fontSize: '0.625rem',
+              fontSize: '0.75rem',
               letterSpacing: '0.22em',
               textTransform: 'uppercase',
               color: 'var(--crimson-label)',
@@ -79,7 +77,7 @@ export function About() {
               color: 'var(--text-muted)',
               margin: 0,
             }}>
-              This is Phase 1 of a larger initiative — your recordings are building the dataset that will power what comes next.
+              This is Phase 1: gathering the voices of our parishes. What we build from them will always serve the Church and the people learning its hymns.
             </p>
           </div>
 

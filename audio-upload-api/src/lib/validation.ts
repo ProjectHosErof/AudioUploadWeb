@@ -17,6 +17,16 @@ export const CONTENT_TYPE_TO_EXT: Record<string, string> = {
   'audio/ogg': 'ogg',
   'application/ogg': 'ogg',
   'audio/vorbis': 'ogg',
+  // Phone recorders: iPhone Voice Memos and most Android apps produce M4A
+  // (AAC in an MP4 container); browsers report it under several names.
+  'audio/mp4': 'm4a',
+  'audio/x-m4a': 'm4a',
+  'audio/m4a': 'm4a',
+  'audio/aac': 'aac',
+  'audio/x-aac': 'aac',
+  // WhatsApp voice notes and browser recorders.
+  'audio/webm': 'webm',
+  'audio/opus': 'opus',
 };
 
 export const ALLOWED_CONTENT_TYPES = Object.keys(CONTENT_TYPE_TO_EXT);
@@ -26,6 +36,15 @@ export const ALLOWED_CONTENT_TYPES = Object.keys(CONTENT_TYPE_TO_EXT);
  * is validated against the DB reference tables in the route; here we only check
  * shape, the content-type allowlist, and a positive declared size.
  */
+/**
+ * Versions of the Terms (with its Contributor License) an upload may claim to
+ * have accepted. Mirrors TERMS_VERSION in phe-landing-page/src/legal/terms.ts.
+ * When the Terms change, ADD the new version here (and deploy the Worker)
+ * before the frontend starts sending it; keep older ones until no deployed
+ * frontend can still send them.
+ */
+export const ACCEPTED_TERMS_VERSIONS = ['2026-1'] as const;
+
 export const initiateSchema = z.object({
   service_slug: z.string().min(1).max(100),
   season_slug: z.string().min(1).max(100),
@@ -39,6 +58,10 @@ export const initiateSchema = z.object({
   wants_updates: z.boolean().default(false),
   email: z.string().email().max(254).optional(),
   turnstile_token: z.string().min(1),
+  // Required: no recording enters the corpus without a recorded license.
+  accepted_terms_version: z.enum(ACCEPTED_TERMS_VERSIONS, {
+    errorMap: () => ({ message: 'You must agree to the current Terms to upload' }),
+  }),
 });
 
 export type InitiateInput = z.infer<typeof initiateSchema>;
@@ -79,6 +102,8 @@ export type ReviewInput = z.infer<typeof reviewSchema>;
  */
 export const subscribeSchema = z.object({
   email: z.string().trim().email().max(254),
+  // Bot check: without it the form could be used to mail any address.
+  turnstile_token: z.string().min(1),
   source: z.enum(['landing', 'upload']).optional(),
 });
 

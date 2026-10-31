@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 export function Footer() {
   return (
     <footer style={{
@@ -9,7 +11,7 @@ export function Footer() {
 
         {/* Ornament */}
         <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-          <span style={{ color: 'var(--gold-muted)', fontSize: '0.625rem', letterSpacing: '0.5em' }}>◆ ◆ ◆</span>
+          <span aria-hidden="true" style={{ color: 'var(--gold-muted)', fontSize: '0.625rem', letterSpacing: '0.5em' }}>◆ ◆ ◆</span>
         </div>
 
         {/* Main columns */}
@@ -42,7 +44,7 @@ export function Footer() {
           <div>
             <p style={{
               fontFamily: 'var(--font-ui)',
-              fontSize: '0.625rem',
+              fontSize: '0.75rem',
               letterSpacing: '0.22em',
               textTransform: 'uppercase',
               color: 'var(--crimson-label)',
@@ -52,9 +54,10 @@ export function Footer() {
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
               {[
-                { label: 'About', href: '#about' },
-                { label: 'Upload a Recording', href: '#upload' },
-                { label: 'Stay Informed', href: '#notify' },
+                { label: 'How It Works', href: '/#how-it-works' },
+                { label: 'Upload a Recording', href: '/#upload' },
+                { label: 'About', href: '/#about' },
+                { label: 'Stay Informed', href: '/#notify' },
               ].map(({ label, href }) => (
                 <a
                   key={label}
@@ -75,7 +78,7 @@ export function Footer() {
               <div style={{ borderTop: '1px solid var(--ink-mid)', paddingTop: '0.875rem', marginTop: '0.125rem' }}>
                 <p style={{
                   fontFamily: 'var(--font-ui)',
-                  fontSize: '0.625rem',
+                  fontSize: '0.75rem',
                   letterSpacing: '0.22em',
                   textTransform: 'uppercase',
                   color: 'var(--crimson-label)',
@@ -84,18 +87,20 @@ export function Footer() {
                   Contact
                 </p>
                 <a
-                  href="mailto:contact@projecthoserof.com"
+                  href="mailto:contact@hoserof.org"
                   style={{
                     fontFamily: 'var(--font-ui)',
                     fontSize: '1rem',
                     color: 'var(--text-muted)',
                     textDecoration: 'none',
                     transition: 'color 0.2s',
+                    display: 'inline-block',
+                    padding: '0.375rem 0',
                   }}
                   onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--gold)')}
                   onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
                 >
-                  contact@projecthoserof.com
+                  contact@hoserof.org
                 </a>
               </div>
             </div>
@@ -121,6 +126,29 @@ export function Footer() {
             letterSpacing: '0.04em',
           }}>
             © 2026 Project Hos Erof. All rights reserved.
+            {' · '}
+            {[
+              { label: 'Privacy', href: '/privacy' },
+              { label: 'Terms', href: '/terms' },
+              { label: 'Copyright', href: '/dmca' },
+            ].map(({ label, href }, i) => (
+              <span key={href}>
+                {i > 0 && ' · '}
+                {/* Padded to a comfortable tap target without changing the line's look. */}
+                <Link
+                  to={href}
+                  style={{
+                    color: 'var(--text-muted)',
+                    textDecoration: 'underline',
+                    textUnderlineOffset: '3px',
+                    display: 'inline-block',
+                    padding: '0.375rem 0.25rem',
+                  }}
+                >
+                  {label}
+                </Link>
+              </span>
+            ))}
           </p>
           <p style={{
             fontFamily: 'var(--font-ui)',

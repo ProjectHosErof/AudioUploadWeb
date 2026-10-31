@@ -1,11 +1,16 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile';
 import { subscribeEmail } from '../services/subscribe';
+import { TURNSTILE_SITE_KEY } from '../config';
 
 export function NotifySection() {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  // Bot check: the API refuses to send a confirmation email without it.
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileInstance>(null);
 
   function isValidEmail(e: string) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
@@ -18,14 +23,21 @@ export function NotifySection() {
       setError('Please enter a valid email address.');
       return;
     }
+    if (!turnstileToken) {
+      setError('Please complete the verification check below.');
+      return;
+    }
     setError('');
     setSubmitting(true);
     try {
-      await subscribeEmail(email);
+      await subscribeEmail(email, turnstileToken);
       setSubmitted(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
     } finally {
+      // Tokens are single-use: reset for a retry.
+      turnstileRef.current?.reset();
+      setTurnstileToken(null);
       setSubmitting(false);
     }
   };
@@ -41,7 +53,7 @@ export function NotifySection() {
 
         <p style={{
           fontFamily: 'var(--font-ui)',
-          fontSize: '0.625rem',
+          fontSize: '0.75rem',
           letterSpacing: '0.22em',
           textTransform: 'uppercase',
           color: 'var(--crimson-label)',
@@ -92,18 +104,23 @@ export function NotifySection() {
               color: 'var(--text-muted)',
               margin: '0 0 2.5rem',
             }}>
-              Don't have a recording to share yet? Enter your email and we'll keep you updated as the project grows.
+              Not ready to share a recording yet? Enter your email and we'll keep you updated as the project grows.
             </p>
 
-            <form onSubmit={handleSubmit}>
-              <div style={{ display: 'flex', gap: '0.75rem', marginBottom: error ? '0.5rem' : 0 }}>
+            <form onSubmit={handleSubmit} noValidate>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginBottom: error ? '0.5rem' : 0 }}>
+                <label htmlFor="notify-email" className="sr-only">Email address</label>
                 <input
+                  id="notify-email"
                   type="email"
+                  autoComplete="email"
+                  aria-invalid={error ? true : undefined}
+                  aria-describedby={error ? 'notify-error' : undefined}
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); if (error) setError(''); }}
                   className={`codex-input${error ? ' codex-input--error' : ''}`}
                   placeholder="your.email@example.com"
-                  style={{ flex: 1 }}
+                  style={{ flex: '1 1 220px', minWidth: 0 }}
                   disabled={submitting}
                 />
                 <button
@@ -116,7 +133,7 @@ export function NotifySection() {
                 </button>
               </div>
               {error && (
-                <p style={{
+                <p id="notify-error" role="alert" style={{
                   fontFamily: 'var(--font-ui)',
                   fontSize: '0.875rem',
                   color: 'var(--crimson-label)',
@@ -125,6 +142,18 @@ export function NotifySection() {
                 }}>
                   {error}
                 </p>
+              )}
+              {TURNSTILE_SITE_KEY && (
+                <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1rem' }}>
+                  <Turnstile
+                    ref={turnstileRef}
+                    siteKey={TURNSTILE_SITE_KEY}
+                    onSuccess={(token) => setTurnstileToken(token)}
+                    onExpire={() => setTurnstileToken(null)}
+                    onError={() => setTurnstileToken(null)}
+                    options={{ theme: 'dark', size: 'compact', action: 'subscribe' }}
+                  />
+                </div>
               )}
             </form>
 

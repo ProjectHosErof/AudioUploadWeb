@@ -5,7 +5,7 @@
  *   3. POST /uploads/:id/complete -> confirms the object, advances lifecycle
  */
 import { API_BASE_URL } from "../config";
-import { supabase } from "../lib/supabaseClient";
+import { getSupabase, hasStoredSessionOrAuthRedirect } from "../lib/supabaseClient";
 
 export interface InitiateRequest {
   service_slug: string;
@@ -18,6 +18,8 @@ export interface InitiateRequest {
   wants_updates: boolean;
   email?: string;
   turnstile_token: string;
+  /** Version of the Terms the contributor agreed to (src/legal/terms.ts). */
+  accepted_terms_version: string;
 }
 
 interface InitiateResponse {
@@ -48,6 +50,12 @@ const EXT_TO_CONTENT_TYPE: Record<string, string> = {
   aif: "audio/aiff",
   flac: "audio/flac",
   ogg: "audio/ogg",
+  // Phone recorders (iPhone Voice Memos, most Android apps).
+  m4a: "audio/mp4",
+  aac: "audio/aac",
+  // WhatsApp voice notes and browser recorders.
+  webm: "audio/webm",
+  opus: "audio/opus",
 };
 
 const ALLOWED_BROWSER_TYPES = new Set([
@@ -56,7 +64,23 @@ const ALLOWED_BROWSER_TYPES = new Set([
   "audio/aiff", "audio/x-aiff",
   "audio/flac", "audio/x-flac",
   "audio/ogg", "application/ogg", "audio/vorbis",
+  "audio/mp4", "audio/x-m4a", "audio/m4a",
+  "audio/aac", "audio/x-aac",
+  "audio/webm", "audio/opus",
 ]);
+
+/** For the file input's `accept`: every extension and MIME type above. */
+export const ACCEPTED_AUDIO = [
+  ...Object.keys(EXT_TO_CONTENT_TYPE).map((ext) => `.${ext}`),
+  ...ALLOWED_BROWSER_TYPES,
+].join(",");
+
+/** Matches the Worker's MAX_UPLOAD_BYTES (wrangler.jsonc): 200 MB. Checked
+ *  as soon as a file is chosen; the Worker enforces it either way. */
+export const MAX_UPLOAD_BYTES = 209_715_200;
+
+/** Human-readable list for labels and error messages. */
+export const ACCEPTED_AUDIO_LABEL = "M4A, MP3, WAV, FLAC, AIFF, OGG or WebM";
 
 /**
  * Resolve a content-type the Worker will accept. Prefer the file extension
@@ -84,8 +108,11 @@ function messageFrom(data: unknown, fallback: string): string {
  * contributor when one happens to be signed in.
  */
 async function currentAccessToken(): Promise<string | null> {
-  if (!supabase) return null;
+  // No saved session means signed out; don't load the auth library to learn that.
+  if (!hasStoredSessionOrAuthRedirect()) return null;
   try {
+    const supabase = await getSupabase();
+    if (!supabase) return null;
     const { data } = await supabase.auth.getSession();
     return data.session?.access_token ?? null;
   } catch {
@@ -116,6 +143,25 @@ async function initiate(req: InitiateRequest): Promise<InitiateResponse> {
     if (res.status === 413) {
       throw new UploadError("That file is too large.", 413);
     }
+    if (res.status === 429) {
+      throw new UploadError(
+        "You've sent several recordings in a short time — please wait a minute, then try again.",
+        429,
+      );
+    }
+    if (res.status >= 500) {
+      throw new UploadError(
+        "Something went wrong on our side and your recording wasn't sent. Please try again in a moment.",
+        res.status,
+      );
+    }
+    const fields = (data as { fields?: unknown }).fields;
+    if (res.status === 400 && Array.isArray(fields) && fields.includes("hymn_slug")) {
+      throw new UploadError(
+        "That hymn isn't listed for the season and service you chose — please pick it again from the list.",
+        400,
+      );
+    }
     throw new UploadError(messageFrom(data, "Could not start the upload."), res.status);
   }
   return data as InitiateResponse;
@@ -140,24 +186,40 @@ function putToStorage(
     xhr.onload = () =>
       xhr.status >= 200 && xhr.status < 300
         ? resolve()
-        : reject(new UploadError(`Storage upload failed (${xhr.status}).`, xhr.status));
-    xhr.onerror = () => reject(new UploadError("Network error during upload."));
+        : reject(new UploadError("Your file didn't finish uploading. Please try again.", xhr.status));
+    xhr.onerror = () =>
+      reject(new UploadError("The connection dropped while uploading. Please check your connection and try again."));
     xhr.onabort = () => reject(new UploadError("Upload was interrupted."));
     xhr.send(file);
   });
 }
 
+/**
+ * Confirm the upload with the Worker. By now the file is safely in storage, so
+ * a hiccup here shouldn't send the contributor back to upload it all again:
+ * retry a few times with backoff. Safe because /complete is idempotent.
+ * A 409 ("not in storage yet") is also worth retrying — storage can lag a
+ * moment behind the PUT.
+ */
 async function complete(recordingId: string): Promise<void> {
-  let res: Response;
-  try {
-    res = await fetch(`${API_BASE_URL}/uploads/${recordingId}/complete`, { method: "POST" });
-  } catch {
-    throw new UploadError("Uploaded, but couldn't confirm with the server. Please try again.");
-  }
-  if (!res.ok) {
+  const delays = [0, 1000, 3000, 7000];
+  let lastError: UploadError | null = null;
+  for (const delay of delays) {
+    if (delay) await new Promise((r) => setTimeout(r, delay));
+    let res: Response;
+    try {
+      res = await fetch(`${API_BASE_URL}/uploads/${recordingId}/complete`, { method: "POST" });
+    } catch {
+      lastError = new UploadError("Uploaded, but couldn't confirm with the server.");
+      continue;
+    }
+    if (res.ok) return;
     const data = await res.json().catch(() => ({}));
-    throw new UploadError(messageFrom(data, "Could not finalize the upload."), res.status);
+    lastError = new UploadError(messageFrom(data, "Could not finalize the upload."), res.status);
+    // Only transient failures are worth another try.
+    if (res.status !== 409 && res.status < 500) break;
   }
+  throw lastError ?? new UploadError("Could not finalize the upload.");
 }
 
 /**

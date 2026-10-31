@@ -2,6 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Cormorant Garamond 300, the hero heading's face. Served from public/fonts
+   (not bundled) so index.html can preload it at a stable URL. */
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 300;
+  src: url(/fonts/cormorant-garamond-latin-300-normal.woff2) format('woff2');
+}
+
 /* ─── Design Tokens ───────────────────────────────────────── */
 
 :root {
@@ -11,10 +21,10 @@
   --parchment:      #F0E8D0;
   --parchment-dim:  #C4B490;
   --gold:           #C8922A;
-  --gold-muted:     #8C6820;
+  --gold-muted:     #A57B26;  /* 4.9:1 on --ink (WCAG AA); was #8C6820 at 3.7:1 */
   --gold-light:     #E8C97A;
-  --crimson:        #8B1A2A;
-  --crimson-label:  #C83545;
+  --crimson:        #8B1A2A;  /* decorative rules only: 2.1:1, never for text */
+  --crimson-label:  #D35A67;  /* 4.9:1 on --ink (WCAG AA); was #C83545 at 3.6:1 */
   --crimson-deep:   #5C0F1A;
   --text-muted:     #9A8B6E;
 
@@ -78,7 +88,7 @@ body {
 
 .notify-cta {
   font-family: var(--font-ui);
-  font-size: 0.625rem;
+  font-size: 0.75rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   font-weight: 500;
@@ -117,8 +127,8 @@ body {
 .codex-label {
   display: block;
   font-family: var(--font-ui);
-  font-size: 0.625rem;
-  letter-spacing: 0.2em;
+  font-size: 0.75rem;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--gold);
   margin-bottom: 0.5rem;
@@ -213,7 +223,7 @@ body {
   border: 1px solid var(--crimson);
   color: var(--parchment);
   font-family: var(--font-ui);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   letter-spacing: 0.22em;
   text-transform: uppercase;
   font-weight: 500;
@@ -291,7 +301,7 @@ body {
 .rs-dark .react-select__group-heading {
   color: var(--gold-muted);
   font-family: var(--font-ui);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   margin: 0;
@@ -355,4 +365,240 @@ body {
 .rs-dark .react-select__control--is-disabled {
   opacity: 0.5;
   pointer-events: none;
+}
+
+/* ─── Legal pages (/privacy, /terms, /dmca) ───────────────── */
+/* Long-form reading: narrower measure, parchment on ink, gold rules. */
+
+.legal-prose {
+  max-width: 720px;
+  margin: 0 auto;
+  font-family: var(--font-ui);
+  font-size: 1.0625rem;
+  line-height: 1.75;
+  color: var(--parchment-dim);
+}
+.legal-prose h1 {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(2.25rem, 5vw, 3rem);
+  color: var(--parchment);
+  margin: 0 0 0.5rem;
+}
+.legal-prose h2 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.625rem;
+  color: var(--gold-light);
+  margin: 2.75rem 0 0.75rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--ink-mid);
+}
+.legal-prose h3 {
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--crimson-label);
+  margin: 1.75rem 0 0.5rem;
+}
+.legal-prose p,
+.legal-prose ul,
+.legal-prose ol { margin: 0 0 1rem; }
+.legal-prose ul,
+.legal-prose ol { padding-left: 1.5rem; }
+.legal-prose ul { list-style: disc; }
+.legal-prose ol { list-style: decimal; }
+.legal-prose li { margin: 0.25rem 0; }
+.legal-prose strong { color: var(--parchment); font-weight: 500; }
+.legal-prose a { color: var(--gold); text-decoration: underline; text-underline-offset: 3px; }
+.legal-prose a:hover { color: var(--gold-light); }
+.legal-prose blockquote {
+  margin: 1.5rem 0;
+  padding: 1rem 1.25rem;
+  border-left: 3px solid var(--gold);
+  background-color: var(--ink-soft);
+  color: var(--parchment);
+}
+.legal-prose blockquote p:last-child { margin-bottom: 0; }
+.legal-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 1.25rem;
+  font-size: 0.9375rem;
+  display: block;
+  overflow-x: auto;
+}
+.legal-prose th,
+.legal-prose td {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--ink-mid);
+  vertical-align: top;
+}
+.legal-prose th { color: var(--parchment); font-weight: 500; }
+
+/* ─── Accessibility ───────────────────────────────────────── */
+
+/* Visible to screen readers, invisible on screen. Not display:none, which
+   would hide the element from assistive tech and from keyboard focus. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* First Tab stop on every page: jump past the nav to the content. */
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -100px;
+  z-index: 100;
+  padding: 0.75rem 1.25rem;
+  background: var(--gold);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-weight: 500;
+  text-decoration: none;
+}
+.skip-link:focus { top: 0.5rem; }
+
+/* One clear keyboard focus ring everywhere (WCAG 2.4.7 / 2.4.11): mouse
+   clicks don't show it, Tab does. */
+:focus-visible {
+  outline: 2px solid var(--gold-light);
+  outline-offset: 3px;
+}
+.codex-input:focus-visible,
+.react-select__control--is-focused {
+  outline: 2px solid var(--gold-light);
+  outline-offset: 2px;
+}
+
+/* Respect "reduce motion": no entrance animations, no smooth scrolling. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .anim-1, .anim-2, .anim-3, .anim-4, .anim-5 { animation: none; }
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+
+/* ─── Navigation: inline on wide screens, menu on phones ──── */
+
+.nav-links-inline {
+  display: flex;
+  gap: 2.5rem;
+  align-items: center;
+}
+.nav-menu-button {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-right: -10px;
+  background: none;
+  border: none;
+  color: var(--parchment);
+  cursor: pointer;
+}
+.nav-menu-panel {
+  position: absolute;
+  top: 56px;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem clamp(1rem, 4vw, 2rem) 1.25rem;
+  background-color: var(--ink);
+  border-bottom: 1px solid var(--ink-mid);
+}
+.nav-menu-panel > a,
+.nav-menu-panel > button {
+  text-align: left;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+@media (max-width: 1023px) {
+  .nav-links-inline { display: none; }
+  .nav-menu-button { display: inline-flex; }
+}
+/* Signed in, the bar holds up to six links (~980px), so fold below 1024px. */
+@media (min-width: 1024px) {
+  .nav-menu-panel { display: none; }
+}
+
+/* The file picker's input is visually hidden inside its drop zone, so show
+   keyboard focus on the zone itself. */
+.file-zone:focus-within {
+  outline: 2px solid var(--gold-light);
+  outline-offset: 3px;
+}
+
+/* ─── Disclosures (<details>): FAQ and upload guidelines ──── */
+
+.codex-details > summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  min-height: 44px;
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  color: var(--gold);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.codex-details > summary::-webkit-details-marker { display: none; }
+/* A plus that turns into a minus — no rotation, so it reads under reduced motion too. */
+.codex-details > summary::after {
+  content: '+';
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--gold-muted);
+  text-decoration: none;
+}
+.codex-details[open] > summary::after { content: '−'; }
+
+.codex-details--faq {
+  border-top: 1px solid var(--ink-mid);
+  padding: 0.75rem 0 1rem;
+}
+.codex-details--faq > summary {
+  font-family: var(--font-display);
+  font-size: 1.3125rem;
+  font-weight: 400;
+  color: var(--parchment);
+  text-decoration: none;
+}
+
+/* Review queue: the date / contributor block sits to the right of the title on
+   wide screens and under it on phones — consistently, whether or not a
+   contributor name is present. */
+.queue-meta { text-align: left; }
+@media (min-width: 640px) {
+  .queue-meta { text-align: right; }
+}
+
+/* Dashboard: cards on phones, the table from 768px up (it needs 640px of
+   content width, and the page has 2rem side padding). */
+.recordings-table { display: none; }
+@media (min-width: 768px) {
+  .recordings-cards { display: none; }
+  .recordings-table { display: block; }
 }

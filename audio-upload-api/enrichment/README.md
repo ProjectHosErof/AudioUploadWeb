@@ -1,5 +1,9 @@
 # Enrichment / dedup job (Phase 2)
 
+**Runs automatically every hour** via `.github/workflows/enrichment.yml`, as the
+least-privilege `enrichment_worker` role (migration 0012). You only need to run
+it by hand for debugging, or to catch up immediately after a batch of uploads.
+
 Offline batch job that inspects recordings after their bytes land in R2. It runs
 **outside** the Cloudflare Worker — the Worker only signs upload URLs and writes
 metadata; this job does the heavy, stateful work (download, probe, hash, dedup).
@@ -13,21 +17,30 @@ For each recording that is `upload_status='completed'` but not yet enriched
 2. Compute a **BLAKE3** content hash.
 3. Run **`ffprobe`** → `duration_seconds`, `sample_rate_hz`, `channels`, `codec`.
 4. **Dedup**: if the hash already belongs to a non-rejected recording, mark this
-   one `review_status='rejected'` with `error_message='duplicate of <id>'`.
+   one `review_status='rejected'` with `error_message='duplicate of <id>'` and
+   `duplicate_of_id=<id>`.
 5. Otherwise write the enrichment fields. Review status stays `processing`
    (awaiting Phase 3 moderation) unless `ENRICH_AUTO_APPROVE=1`, which promotes
    it to `ready`.
 
 Unreadable / non-audio objects (e.g. corrupt uploads) → `review_status='rejected'`
-with the ffprobe error. The selection query excludes both enriched and rejected
+with the ffprobe error.
+
+**Backfill:** recordings an admin approved (`ready`) before they were probed get
+their technical fields filled in, without changing their review status. An
+approved recording that turns out unreadable is flagged in `error_message`
+(`enrichment failed: …`) for a human to look at, never rejected automatically. The selection query excludes both enriched and rejected
 rows, so nothing is ever reprocessed — no retry loops.
 
 ## Prerequisites
 
 - **ffmpeg** (provides `ffprobe`): `brew install ffmpeg`
 - Python 3.9+
-- Credentials in `../.env` (the audio-upload-api file): `DIRECT_URL`,
-  `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`.
+- Credentials in `../.env` (the audio-upload-api file) or the environment:
+  a database URL (`ENRICH_DB_URL`, else `MIGRATE_URL`, else `DIRECT_URL`; use a
+  pooler URL on IPv4-only networks), plus `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`,
+  `R2_SECRET_ACCESS_KEY` and `R2_BUCKET_NAME`. Download-only, so a read-only
+  R2 token is enough.
 
 ## Setup
 

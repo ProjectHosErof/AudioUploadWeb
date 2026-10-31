@@ -18,6 +18,11 @@
   "observability": {
     "enabled": true
   },
+  // Production API at api.hoserof.org (deploy creates the DNS record and
+  // certificate). workers.dev stays on so links in emails already sent —
+  // unsubscribe links point at the old origin — keep working.
+  "routes": [{ "pattern": "api.hoserof.org", "custom_domain": true }],
+  "workers_dev": true,
   // Two schedules, dispatched on controller.cron in src/scheduled.ts:
   //   */15 — janitor: reap stale `pending` rows + sweep orphaned R2 objects
   //   16:00 UTC — one digest per contributor covering the day's moderation
@@ -46,8 +51,11 @@
     ]
   },
   "vars": {
-    // Comma-separated list of allowed browser origins for CORS.
-    "ALLOWED_ORIGINS": "http://localhost:5173,http://localhost:4173",
+    // Comma-separated list of allowed browser origins for CORS. The site is
+    // first (urls.ts falls back to it for SITE_URL); localhost stays for local
+    // development against this backend. www.hoserof.org redirects to the apex,
+    // so it never makes API calls. Must match R2 CORS — see DEPLOY.md.
+    "ALLOWED_ORIGINS": "https://hoserof.org,http://localhost:5173,http://localhost:4173",
     // Hard ceiling enforced at initiate time and in the presigned content-length range. 200 MB.
     "MAX_UPLOAD_BYTES": "209715200",
     // Presigned URL lifetime.
@@ -57,19 +65,18 @@
     // upload newer than the dump looks orphaned and is deleted. Anything other
     // than "true" disables it. See DEPLOY.md.
     "JANITOR_SWEEP_ENABLED": "true",
-    // Where links in outbound email send a human. Defaults to the first
-    // ALLOWED_ORIGINS entry when unset; must be the real site in production.
-    "SITE_URL": "http://localhost:5173",
+    // Where links in outbound email send a human.
+    "SITE_URL": "https://hoserof.org",
     // Sender for all outbound mail. mail.hoserof.org is verified in Resend.
     // Sending stays on the subdomain so a bad batch can never damage the
     // apex domain's reputation.
     "EMAIL_FROM": "Project Hos Erof <hello@mail.hoserof.org>",
-    // Where replies go. Currently the project mailbox directly; switch to
-    // hello@hoserof.org once Cloudflare Email Routing forwards it there.
-    "EMAIL_REPLY_TO": "projecthoserof@gmail.com",
+    // Where replies go: forwarded to the project mailbox by Cloudflare Email
+    // Routing, so the Gmail address never appears in mail.
+    "EMAIL_REPLY_TO": "contact@hoserof.org",
     // This Worker's own public origin. The fetch path reads it from the
     // request; a scheduled run has no request, so unsubscribe links in the
     // digest need it configured.
-    "API_ORIGIN": "https://audio-upload-api.dev-anthonyriad.workers.dev"
+    "API_ORIGIN": "https://api.hoserof.org"
   }
 }

@@ -1,0 +1,7 @@
+# Private, per-user pages have nothing for search engines.
+User-agent: *
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /login
+Disallow: /subscribed
+Disallow: /unsubscribed

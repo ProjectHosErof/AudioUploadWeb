@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
+import { usePageTitle } from '../lib/usePageTitle';
 import { Nav } from './Nav';
+import { language_options } from '../options.data';
 import {
   ModerationError,
   REJECTION_REASONS,
@@ -43,11 +45,18 @@ function technicalLine(item: QueueItem): string {
 
 const eyebrowStyle: React.CSSProperties = {
   fontFamily: 'var(--font-ui)',
-  fontSize: '0.625rem',
+  fontSize: '0.75rem',
   letterSpacing: '0.22em',
   textTransform: 'uppercase',
   color: 'var(--crimson-label)',
 };
+
+const LANGUAGE_LABELS = new Map(language_options.map((o) => [o.value, o.label]));
+
+/** "Coptic / Arabic" from the stored slugs; an unknown slug shows as itself. */
+function languageLabels(slugs: string[]): string {
+  return slugs.map((s) => LANGUAGE_LABELS.get(s) ?? s).join(' / ');
+}
 
 const metaStyle: React.CSSProperties = {
   fontFamily: 'var(--font-ui)',
@@ -58,7 +67,7 @@ const metaStyle: React.CSSProperties = {
 
 const buttonBase: React.CSSProperties = {
   fontFamily: 'var(--font-ui)',
-  fontSize: '0.6875rem',
+  fontSize: '0.75rem',
   letterSpacing: '0.18em',
   textTransform: 'uppercase',
   padding: '0.625rem 1.5rem',
@@ -146,7 +155,7 @@ function ReviewCard({ item, onResolved, onError }: CardProps) {
             {item.title}
           </h2>
           <p style={metaStyle}>
-            {[item.service, item.season].filter(Boolean).join(' · ') || '—'}
+            {[item.service, item.season, languageLabels(item.languages)].filter(Boolean).join(' · ') || '—'}
           </p>
           <p style={{ ...metaStyle, fontSize: '0.8125rem', marginTop: '0.25rem' }}>
             {formatLength(item.durationSeconds)}
@@ -154,21 +163,23 @@ function ReviewCard({ item, onResolved, onError }: CardProps) {
           </p>
         </div>
 
-        <div style={{ textAlign: 'right', fontFamily: 'var(--font-ui)', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+        <div className="queue-meta" style={{ fontFamily: 'var(--font-ui)', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
           <p style={{ margin: '0 0 0.25rem' }}>{formatDate(item.uploadedAt)}</p>
           {item.contributor && <p style={{ margin: 0, color: 'var(--gold-muted)' }}>{item.contributor}</p>}
           {!item.isEnriched && (
             <p style={{
               margin: '0.5rem 0 0',
-              fontSize: '0.625rem',
+              fontSize: '0.75rem',
               letterSpacing: '0.14em',
               textTransform: 'uppercase',
               color: 'var(--crimson-label)',
               border: '1px solid var(--crimson)',
               padding: '0.2rem 0.5rem',
               display: 'inline-block',
-            }}>
-              Not yet analysed
+            }}
+              title="Automatic checks (duplicates, unreadable files, duration) run every hour. Consider waiting before approving."
+            >
+              Not yet analysed · checks run hourly
             </p>
           )}
         </div>
@@ -205,7 +216,7 @@ function ReviewCard({ item, onResolved, onError }: CardProps) {
           </button>
         )}
         {item.originalFilename && (
-          <p style={{ ...metaStyle, fontSize: '0.6875rem', marginTop: '0.5rem', opacity: 0.7 }}>
+          <p style={{ ...metaStyle, fontSize: '0.75rem', marginTop: '0.5rem', color: 'var(--text-muted)' }}>
             {item.originalFilename}
           </p>
         )}
@@ -297,6 +308,7 @@ function ReviewCard({ item, onResolved, onError }: CardProps) {
 }
 
 export function AdminPage() {
+  usePageTitle('Review queue');
   const [items, setItems] = useState<QueueItem[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -333,6 +345,7 @@ export function AdminPage() {
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--ink)' }}>
       <Nav />
+      <main id="main">
 
       <header style={{
         paddingTop: 'calc(56px + clamp(3rem, 6vw, 4.5rem))',
@@ -483,6 +496,7 @@ export function AdminPage() {
           )}
         </div>
       </section>
+      </main>
     </div>
   );
 }

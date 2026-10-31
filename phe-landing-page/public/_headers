@@ -1,0 +1,17 @@
+# Security headers for every page Cloudflare Pages serves.
+# A full Content-Security-Policy is deliberately not set yet: Turnstile,
+# Supabase, Google sign-in and direct-to-R2 uploads would each need careful
+# allowlisting, and a wrong CSP silently breaks uploads. frame-ancestors is
+# safe on its own and stops the site being framed (clickjacking).
+/*
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Content-Security-Policy: frame-ancestors 'none'
+  X-Frame-Options: DENY
+  Permissions-Policy: camera=(), geolocation=(), microphone=(), payment=()
+
+# Self-hosted hero font. Its name isn't content-hashed, so cache for a week
+# rather than forever.
+/fonts/*
+  Cache-Control: public, max-age=604800

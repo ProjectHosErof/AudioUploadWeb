@@ -1,32 +1,41 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, type ReactNode } from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
 import { Nav } from "./components/Nav";
 import { Hero } from "./components/Hero";
 import { About } from "./components/About";
-import { CounterSection } from "./components/CounterSection";
+import { HowItWorks } from "./components/HowItWorks";
+import { Faq } from "./components/Faq";
 import { NotifySection } from "./components/NotifySection";
-import { UploadForm } from "./components/UploadForm";
 import { Footer } from "./components/Footer";
-import { LoginPage } from "./components/LoginPage";
-import { DashboardPage } from "./components/DashboardPage";
-import { AdminPage } from "./components/AdminPage";
 import { SubscriptionResultPage } from "./components/SubscriptionResultPage";
+import { NotFoundPage } from "./components/NotFoundPage";
 import { ProtectedRoute } from "./auth/ProtectedRoute";
 import { AdminRoute } from "./auth/AdminRoute";
-// import { AudioGallery } from "./components/AudioGallery";
-// import { Contact } from "./components/Contact";
+import { usePageTitle } from "./lib/usePageTitle";
 
-export interface AudioFile {
-  id: string;
-  title: string;
-  artist: string;
-  uploadedAt: string;
-  fileUrl: string;
+// Pages most visitors never open — sign-in, the contributor dashboard, the
+// review queue and the legal text (which pulls in a Markdown parser) — load
+// on demand, keeping the landing page's bundle small.
+const LoginPage = lazy(() => import("./components/LoginPage").then((m) => ({ default: m.LoginPage })));
+const DashboardPage = lazy(() => import("./components/DashboardPage").then((m) => ({ default: m.DashboardPage })));
+const AdminPage = lazy(() => import("./components/AdminPage").then((m) => ({ default: m.AdminPage })));
+const LegalPage = lazy(() => import("./components/LegalPage"));
+// The upload form brings react-select and the full hymn catalogue (~290 KB of
+// JSON). It sits at the bottom of the page, so load it after first paint.
+const UploadForm = lazy(() => import("./components/UploadForm").then((m) => ({ default: m.UploadForm })));
+
+/** A blank page in the site's background colour while a lazy page loads. */
+function Loading({ children }: { children: ReactNode }) {
+  return (
+    <Suspense fallback={<div style={{ minHeight: "100vh", backgroundColor: "var(--ink)" }} />}>
+      {children}
+    </Suspense>
+  );
 }
 
 function LandingPage() {
-  const [, setAudioFiles] = useState<AudioFile[]>([]);
   const { hash } = useLocation();
+  usePageTitle(null);
 
   // Arriving from another route (e.g. the dashboard's "Upload New Recording")
   // only changes history state, so the browser won't scroll to the anchor
@@ -34,28 +43,30 @@ function LandingPage() {
   useEffect(() => {
     if (!hash) return;
     const target = document.querySelector(hash);
-    if (target) target.scrollIntoView({ behavior: 'smooth' });
+    if (target) target.scrollIntoView({ behavior: "smooth" });
   }, [hash]);
-
-  const handleUpload = (file: Omit<AudioFile, "id" | "uploadedAt">) => {
-    const newFile: AudioFile = {
-      ...file,
-      id: Date.now().toString(),
-      uploadedAt: new Date().toISOString().split("T")[0],
-    };
-    setAudioFiles((prev) => [newFile, ...prev]);
-  };
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "var(--ink)" }}>
       <Nav />
-      <Hero />
-      <About />
-      <CounterSection />
-      <NotifySection />
-      <UploadForm onUpload={handleUpload} />
-      {/* <AudioGallery audioFiles={audioFiles} /> */}
-      {/* <Contact /> */}
+      <main id="main">
+        {/* Ordered around the one action we want: understand it, then do it.
+            Background (FAQ, About) and the fallback for people without a
+            recording yet (Stay informed) come after the form.
+            Backgrounds alternate --ink / --ink-soft down the page (the
+            --ink-soft bands carry thin borders) so each section reads as its
+            own band — keep that rhythm when adding or moving sections. */}
+        <Hero />
+        <HowItWorks />
+        {/* The placeholder keeps the #upload anchor (nav, hero button, the
+            dashboard's "Upload New Recording") working while the form loads. */}
+        <Suspense fallback={<section id="upload" style={{ minHeight: "100vh", backgroundColor: "var(--ink)" }} />}>
+          <UploadForm />
+        </Suspense>
+        <Faq />
+        <About />
+        <NotifySection />
+      </main>
       <Footer />
     </div>
   );
@@ -65,12 +76,12 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
-      <Route path="/login" element={<LoginPage />} />
+      <Route path="/login" element={<Loading><LoginPage /></Loading>} />
       <Route
         path="/dashboard"
         element={
           <ProtectedRoute>
-            <DashboardPage />
+            <Loading><DashboardPage /></Loading>
           </ProtectedRoute>
         }
       />
@@ -78,15 +89,18 @@ export default function App() {
         path="/admin"
         element={
           <AdminRoute>
-            <AdminPage />
+            <Loading><AdminPage /></Loading>
           </AdminRoute>
         }
       />
       {/* Where the confirm / unsubscribe links in an email land. */}
       <Route path="/subscribed" element={<SubscriptionResultPage variant="confirmed" />} />
       <Route path="/unsubscribed" element={<SubscriptionResultPage variant="unsubscribed" />} />
-      {/* Unknown paths fall back to the landing page. */}
-      <Route path="*" element={<LandingPage />} />
+      <Route path="/privacy" element={<Loading><LegalPage doc="privacy" /></Loading>} />
+      <Route path="/terms" element={<Loading><LegalPage doc="terms" /></Loading>} />
+      <Route path="/dmca" element={<Loading><LegalPage doc="dmca" /></Loading>} />
+      {/* Unknown paths: a real "page not found", marked noindex. */}
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }

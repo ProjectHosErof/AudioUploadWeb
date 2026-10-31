@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../auth/AuthProvider';
+import { usePageTitle } from '../lib/usePageTitle';
+import { Link, Navigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../auth/useAuth';
 
 export function LoginPage() {
+  usePageTitle('Sign in');
   const { session, loading, enabled, signInWithGoogle, signInWithMagicLink } = useAuth();
   const location = useLocation();
   const [email, setEmail] = useState('');
@@ -46,16 +48,35 @@ export function LoginPage() {
   };
 
   return (
-    <div style={{
+    <main id="main" style={{
       minHeight: '100vh',
       backgroundColor: 'var(--ink)',
       display: 'flex',
+      flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '2rem',
+      padding: '4.5rem 1rem 2rem',
       position: 'relative',
       overflow: 'hidden',
     }}>
+      {/* A way back: this page has no site nav. */}
+      <Link
+        to="/"
+        style={{
+          position: 'absolute',
+          top: '1rem',
+          left: '1rem',
+          zIndex: 1,
+          padding: '0.5rem',
+          fontFamily: 'var(--font-ui)',
+          fontSize: '0.9375rem',
+          color: 'var(--parchment-dim)',
+          textDecoration: 'none',
+        }}
+      >
+        ← Back to Project Hos Erof
+      </Link>
+
       {/* Ambient glow */}
       <div style={{
         position: 'absolute',
@@ -69,7 +90,7 @@ export function LoginPage() {
         position: 'relative',
         width: '100%',
         maxWidth: '400px',
-        padding: '3.5rem 3rem 3rem',
+        padding: 'clamp(2.5rem, 6vw, 3.5rem) clamp(1.5rem, 6vw, 3rem) clamp(2rem, 5vw, 3rem)',
         backgroundColor: 'var(--ink-soft)',
         border: '1px solid var(--ink-mid)',
         textAlign: 'center',
@@ -80,18 +101,18 @@ export function LoginPage() {
         <span className="codex-corner codex-corner--br" />
 
         {/* Gold ornament */}
-        <p className="anim-1" style={{
+        <p className="anim-1" aria-hidden="true" style={{
           fontFamily: 'var(--font-display)',
           fontSize: '0.75rem',
           color: 'var(--gold)',
           letterSpacing: '0.55em',
           margin: '0 0 1.75rem',
         }}>
-          ✦ ✦ ✦
+          ◆ ◆ ◆
         </p>
 
-        {/* Brand mark */}
-        <h1 className="anim-2" style={{
+        {/* Brand mark (the page's heading is the line below: what this page is for) */}
+        <p className="anim-2" style={{
           fontFamily: 'var(--font-display)',
           fontSize: 'clamp(2rem, 5vw, 2.625rem)',
           fontWeight: 300,
@@ -101,7 +122,7 @@ export function LoginPage() {
           letterSpacing: '0.02em',
         }}>
           Project Hos Erof
-        </h1>
+        </p>
 
         {/* Crimson rule */}
         <div className="anim-2" style={{
@@ -114,7 +135,7 @@ export function LoginPage() {
         {linkSent ? (
           /* --- Magic link sent --- */
           <>
-            <p className="anim-3" style={{
+            <h1 className="anim-3" style={{
               fontFamily: 'var(--font-ui)',
               fontSize: '1rem',
               lineHeight: 1.7,
@@ -122,7 +143,7 @@ export function LoginPage() {
               margin: '0 0 0.75rem',
             }}>
               Check your email
-            </p>
+            </h1>
             <p className="anim-3" style={{
               fontFamily: 'var(--font-ui)',
               fontSize: '0.9375rem',
@@ -137,7 +158,7 @@ export function LoginPage() {
               onClick={() => { setLinkSent(false); setEmail(''); }}
               style={{
                 fontFamily: 'var(--font-ui)',
-                fontSize: '0.6875rem',
+                fontSize: '0.75rem',
                 letterSpacing: '0.18em',
                 textTransform: 'uppercase',
                 color: 'var(--gold-muted)',
@@ -153,7 +174,7 @@ export function LoginPage() {
         ) : (
           <>
             {/* Tagline */}
-            <p className="anim-3" style={{
+            <h1 className="anim-3" style={{
               fontFamily: 'var(--font-ui)',
               fontSize: '1rem',
               lineHeight: 1.7,
@@ -161,7 +182,7 @@ export function LoginPage() {
               margin: '0 0 2.5rem',
             }}>
               Sign in to manage your contributions
-            </p>
+            </h1>
 
             {/* Google */}
             <button
@@ -220,7 +241,7 @@ export function LoginPage() {
               <div style={{ flex: 1, height: '1px', background: 'var(--ink-mid)' }} />
               <span style={{
                 fontFamily: 'var(--font-ui)',
-                fontSize: '0.625rem',
+                fontSize: '0.75rem',
                 letterSpacing: '0.2em',
                 textTransform: 'uppercase',
                 color: 'var(--gold-muted)',
@@ -295,7 +316,7 @@ export function LoginPage() {
         {/* Heritage note */}
         <p className="anim-5" style={{
           fontFamily: 'var(--font-ui)',
-          fontSize: '0.6875rem',
+          fontSize: '0.75rem',
           fontStyle: 'italic',
           color: 'var(--gold-muted)',
           margin: '1.75rem 0 0',
@@ -303,6 +324,20 @@ export function LoginPage() {
           Your contributions are preserved for the community.
         </p>
       </div>
-    </div>
+
+      <p style={{
+        position: 'relative',
+        fontFamily: 'var(--font-ui)',
+        fontSize: '0.875rem',
+        color: 'var(--text-muted)',
+        margin: '1.5rem 0 0',
+        textAlign: 'center',
+      }}>
+        By signing in you agree to our{' '}
+        <Link to="/terms" style={{ color: 'var(--gold)', textDecoration: 'underline', textUnderlineOffset: '3px' }}>Terms</Link>
+        {' · '}
+        <Link to="/privacy" style={{ color: 'var(--gold)', textDecoration: 'underline', textUnderlineOffset: '3px' }}>Privacy Policy</Link>
+      </p>
+    </main>
   );
 }
