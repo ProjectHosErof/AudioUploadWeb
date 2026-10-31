@@ -111,8 +111,8 @@ export function LoginPage() {
           ◆ ◆ ◆
         </p>
 
-        {/* Brand mark */}
-        <h1 className="anim-2" style={{
+        {/* Brand mark (the page's heading is the line below: what this page is for) */}
+        <p className="anim-2" style={{
           fontFamily: 'var(--font-display)',
           fontSize: 'clamp(2rem, 5vw, 2.625rem)',
           fontWeight: 300,
@@ -122,7 +122,7 @@ export function LoginPage() {
           letterSpacing: '0.02em',
         }}>
           Project Hos Erof
-        </h1>
+        </p>
 
         {/* Crimson rule */}
         <div className="anim-2" style={{
@@ -135,7 +135,7 @@ export function LoginPage() {
         {linkSent ? (
           /* --- Magic link sent --- */
           <>
-            <p className="anim-3" style={{
+            <h1 className="anim-3" style={{
               fontFamily: 'var(--font-ui)',
               fontSize: '1rem',
               lineHeight: 1.7,
@@ -143,7 +143,7 @@ export function LoginPage() {
               margin: '0 0 0.75rem',
             }}>
               Check your email
-            </p>
+            </h1>
             <p className="anim-3" style={{
               fontFamily: 'var(--font-ui)',
               fontSize: '0.9375rem',
@@ -174,7 +174,7 @@ export function LoginPage() {
         ) : (
           <>
             {/* Tagline */}
-            <p className="anim-3" style={{
+            <h1 className="anim-3" style={{
               fontFamily: 'var(--font-ui)',
               fontSize: '1rem',
               lineHeight: 1.7,
@@ -182,7 +182,7 @@ export function LoginPage() {
               margin: '0 0 2.5rem',
             }}>
               Sign in to manage your contributions
-            </p>
+            </h1>
 
             {/* Google */}
             <button

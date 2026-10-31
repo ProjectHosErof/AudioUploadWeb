@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { Upload, Music, CheckCircle2 } from "lucide-react";
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import Select, { type MultiValue, type SingleValue } from "react-select";
@@ -27,8 +28,12 @@ const serviceTypes = [
 
 /** Bytes → "12.3 MB". */
 function formatSize(bytes: number): string {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
+
+/** A form check that failed on submit; its message tracks the form as it's fixed. */
+type FormCheck = "missing" | "file" | "terms" | "email";
 
 export function UploadForm() {
   const { session } = useAuth();
@@ -54,9 +59,12 @@ export function UploadForm() {
   const [emailError, setEmailError] = useState("");
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  // An upload attempt that failed (server, storage, verification). Stays until
+  // the next submit: it describes that attempt, not the form.
   const [submitError, setSubmitError] = useState("");
+  const [failedCheck, setFailedCheck] = useState<FormCheck | null>(null);
   // Set after a successful upload; replaces the form with a thank-you panel.
-  const [submitted, setSubmitted] = useState<{ reference: string } | null>(null);
+  const [submitted, setSubmitted] = useState<{ reference: string; email: string } | null>(null);
   const turnstileRef = useRef<TurnstileInstance>(null);
   const errorRef = useRef<HTMLParagraphElement>(null);
   const successRef = useRef<HTMLDivElement>(null);
@@ -85,14 +93,57 @@ export function UploadForm() {
     }
   }
 
-  function fail(message: string) {
-    setSubmitError(message);
+  /** What's still missing, as "a service, a season and a hymn"; empty when nothing is. */
+  function missingList(): string {
+    const missing = [
+      !selectedService && "a service",
+      !selectedSeason && "a season",
+      !selectedHymn && "a hymn",
+      selectedLanguage.length === 0 && "at least one language",
+      !file && "an audio file",
+    ].filter((m): m is string => Boolean(m));
+    if (missing.length <= 1) return missing[0] ?? "";
+    return `${missing.slice(0, -1).join(", ")} and ${missing[missing.length - 1]}`;
+  }
+
+  /** The current message for a failed check, or "" once the user has fixed it. */
+  function checkMessage(check: FormCheck): string {
+    switch (check) {
+      case "missing": {
+        const list = missingList();
+        return list ? `Please choose ${list}.` : "";
+      }
+      case "file":
+        return fileError;
+      case "terms":
+        return agreedToTerms ? "" : "Please confirm you agree to the Terms and Contributor License.";
+      case "email": {
+        const value = emailValue.trim();
+        return value && !isValidEmail(value) ? "Please enter a valid email address, or leave it empty." : "";
+      }
+    }
+  }
+
+  const shownError = failedCheck ? checkMessage(failedCheck) : submitError;
+
+  function focusError() {
     // Bring the message into view and to screen readers' attention.
     requestAnimationFrame(() => errorRef.current?.focus());
   }
 
+  function fail(message: string) {
+    setFailedCheck(null);
+    setSubmitError(message);
+    focusError();
+  }
+
+  function failCheck(check: FormCheck) {
+    setSubmitError("");
+    setFailedCheck(check);
+    focusError();
+  }
+
   const isHymnDisabled = !selectedService || !selectedSeason;
-  const isLanguageDisabled = !selectedService || !selectedSeason;
 
   // Only the hymns said in the chosen season + service (the API enforces the
   // same rule), grouped by hymn type.
@@ -107,7 +158,6 @@ export function UploadForm() {
       season && service && selectedHymn &&
       hymnsFor(season.value, service.value).groups.some((g) => g.options.some((o) => o.value === selectedHymn.value));
     if (!stillListed) setSelectedHymn(null);
-    if (!season || !service) setSelectedLanguage([]);
   }
 
   function isValidEmail(e: string): boolean {
@@ -118,34 +168,25 @@ export function UploadForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError("");
+    setFailedCheck(null);
 
     // The form is noValidate, so every check happens here, with a message the
     // user can see (a hidden file input can't show the browser's own bubble).
-    const missing = [
-      !selectedService && "a service",
-      !selectedSeason && "a season",
-      !selectedHymn && "a hymn",
-      selectedLanguage.length === 0 && "at least one language",
-      !file && "an audio file",
-    ].filter(Boolean);
-    if (missing.length) {
-      const list = missing.length > 1
-        ? `${missing.slice(0, -1).join(", ")} and ${missing[missing.length - 1]}`
-        : missing[0];
-      fail(`Please choose ${list}.`);
+    if (missingList()) {
+      failCheck("missing");
       return;
     }
     if (fileError) {
-      fail(fileError);
+      failCheck("file");
       return;
     }
     if (!agreedToTerms) {
-      fail("Please confirm you agree to the Terms and Contributor License.");
+      failCheck("terms");
       return;
     }
     if (emailValue.trim() && !isValidEmail(emailValue.trim())) {
       setEmailError("Please enter a valid email address.");
-      fail("Please enter a valid email address, or leave it empty.");
+      failCheck("email");
       return;
     }
     setEmailError("");
@@ -164,6 +205,8 @@ export function UploadForm() {
       return;
     }
 
+    // Captured now: the form is cleared once the upload succeeds.
+    const sentTo = emailValue.trim();
     setIsSubmitting(true);
     setUploadProgress(0);
     try {
@@ -198,7 +241,7 @@ export function UploadForm() {
       setEmailEdited(false);
       setEmailError("");
       setUploadProgress(null);
-      setSubmitted({ reference: recordingId.slice(0, 8).toUpperCase() });
+      setSubmitted({ reference: recordingId.slice(0, 8).toUpperCase(), email: sentTo });
     } catch (err) {
       setUploadProgress(null);
       fail(err instanceof UploadError ? err.message : "Something went wrong. Please try again.");
@@ -292,8 +335,14 @@ export function UploadForm() {
                 Thank you — your recording is in.
               </p>
               <p style={{ fontFamily: 'var(--font-ui)', fontSize: '1.0625rem', lineHeight: 1.7, color: 'var(--text-muted)', margin: '0 auto 0.5rem', maxWidth: '34rem' }}>
-                A reviewer will listen to it soon. If you gave us your email or are signed in,
-                we'll write once it's been reviewed.
+                A reviewer will listen to it soon.{' '}
+                {submitted.email ? (
+                  <>We'll email <span style={{ color: 'var(--parchment)' }}>{submitted.email}</span> once it's been reviewed.</>
+                ) : session ? (
+                  "You'll see the outcome in your contributions."
+                ) : (
+                  'Sign in to see when it\'s been reviewed.'
+                )}
               </p>
               <p style={{ fontFamily: 'var(--font-ui)', fontSize: '0.875rem', color: 'var(--gold-muted)', margin: '0 0 2rem' }}>
                 Reference: <span style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '0.08em' }}>{submitted.reference}</span>
@@ -302,13 +351,13 @@ export function UploadForm() {
                 <button type="button" className="hero-cta" onClick={() => setSubmitted(null)}>
                   Upload another
                 </button>
-                <a href={session ? '/dashboard' : '/login'} className="hero-cta" style={{ background: 'transparent' }}>
+                <Link to={session ? '/dashboard' : '/login'} className="hero-cta" style={{ background: 'transparent' }}>
                   {session ? 'See my contributions' : 'Sign in to track it'}
-                </a>
+                </Link>
               </div>
             </div>
           ) : (
-          <form onSubmit={handleSubmit} noValidate aria-describedby={submitError ? 'upload-error' : undefined}>
+          <form onSubmit={handleSubmit} noValidate aria-describedby={shownError ? 'upload-error' : undefined}>
 
             {/* Service & Season */}
             <div className="grid sm:grid-cols-2 gap-4" style={{ marginBottom: '1.5rem' }}>
@@ -379,7 +428,6 @@ export function UploadForm() {
                     placeholder="Select language(s)"
                     isClearable
                     isMulti
-                    isDisabled={isLanguageDisabled}
                   />
                 </div>
               </div>
@@ -411,7 +459,7 @@ export function UploadForm() {
                 color: 'var(--gold-muted)',
                 margin: '0 0 1.5rem',
               }}>
-                Select a service and season to unlock hymn and language fields.
+                Select a service and season to see the hymns for them.
               </p>
             )}
 
@@ -655,14 +703,14 @@ export function UploadForm() {
             )}
 
             {/* Submit error */}
-            {submitError && (
+            {shownError && (
               <p id="upload-error" ref={errorRef} tabIndex={-1} role="alert" style={{
                 fontFamily: 'var(--font-ui)',
                 fontSize: '0.9375rem',
                 color: 'var(--crimson-label)',
                 margin: '0 0 1rem',
               }}>
-                {submitError}
+                {shownError}
               </p>
             )}
 

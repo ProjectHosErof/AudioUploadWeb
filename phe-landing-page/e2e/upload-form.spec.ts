@@ -1,5 +1,5 @@
 import { test, expect } from './fixtures';
-import { fillRequired } from './upload-helpers';
+import { choose, fillRequired } from './upload-helpers';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/#upload');
@@ -57,6 +57,7 @@ test('a phone recording uploads, sending the email without joining the newslette
   await page.getByRole('button', { name: 'Share Recording' }).click();
 
   await expect(page.getByText('Thank you — your recording is in.')).toBeVisible();
+  await expect(page.getByRole('status')).toContainText("We'll email chanter@example.com once it's been reviewed.");
   await expect(page.getByRole('status')).toBeFocused();
   expect(captured.initiate).toHaveLength(1);
   expect(captured.initiate[0]).toMatchObject({
@@ -81,6 +82,46 @@ test('without an email, nothing is sent and nobody is subscribed', async ({ page
   await fillRequired(page);
   await page.getByRole('button', { name: 'Share Recording' }).click();
   await expect(page.getByText('Thank you — your recording is in.')).toBeVisible();
+  await expect(page.getByRole('status')).toContainText("Sign in to see when it's been reviewed.");
   expect(captured.initiate[0]).not.toHaveProperty('email');
   expect(captured.initiate[0]).toMatchObject({ wants_updates: false });
+});
+
+test('the error updates as the missing fields are filled in', async ({ page }) => {
+  const alert = page.locator('#upload-error');
+  await page.getByRole('button', { name: 'Share Recording' }).click();
+  await expect(alert).toContainText('a service, a season, a hymn');
+
+  await choose(page, 'upload-service', 'Liturgy');
+  await choose(page, 'upload-season', 'Annual');
+  await expect(alert).not.toContainText('a service');
+  await expect(alert).not.toContainText('a season');
+  await expect(alert).toContainText('a hymn');
+
+  await page.locator('#upload-hymn').click();
+  await page.keyboard.press('Enter');
+  await choose(page, 'upload-language', 'Coptic');
+  await expect(alert).toHaveText('Please choose an audio file.');
+
+  await page.locator('#file-input').setInputFiles({ name: 'voice-memo.m4a', mimeType: 'audio/mp4', buffer: Buffer.from('x') });
+  await expect(alert).toHaveCount(0);
+});
+
+test('the consent error goes once the box is ticked', async ({ page }) => {
+  await fillRequired(page);
+  await page.getByLabel(/I agree to the/).uncheck();
+  await page.getByRole('button', { name: 'Share Recording' }).click();
+  await expect(page.locator('#upload-error')).toHaveText('Please confirm you agree to the Terms and Contributor License.');
+  await page.getByLabel(/I agree to the/).check();
+  await expect(page.locator('#upload-error')).toHaveCount(0);
+});
+
+test('language can be chosen before the service and season', async ({ page }) => {
+  await choose(page, 'upload-language', 'Coptic');
+  await expect(page.locator('#upload').getByText('Coptic', { exact: true })).toBeVisible();
+});
+
+test('a small file shows its size in KB', async ({ page }) => {
+  await page.locator('#file-input').setInputFiles({ name: 'short.m4a', mimeType: 'audio/mp4', buffer: Buffer.alloc(40 * 1024) });
+  await expect(page.locator('#upload')).toContainText('40 KB');
 });

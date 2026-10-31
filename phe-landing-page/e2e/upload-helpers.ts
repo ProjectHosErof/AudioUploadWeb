@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test';
 
 /** Pick an option in a react-select by typing and choosing the first match. */
-async function choose(page: Page, inputId: string, text: string) {
+export async function choose(page: Page, inputId: string, text: string) {
   const input = page.locator(`#${inputId}`);
   await input.click();
   await input.fill(text);

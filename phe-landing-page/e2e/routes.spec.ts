@@ -7,7 +7,7 @@ const routes: { path: string; title: string; h1: RegExp }[] = [
   { path: '/privacy', title: 'Privacy Policy · Project Hos Erof', h1: /Privacy Policy/ },
   { path: '/terms', title: 'Terms of Service · Project Hos Erof', h1: /Terms of Service/ },
   { path: '/dmca', title: 'Copyright Policy · Project Hos Erof', h1: /Copyright Policy/ },
-  { path: '/login', title: 'Sign in · Project Hos Erof', h1: /Project Hos Erof/ },
+  { path: '/login', title: 'Sign in · Project Hos Erof', h1: /Sign in/ },
   { path: '/subscribed', title: 'Subscription confirmed · Project Hos Erof', h1: /on the list/ },
   { path: '/subscribed?status=unknown', title: 'Subscription confirmed · Project Hos Erof', h1: /expired/ },
   { path: '/unsubscribed', title: 'Unsubscribed · Project Hos Erof', h1: /won’t hear from us/ },
@@ -51,4 +51,33 @@ test('the 404 page is not indexable and links home', async ({ page }) => {
   await expect(page).toHaveURL(/\/$/);
   // The noindex tag leaves with the 404 page.
   await expect(page.locator('meta[name="robots"][content="noindex"]')).toHaveCount(0);
+});
+
+test('each page declares its own address', async ({ page }) => {
+  const canonical = page.locator('link[rel="canonical"]');
+  for (const { path } of routes) {
+    await page.goto(path);
+    await expect(canonical).toHaveAttribute('href', `https://hoserof.org${new URL(path, 'http://x').pathname}`);
+  }
+});
+
+test('the legal pages describe themselves, and the home page gets its own back', async ({ page }) => {
+  const description = page.locator('meta[name="description"]');
+  await page.goto('/');
+  const home = await description.getAttribute('content');
+  expect(home).toMatch(/community collection/);
+
+  const seen = new Set<string>();
+  for (const path of ['/privacy', '/terms', '/dmca']) {
+    await page.goto(path);
+    await expect(description).not.toHaveAttribute('content', home!);
+    seen.add((await description.getAttribute('content'))!);
+  }
+  expect(seen.size).toBe(3);
+
+  // Client-side navigation back home (the footer's site link) restores both.
+  await page.getByRole('link', { name: 'Project Hos Erof' }).first().click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(description).toHaveAttribute('content', home!);
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://hoserof.org/');
 });

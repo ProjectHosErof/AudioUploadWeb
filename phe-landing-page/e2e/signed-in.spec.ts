@@ -76,3 +76,48 @@ test('signing out returns home and forgets the session', async ({ page }) => {
   await expect(page).toHaveURL(/\/$/);
   await expect.poll(() => page.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith('sb-')))).toEqual([]);
 });
+
+test.describe('dashboard problems', () => {
+  test('an expired sign-in asks to sign in again, without raw errors or false totals', async ({ page }) => {
+    await page.route('http://supabase.test/rest/v1/recordings**', (route) =>
+      route.fulfill({ status: 401, json: { code: 'PGRST301', message: 'JWT expired', details: null, hint: null } }),
+    );
+    await page.goto('/dashboard');
+    const alert = page.getByRole('alert');
+    await expect(alert).toContainText('Your sign-in has expired.');
+    await expect(page.locator('main')).not.toContainText('JWT');
+    await expect(page.locator('main')).not.toContainText('begins with a single hymn');
+    for (const label of ['Total Recordings', 'In the Collection']) {
+      await expect(page.getByText(label, { exact: true }).locator('xpath=preceding-sibling::p')).toHaveText('—');
+    }
+    await alert.getByRole('button', { name: 'Sign in again' }).click();
+    await expect(page).toHaveURL(/\/login$/);
+  });
+
+  test('a failed load offers to try again', async ({ page }) => {
+    let calls = 0;
+    await page.route('http://supabase.test/rest/v1/recordings**', async (route) => {
+      calls += 1;
+      if (calls === 1) await route.fulfill({ status: 500, json: { code: 'XX000', message: 'internal' } });
+      else await route.fallback();
+    });
+    await page.goto('/dashboard');
+    await expect(page.getByRole('alert')).toContainText("We couldn't load your recordings.");
+    await page.getByRole('button', { name: 'Try again' }).click();
+    await expect(page.getByText('Golgotha').filter({ visible: true })).toBeVisible();
+  });
+
+  test('the community line has no stray dash and says "collection" once', async ({ page }) => {
+    await page.goto('/dashboard');
+    const line = page.getByText(/^Together,/);
+    await expect(line).toBeVisible();
+    const text = (await line.textContent())!;
+    expect(text).not.toContain('—');
+    expect(text.match(/collection/g)?.length ?? 0).toBeLessThanOrEqual(1);
+  });
+});
+
+test('review queue cards show the language', async ({ page }) => {
+  await page.goto('/admin');
+  await expect(page.getByText('Liturgy of St. Basil · Annual · Coptic').first()).toBeVisible();
+});
