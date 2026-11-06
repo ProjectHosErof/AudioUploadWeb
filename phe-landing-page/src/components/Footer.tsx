@@ -36,7 +36,7 @@ export function Footer() {
               margin: 0,
               maxWidth: '460px',
             }}>
-              An open initiative to preserve and share the sacred hymns and responses of the Coptic Orthodox tradition — for the community, by the community.
+              A community initiative to preserve and share the sacred hymns and responses of the Coptic Orthodox tradition — for the community, by the community.
             </p>
           </div>
 

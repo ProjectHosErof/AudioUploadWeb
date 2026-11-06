@@ -125,3 +125,36 @@ test('a small file shows its size in KB', async ({ page }) => {
   await page.locator('#file-input').setInputFiles({ name: 'short.m4a', mimeType: 'audio/mp4', buffer: Buffer.alloc(40 * 1024) });
   await expect(page.locator('#upload')).toContainText('40 KB');
 });
+
+test('"Upload another" keeps the service, season, language and email', async ({ page }) => {
+  await fillRequired(page);
+  await page.getByLabel('Email (optional)').fill('choir@example.com');
+  await page.getByRole('button', { name: 'Share Recording' }).click();
+  await page.getByRole('button', { name: 'Upload another' }).click();
+
+  const control = (id: string) => page.locator(`#${id}`).locator('xpath=ancestor::div[contains(@class,"react-select__control")]');
+  await expect(control('upload-service')).toContainText('Liturgy');
+  await expect(control('upload-season')).toContainText('Annual');
+  await expect(control('upload-language')).toContainText('Coptic');
+  await expect(page.getByLabel('Email (optional)')).toHaveValue('choir@example.com');
+  // Per recording: the hymn, the file and the consent start fresh.
+  await expect(control('upload-hymn')).toContainText('Select or type a hymn');
+  await expect(page.getByText('Drop your audio file here')).toBeVisible();
+  await expect(page.getByLabel(/I agree to the/)).not.toBeChecked();
+});
+
+test('a slow upload can be cancelled, keeping the form as it was', async ({ page }) => {
+  await page.route('http://r2.test/**', async (route) => {
+    await new Promise((r) => setTimeout(r, 10_000));
+    await route.fulfill({ status: 200, body: '' }).catch(() => {});
+  });
+  await fillRequired(page);
+  await page.getByRole('button', { name: 'Share Recording' }).click();
+  await page.getByRole('button', { name: 'Cancel upload' }).click();
+
+  await expect(page.locator('#upload')).toContainText('Upload cancelled — your choices are still here.');
+  await expect(page.locator('#upload-error')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Share Recording' })).toBeEnabled();
+  await expect(page.getByText('voice-memo.m4a')).toBeVisible();
+  await expect(page.getByLabel(/I agree to the/)).toBeChecked();
+});

@@ -1,6 +1,7 @@
 export function Hero() {
   return (
     <section
+      className="hero"
       style={{
         backgroundColor: 'var(--ink)',
         background: 'radial-gradient(ellipse at 50% -5%, rgba(200, 146, 42, 0.07) 0%, transparent 62%), var(--ink)',
@@ -20,7 +21,7 @@ export function Hero() {
         background: 'linear-gradient(90deg, transparent 0%, var(--gold) 30%, var(--gold) 70%, transparent 100%)',
       }} />
 
-      <div style={{
+      <div className="hero-inner" style={{
         maxWidth: '1000px',
         margin: '0 auto',
         padding: 'clamp(2.5rem, 7vh, 8rem) 1.5rem',

@@ -240,7 +240,7 @@ export function DashboardPage() {
             <Link
               to="/#upload"
               className="hero-cta anim-2"
-              style={{ whiteSpace: 'nowrap', display: 'inline-block' }}
+              style={{ display: 'inline-block', maxWidth: '100%' }}
             >
               Upload New Recording
             </Link>
@@ -255,7 +255,7 @@ export function DashboardPage() {
         padding: 'clamp(2.5rem, 5vw, 3.5rem) 2rem',
       }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div className="grid grid-cols-3 gap-px" style={{ backgroundColor: 'var(--ink-mid)' }}>
+          <div className="stats-grid grid grid-cols-3 gap-px" style={{ backgroundColor: 'var(--ink-mid)' }}>
             <div style={{ backgroundColor: 'var(--ink-soft)' }}>
               <StatCard value={loading || error ? '—' : String(stats.total)} label="Total Recordings" />
             </div>
@@ -355,12 +355,14 @@ export function DashboardPage() {
             <ul className="recordings-cards" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
               {tracks.map((track) => (
                 <li key={track.id} style={{ borderTop: '1px solid var(--ink-mid)', padding: '1.125rem 0' }}>
-                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '0.75rem' }}>
+                  {/* Wraps so a long title keeps the full width and the badge drops below it. */}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', justifyContent: 'space-between', gap: '0.5rem 0.75rem' }}>
                     <span style={{
                       fontFamily: 'var(--font-display)',
                       fontSize: '1.25rem',
                       color: 'var(--parchment)',
                       lineHeight: 1.2,
+                      flex: '1 1 12rem',
                       minWidth: 0,
                       overflowWrap: 'anywhere',
                     }}>

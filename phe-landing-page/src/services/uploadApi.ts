@@ -44,6 +44,14 @@ export class UploadError extends Error {
   }
 }
 
+/** The contributor cancelled the upload; nothing to report as an error. */
+export class UploadCancelled extends Error {
+  constructor() {
+    super("Upload cancelled.");
+    this.name = "UploadCancelled";
+  }
+}
+
 // Canonical extension -> MIME type. Every value is in the Worker's allowlist.
 const EXT_TO_CONTENT_TYPE: Record<string, string> = {
   wav: "audio/wav",
@@ -122,7 +130,7 @@ async function currentAccessToken(): Promise<string | null> {
   }
 }
 
-async function initiate(req: InitiateRequest): Promise<InitiateResponse> {
+async function initiate(req: InitiateRequest, signal?: AbortSignal): Promise<InitiateResponse> {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   const token = await currentAccessToken();
   if (token) headers.Authorization = `Bearer ${token}`;
@@ -133,8 +141,10 @@ async function initiate(req: InitiateRequest): Promise<InitiateResponse> {
       method: "POST",
       headers,
       body: JSON.stringify(req),
+      signal,
     });
   } catch {
+    if (signal?.aborted) throw new UploadCancelled();
     throw new UploadError("Couldn't reach the server. Check your connection and try again.");
   }
   const data = await res.json().catch(() => ({}));
@@ -175,9 +185,12 @@ function putToStorage(
   file: File,
   contentType: string,
   onProgress?: (pct: number) => void,
+  signal?: AbortSignal,
 ): Promise<void> {
   return new Promise((resolve, reject) => {
+    if (signal?.aborted) return reject(new UploadCancelled());
     const xhr = new XMLHttpRequest();
+    signal?.addEventListener("abort", () => xhr.abort(), { once: true });
     xhr.open("PUT", uploadUrl);
     xhr.setRequestHeader("Content-Type", contentType);
     xhr.upload.onprogress = (e) => {
@@ -191,7 +204,8 @@ function putToStorage(
         : reject(new UploadError("Your file didn't finish uploading. Please try again.", xhr.status));
     xhr.onerror = () =>
       reject(new UploadError("The connection dropped while uploading. Please check your connection and try again."));
-    xhr.onabort = () => reject(new UploadError("Upload was interrupted."));
+    xhr.onabort = () =>
+      reject(signal?.aborted ? new UploadCancelled() : new UploadError("Upload was interrupted."));
     xhr.send(file);
   });
 }
@@ -231,11 +245,14 @@ async function complete(recordingId: string): Promise<void> {
 export async function uploadRecording(
   params: Omit<InitiateRequest, "content_type"> & { file: File; content_type: string },
   onProgress?: (pct: number) => void,
+  signal?: AbortSignal,
 ): Promise<string> {
   const { file, ...rest } = params;
-  const init = await initiate(rest);
+  const init = await initiate(rest, signal);
   const contentType = init.requiredHeaders?.["Content-Type"] ?? params.content_type;
-  await putToStorage(init.uploadUrl, file, contentType, onProgress);
+  await putToStorage(init.uploadUrl, file, contentType, onProgress, signal);
+  // Not cancellable from here: the file is stored, so confirming it is the
+  // only way it isn't wasted. An abandoned "pending" row is swept later.
   await complete(init.recordingId);
   return init.recordingId;
 }

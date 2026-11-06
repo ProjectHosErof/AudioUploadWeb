@@ -617,3 +617,24 @@ body {
   color: var(--gold) !important;
   border-top: 1px solid var(--ink-mid);
 }
+
+/* A phone held sideways: the hero fits on one screen, so "Add your voice"
+   is visible without scrolling. Overrides the hero's inline sizes only here. */
+@media (max-height: 500px) and (orientation: landscape) {
+  .hero { min-height: auto !important; }
+  .hero-inner { padding: 1rem 1.5rem 1.25rem !important; }
+  .hero-inner > div { margin-top: 0 !important; margin-bottom: 0.625rem !important; }
+  .hero-inner > div > div[style*="height: 1px"] { margin: 0.5rem 0 !important; }
+  .hero-inner h1 { font-size: 2.75rem !important; }
+  .hero-inner h1 + p { margin-top: 0.25rem !important; }
+  .hero-inner p + p { margin-top: 0.5rem !important; max-width: 44rem !important; font-size: 0.9375rem !important; line-height: 1.6 !important; }
+  .hero-inner .anim-5 > div { margin-top: 0.5rem !important; }
+  /* The ◆ ◆ ◆ ornament is decoration; on a short screen the button matters more. */
+  .hero-inner .anim-3 { display: none !important; }
+}
+
+/* Dashboard totals: three across, except on the narrowest phones (or high
+   zoom), where three boxes can't fit whole words like "RECORDINGS". */
+@media (max-width: 359px) {
+  .stats-grid { grid-template-columns: 1fr !important; }
+}

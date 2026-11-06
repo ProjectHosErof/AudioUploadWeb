@@ -15,18 +15,18 @@ import {
 import type { SelectOption } from "../options.data";
 import { TURNSTILE_SITE_KEY } from "../config";
 import { TERMS_VERSION } from "../legal/terms";
-import { ACCEPTED_AUDIO, ACCEPTED_AUDIO_LABEL, MAX_UPLOAD_BYTES, resolveContentType, uploadRecording, UploadError } from "../services/uploadApi";
+import { ACCEPTED_AUDIO, ACCEPTED_AUDIO_LABEL, MAX_UPLOAD_BYTES, resolveContentType, uploadRecording, UploadCancelled, UploadError } from "../services/uploadApi";
 import { useAuth } from '../auth/useAuth';
 
+// Named as in the Service dropdown, so the guidelines and the form agree.
 const serviceTypes = [
-  'St. Basil / St. Gregory / St. Cyril Divine Liturgy',
-  'Matins & Vespers',
-  'Vesper Praises',
-  'Morning & Midnight Praises',
-  'Melodies',
-  'Ceremonies (Baptism, Crowning, Ordination)',
-  'Venerations',
-  'and more',
+  'The Divine Liturgy (St. Basil, St. Gregory, St. Cyril)',
+  'Vespers and Matins (Raising of Incense)',
+  'Midnight Praises (Tasbeha), Vesper Praises and Morning Praises',
+  'Pascha (Holy Week)',
+  'Venerations (Tamagid) and Melodies',
+  'Ceremonies: Baptism, Crowning (Wedding), Reception of New Priest',
+  '…and more. If yours isn\'t in the form\'s list, choose “My hymn isn\'t listed”.',
 ];
 
 /** Bytes → "12.3 MB". */
@@ -103,6 +103,9 @@ export function UploadForm() {
   // Says what a season/service change did to the chosen hymn.
   const [hymnNotice, setHymnNotice] = useState("");
   const hymnSelectRef = useRef<SelectInstance<SelectOption, false>>(null);
+  // The upload in flight, so it can be cancelled; and a note once it was.
+  const uploadAbort = useRef<AbortController | null>(null);
+  const [cancelNote, setCancelNote] = useState("");
   const [failedCheck, setFailedCheck] = useState<FormCheck | null>(null);
   // Set after a successful upload; replaces the form with a thank-you panel.
   const [submitted, setSubmitted] = useState<{ reference: string; email: string } | null>(null);
@@ -289,6 +292,8 @@ export function UploadForm() {
 
     // Captured now: the form is cleared once the upload succeeds.
     const sentTo = emailValue.trim();
+    uploadAbort.current = new AbortController();
+    setCancelNote("");
     setIsSubmitting(true);
     setUploadProgress(0);
     try {
@@ -315,26 +320,30 @@ export function UploadForm() {
           file: file!,
         },
         (pct) => setUploadProgress(pct),
+        uploadAbort.current.signal,
       );
 
-      setSelectedService(null);
-      setSelectedSeason(null);
+      // Ready for the next one. A choir often records several hymns from the
+      // same service, so service, season, languages and email stay; the hymn,
+      // the file and the consent (which covers who is heard) are per recording.
       setSelectedHymn(null);
       setShowAll(false);
       setHymnNotice("");
-      setSelectedLanguage([]);
       setFile(null);
       setChecked(false);
       setAgreedToTerms(false);
-      setEmail("");
-      setEmailEdited(false);
       setEmailError("");
       setUploadProgress(null);
       setSubmitted({ reference: recordingId.slice(0, 8).toUpperCase(), email: sentTo });
     } catch (err) {
       setUploadProgress(null);
-      fail(err instanceof UploadError ? err.message : "Something went wrong. Please try again.");
+      if (err instanceof UploadCancelled) {
+        setCancelNote("Upload cancelled — your choices are still here.");
+      } else {
+        fail(err instanceof UploadError ? err.message : "Something went wrong. Please try again.");
+      }
     } finally {
+      uploadAbort.current = null;
       // A Turnstile token is single-use — reset the widget for the next attempt.
       turnstileRef.current?.reset();
       setTurnstileToken(null);
@@ -388,10 +397,10 @@ export function UploadForm() {
           <summary>What to record — full guidelines</summary>
           <div style={{ paddingTop: '1rem' }}>
             <p style={{ fontFamily: 'var(--font-ui)', fontSize: '1.0625rem', lineHeight: 1.75, color: 'var(--text-muted)', margin: '0 0 0.75rem' }}>
-              These recordings will form a training dataset for a future platform currently in development for the Coptic Orthodox community.
+              Every recording joins the project's collection of Coptic hymns, which will help build tools for learning them. Recordings are never sold or published as a dataset.
             </p>
             <p style={{ fontFamily: 'var(--font-ui)', fontSize: '1.0625rem', lineHeight: 1.75, color: 'var(--text-muted)', margin: '0 0 1rem' }}>
-              We are looking for hymns and responses across different feasts, seasons, and tunes. Please do{' '}
+              We're looking for hymns and responses across different feasts, seasons, and tunes. Please do{' '}
               <em style={{ color: 'var(--parchment-dim)' }}>not</em> submit entire liturgies or full service recordings.
               Hymns and responses from services such as:
             </p>
@@ -780,9 +789,30 @@ export function UploadForm() {
               )}
             </div>
 
-            {/* Upload progress */}
+            {/* Upload progress, with a way out of a long upload */}
             {isSubmitting && uploadProgress !== null && (
               <div style={{ marginBottom: '1.25rem' }}>
+                {uploadProgress < 100 && (
+                  <div style={{ textAlign: 'right', marginBottom: '0.5rem' }}>
+                    <button
+                      type="button"
+                      onClick={() => uploadAbort.current?.abort()}
+                      style={{
+                        fontFamily: 'var(--font-ui)',
+                        fontSize: '0.875rem',
+                        color: 'var(--text-muted)',
+                        background: 'none',
+                        border: 'none',
+                        textDecoration: 'underline',
+                        textUnderlineOffset: '3px',
+                        cursor: 'pointer',
+                        padding: '0.375rem 0',
+                      }}
+                    >
+                      Cancel upload
+                    </button>
+                  </div>
+                )}
                 <div
                   role="progressbar"
                   aria-label="Upload progress"
@@ -800,6 +830,16 @@ export function UploadForm() {
                 </div>
               </div>
             )}
+
+            {/* After a cancel: calm, not an error */}
+            <p role="status" style={{
+              fontFamily: 'var(--font-ui)',
+              fontSize: '0.9375rem',
+              color: 'var(--text-muted)',
+              margin: cancelNote && !isSubmitting ? '0 0 1rem' : 0,
+            }}>
+              {!isSubmitting && cancelNote}
+            </p>
 
             {/* Submit error */}
             {shownError && (

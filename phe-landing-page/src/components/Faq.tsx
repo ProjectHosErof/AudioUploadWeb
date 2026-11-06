@@ -15,7 +15,7 @@ const faqs = [
   },
   {
     q: 'Will this be used for AI?',
-    a: 'In time, the collection will help build a tool that recognises hymns and helps people learn them. Recordings are never sold, never published as a dataset, and never used to identify who is singing — see the Terms.',
+    a: 'In time, the collection will help build a tool that recognizes hymns and helps people learn them. Recordings are never sold, never published as a dataset, and never used to identify who is singing — see the Terms.',
   },
   {
     q: 'Will my personal information be shared?',

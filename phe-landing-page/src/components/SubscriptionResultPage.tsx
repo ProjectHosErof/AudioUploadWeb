@@ -13,53 +13,65 @@ import { Footer } from './Footer';
  */
 
 interface Copy {
+  /** Browser tab title: says what happened, like the heading does. */
+  title: string;
   eyebrow: string;
   heading: string;
   body: string;
+  /** Offer a fresh signup when the link couldn't be used. */
+  signUpAgain?: boolean;
 }
 
 const CONFIRMED: Record<string, Copy> = {
   ok: {
+    title: 'Subscription confirmed',
     eyebrow: 'Subscribed',
     heading: 'You’re on the list.',
     body: 'We’ll write when there is something worth telling you about — and not otherwise.',
   },
   unknown: {
-    eyebrow: 'Link not recognised',
+    title: 'Link expired',
+    eyebrow: 'Link not recognized',
     heading: 'That link has expired.',
     body: 'It may already have been used, or been cut short by your mail client. Signing up again will send a fresh one.',
+    signUpAgain: true,
   },
   error: {
+    title: 'Couldn’t confirm',
     eyebrow: 'Something went wrong',
     heading: 'We couldn’t confirm that.',
     body: 'Please try the link again in a moment. If it keeps failing, sign up again and we’ll send a new one.',
+    signUpAgain: true,
   },
 };
 
 const UNSUBSCRIBED: Record<string, Copy> = {
   ok: {
+    title: 'Unsubscribed',
     eyebrow: 'Unsubscribed',
     heading: 'You won’t hear from us again.',
     body: 'Your address has been removed from the list. Any recordings you’ve contributed stay exactly as they are.',
   },
   unknown: {
-    eyebrow: 'Link not recognised',
+    title: 'Nothing to remove',
+    eyebrow: 'Link not recognized',
     heading: 'Nothing to remove.',
     body: 'That link doesn’t match a subscription — you may already have unsubscribed.',
   },
   error: {
+    title: 'Couldn’t unsubscribe',
     eyebrow: 'Something went wrong',
     heading: 'We couldn’t remove you.',
-    body: 'Please try the link again in a moment.',
+    body: 'Please try the link again in a moment, or write to contact@hoserof.org and we’ll remove you.',
   },
 };
 
 export function SubscriptionResultPage({ variant }: { variant: 'confirmed' | 'unsubscribed' }) {
-  usePageTitle(variant === 'confirmed' ? 'Subscription confirmed' : 'Unsubscribed');
   const [params] = useSearchParams();
   const status = params.get('status') ?? 'ok';
   const table = variant === 'confirmed' ? CONFIRMED : UNSUBSCRIBED;
   const copy = table[status] ?? table.ok;
+  usePageTitle(copy.title);
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--ink)', display: 'flex', flexDirection: 'column' }}>
@@ -129,9 +141,20 @@ export function SubscriptionResultPage({ variant }: { variant: 'confirmed' | 'un
             {copy.body}
           </p>
 
-          <Link to="/" className="hero-cta" style={{ display: 'inline-block' }}>
-            Return to Project Hos Erof
-          </Link>
+          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            {copy.signUpAgain && (
+              <Link to="/#notify" className="hero-cta" style={{ display: 'inline-block' }}>
+                Sign up again
+              </Link>
+            )}
+            <Link
+              to="/"
+              className="hero-cta"
+              style={{ display: 'inline-block', ...(copy.signUpAgain ? { background: 'transparent' } : {}) }}
+            >
+              Return to Project Hos Erof
+            </Link>
+          </div>
         </div>
       </main>
 
