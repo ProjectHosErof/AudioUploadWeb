@@ -59,6 +59,7 @@ export function Footer() {
                 { label: 'About', href: '/#about' },
                 { label: 'Stay Informed', href: '/#notify' },
                 { label: 'Get Help', href: '/help?from=footer' },
+                { label: 'Join the Beta', href: '/beta' },
               ].map(({ label, href }) => (
                 <a
                   key={label}

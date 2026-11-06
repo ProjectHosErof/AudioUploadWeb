@@ -207,6 +207,37 @@ export const subscribers = pgTable('subscribers', {
 });
 
 // ==========================================
+// 3d. BETA TESTERS — people who asked to join the beta through the open link.
+//     Same double opt-in as `subscribers`: a row reaches the admin list only
+//     after its confirmation link is followed (status 'pending'). Acceptance
+//     starts the welcome / day-7 check-in / end-of-beta survey sequence.
+//     RLS on with no policy (migration 0014): only the Worker reads it.
+// ==========================================
+
+export const betaTesters = pgTable('beta_testers', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  // Lowercase, enforced by a CHECK in migration 0014 (as on subscribers).
+  email: varchar('email', { length: 255 }).notNull().unique(),
+  name: varchar('name', { length: 100 }).notNull(),
+  parish: varchar('parish', { length: 120 }),
+  device: varchar('device', { length: 20 }).notNull(),
+  ageRange: varchar('age_range', { length: 10 }),
+  role: varchar('role', { length: 20 }),
+  // Capability for the confirm and leave links (as subscribers.token).
+  token: uuid('token').defaultRandom().notNull().unique(),
+  // unconfirmed → pending → accepted | declined; any → withdrawn (src/lib/beta.ts).
+  status: varchar('status', { length: 12 }).default('unconfirmed').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  confirmationSentAt: timestamp('confirmation_sent_at', { withTimezone: true }),
+  confirmedAt: timestamp('confirmed_at', { withTimezone: true }),
+  decidedAt: timestamp('decided_at', { withTimezone: true }),
+  decidedBy: varchar('decided_by', { length: 255 }),
+  checkinSentAt: timestamp('checkin_sent_at', { withTimezone: true }),
+  surveySentAt: timestamp('survey_sent_at', { withTimezone: true }),
+  withdrawnAt: timestamp('withdrawn_at', { withTimezone: true }),
+});
+
+// ==========================================
 // 4. RECORDINGS — one row per submission. Combines storage state,
 //    liturgical metadata, offline-enrichment fields, and moderation.
 // ==========================================

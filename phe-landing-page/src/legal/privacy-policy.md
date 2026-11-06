@@ -31,6 +31,9 @@ We keep your **email address**, when you **confirmed** it, where you signed up (
 ### 1.5 If you ask us for help
 When you use the [Get help](/help) form, we receive your **email address**, your **name** if you give it, **your message**, and, if you include it, a **recording reference**. The form also tells us the **page you came from**, whether you were **signed in**, and your **browser and device type**, so we can understand the problem. We use this only to answer you. It reaches us as an email to support@hoserof.org; the same applies if you email us directly.
 
+### 1.6 If you join the beta
+When you ask to join the [beta](/beta), we keep your **name**, **email address**, the **device** you'll mostly use, and, if you tell us, your **parish or city**, how you're **involved**, and your **age range**. We also keep when you asked, confirmed, were accepted and were sent each beta email. We use this to run the beta: to decide who joins, to send the welcome, a check-in and a closing survey, and to see whether testers have signed in and uploaded so we can help anyone who's stuck. You can leave at any time with the link in any beta email.
+
 ## 2. How we use it
 - To **store, review and catalogue** recordings, and to use them to **build and improve a hymn-recognition model** and related tools for Project Hos Erof (see the Contributor License in our [Terms](/terms)).
 - To **show you your contributions** and their status.
@@ -61,6 +64,7 @@ Recordings are used **within Project Hos Erof**. We don't publish or sell the co
 - **Your email for review summaries:** for as long as the recording it came with is kept.
 - **Mailing list:** until you unsubscribe. After that we keep only a do-not-email record.
 - **Help requests and emails to us:** for as long as we need them to answer you, and deleted within **12 months**.
+- **Beta requests:** unconfirmed requests are deleted after **7 days** and declined ones after **30 days**. Everything else about the beta is deleted within **3 months** of the beta ending.
 - **Backups:** we keep encrypted backups so the collection can't be lost. When something is deleted, it leaves our backups **within 45 days**.
 
 ## 6. Your choices and rights

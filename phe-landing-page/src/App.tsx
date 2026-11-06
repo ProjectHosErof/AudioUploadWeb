@@ -20,6 +20,8 @@ const LoginPage = lazy(() => import("./components/LoginPage").then((m) => ({ def
 const DashboardPage = lazy(() => import("./components/DashboardPage").then((m) => ({ default: m.DashboardPage })));
 const AdminPage = lazy(() => import("./components/AdminPage").then((m) => ({ default: m.AdminPage })));
 const LegalPage = lazy(() => import("./components/LegalPage"));
+const BetaJoinPage = lazy(() => import("./components/BetaJoinPage").then((m) => ({ default: m.BetaJoinPage })));
+const BetaAdminPage = lazy(() => import("./components/BetaAdminPage").then((m) => ({ default: m.BetaAdminPage })));
 const HelpPage = lazy(() => import("./components/HelpPage").then((m) => ({ default: m.HelpPage })));
 // The upload form brings react-select and the full hymn catalogue (~290 KB of
 // JSON). It sits at the bottom of the page, so load it after first paint.
@@ -101,6 +103,18 @@ export default function App() {
       <Route path="/terms" element={<Loading><LegalPage doc="terms" /></Loading>} />
       <Route path="/dmca" element={<Loading><LegalPage doc="dmca" /></Loading>} />
       <Route path="/help" element={<Loading><HelpPage /></Loading>} />
+      {/* The open "join the beta" link, and where its email links land. */}
+      <Route path="/beta" element={<Loading><BetaJoinPage /></Loading>} />
+      <Route path="/beta/confirmed" element={<SubscriptionResultPage variant="beta-confirmed" />} />
+      <Route path="/beta/left" element={<SubscriptionResultPage variant="beta-left" />} />
+      <Route
+        path="/admin/beta"
+        element={
+          <AdminRoute>
+            <Loading><BetaAdminPage /></Loading>
+          </AdminRoute>
+        }
+      />
       {/* Unknown paths: a real "page not found", marked noindex. */}
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

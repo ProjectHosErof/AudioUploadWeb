@@ -170,3 +170,65 @@ test('the review page names languages without downloading the hymn list', async 
   await expect(page.getByText('Liturgy of St. Basil · Annual · Coptic').first()).toBeVisible();
   expect(chunks.filter((c) => /\/assets\/options\.data-/.test(c))).toEqual([]);
 });
+
+test.describe('beta admin', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/admin/beta');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Beta testers');
+  });
+
+  test('lists who is waiting, and accepting moves them to the testers', async ({ page, captured }) => {
+    await expect(page.getByRole('heading', { name: 'Waiting · 2' })).toBeVisible();
+    const marina = page.getByRole('listitem').filter({ hasText: 'Marina Gerges' });
+    await expect(marina).toContainText('St. Mark, Cleveland · iPhone · Chanter or deacon · 45–64');
+    await marina.getByRole('button', { name: 'Accept' }).click();
+
+    await expect(page.getByRole('status')).toContainText('Marina Gerges is in. Their welcome email is on its way.');
+    await expect(page.getByRole('heading', { name: 'Waiting · 1' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Testers · 3' })).toBeVisible();
+    expect(captured.betaDecisions[0]).toMatchObject({ id: '30000000-0000-4000-8000-000000000001', body: { decision: 'accept', notify: true } });
+  });
+
+  test('declining without a note says so to the server', async ({ page, captured }) => {
+    const bishoy = page.getByRole('listitem').filter({ hasText: 'Bishoy Fahmy' });
+    await bishoy.getByLabel('Send a short note if declined').uncheck();
+    await bishoy.getByRole('button', { name: 'Decline' }).click();
+    await expect(page.getByRole('status')).toContainText('Bishoy Fahmy was declined.');
+    expect(captured.betaDecisions[0].body).toEqual({ decision: 'decline', notify: false });
+  });
+
+  test('shows each tester\'s progress and flags anyone stuck', async ({ page }) => {
+    const view = page.locator('.beta-cards, .beta-table').filter({ visible: true });
+    await expect(view).toContainText('Mina Abadir');
+    await expect(view.getByText('May be stuck')).toHaveCount(1);
+    const kirollos = view.locator('li, tr').filter({ hasText: 'Kirollos Hanna' });
+    await expect(kirollos.getByText('May be stuck')).toBeVisible();
+    await expect(view.locator('li, tr').filter({ hasText: 'Mina Abadir' })).toContainText('4');
+  });
+
+  test('ending the beta asks first, wants an https link, then reports what was sent', async ({ page, captured }) => {
+    const end = page.locator('section').filter({ has: page.getByRole('heading', { name: 'End the beta' }) });
+    await expect(end).toContainText('2 haven’t had it yet');
+    await end.getByLabel('Survey link').fill('http://forms.gle/abc');
+    await expect(end).toContainText('The link must start with https://');
+    await expect(end.getByRole('button', { name: 'Send survey' })).toBeDisabled();
+
+    await end.getByLabel('Survey link').fill('https://forms.gle/abc');
+    await end.getByRole('button', { name: 'Send survey' }).click();
+    await expect(end).toContainText('Send to 2 testers?');
+    await end.getByRole('button', { name: 'Yes, send' }).click();
+    await expect(end.getByRole('status')).toContainText('Sent to 2 testers.');
+    expect(captured.betaEnd[0]).toEqual({ surveyUrl: 'https://forms.gle/abc' });
+  });
+
+  test('admins see a Beta link in the header', async ({ page }, info) => {
+    await page.goto('/');
+    if (info.project.name === 'mobile') await page.getByRole('button', { name: 'Open menu' }).click();
+    await expect(page.getByRole('navigation').getByRole('link', { name: 'Beta', exact: true })).toBeVisible();
+  });
+
+  test('has no WCAG 2.2 AA violations', async ({ page }) => {
+    await settle(page);
+    expect(await axeViolations(page)).toEqual([]);
+  });
+});

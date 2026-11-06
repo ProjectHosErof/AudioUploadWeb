@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile';
 import { Nav } from './Nav';
 import { Footer } from './Footer';
@@ -168,6 +168,8 @@ export function HelpPage() {
             Something not working, or an idea to share? Tell us here and we'll reply by email — usually
             within two days. You can also write to{' '}
             <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: 'var(--gold)', textDecoration: 'underline', textUnderlineOffset: '3px' }}>{SUPPORT_EMAIL}</a>.
+            {' '}Want to help test the site?{' '}
+            <Link to="/beta" style={{ color: 'var(--gold)', textDecoration: 'underline', textUnderlineOffset: '3px' }}>Join the beta</Link>.
           </p>
 
           <div style={{

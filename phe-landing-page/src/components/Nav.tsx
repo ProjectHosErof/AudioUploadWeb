@@ -111,6 +111,18 @@ export function Nav() {
                 Review Queue
               </Link>
             )}
+            {isAdmin && (
+              <Link
+                to="/admin/beta"
+                onClick={close}
+                aria-current={current('/admin/beta')}
+                style={{ ...linkStyle, color: color('/admin/beta', 'var(--crimson-label)') }}
+                onMouseEnter={hoverOn('var(--gold)')}
+                onMouseLeave={hoverOn(color('/admin/beta', 'var(--crimson-label)'))}
+              >
+                Beta
+              </Link>
+            )}
             <button
               onClick={handleSignOut}
               style={linkStyle}

@@ -50,6 +50,18 @@ export function helpRateLimit(): MiddlewareHandler<{ Bindings: Env }> {
   };
 }
 
+/** Joining the beta sends a confirmation email: the same tight ceiling, its own binding. */
+export function betaRateLimit(): MiddlewareHandler<{ Bindings: Env }> {
+  return async (c, next) => {
+    const ip = clientIp((n) => c.req.header(n));
+    const { success } = await c.env.BETA_LIMITER.limit({ key: ip });
+    if (!success) {
+      return c.json({ error: 'Too many requests. Please wait a minute and try again.' }, 429);
+    }
+    await next();
+  };
+}
+
 export function subscribeRateLimit(): MiddlewareHandler<{ Bindings: Env }> {
   return async (c, next) => {
     const ip = clientIp((n) => c.req.header(n));

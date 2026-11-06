@@ -54,6 +54,13 @@
         "type": "ratelimit",
         "namespace_id": "1003",
         "simple": { "limit": 3, "period": 60 }
+      },
+      {
+        // Joining the beta sends a confirmation email; the same tight ceiling.
+        "name": "BETA_LIMITER",
+        "type": "ratelimit",
+        "namespace_id": "1004",
+        "simple": { "limit": 3, "period": 60 }
       }
     ]
   },

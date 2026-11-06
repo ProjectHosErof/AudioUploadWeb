@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { ACCEPTED_TERMS_VERSIONS, helpSchema, initiateSchema } from './validation';
+import { ACCEPTED_TERMS_VERSIONS, betaApplySchema, betaEndSchema, helpSchema, initiateSchema } from './validation';
 
 const valid = {
   service_slug: 'liturgy',
@@ -84,4 +84,31 @@ describe('helpSchema', () => {
       assert.equal(helpSchema.safeParse({ ...ok, ...change }).success, false);
     });
   }
+});
+
+describe('betaApplySchema', () => {
+  const ok = { name: 'Mina', email: 'Mina@Example.com', device: 'iphone', consent: true, turnstile_token: 't' };
+
+  it('accepts a request and lowercases the email', () => {
+    const parsed = betaApplySchema.safeParse({ ...ok, role: 'chanter', age_range: '45-64', parish: 'St. Mark' });
+    assert.equal(parsed.success && parsed.data.email, 'mina@example.com');
+  });
+
+  for (const [name, change] of [
+    ['no consent', { consent: false }],
+    ['an unknown device', { device: 'watch' }],
+    ['a bad email', { email: 'mina' }],
+    ['no name', { name: ' ' }],
+    ['an unknown age range', { age_range: '30' }],
+  ] as const) {
+    it(`rejects ${name}`, () => assert.equal(betaApplySchema.safeParse({ ...ok, ...change }).success, false));
+  }
+});
+
+describe('betaEndSchema', () => {
+  it('takes only an https survey link', () => {
+    assert.equal(betaEndSchema.safeParse({ surveyUrl: 'https://forms.gle/abc' }).success, true);
+    assert.equal(betaEndSchema.safeParse({ surveyUrl: 'http://forms.gle/abc' }).success, false);
+    assert.equal(betaEndSchema.safeParse({ surveyUrl: 'javascript:alert(1)' }).success, false);
+  });
 });
