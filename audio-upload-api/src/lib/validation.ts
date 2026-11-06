@@ -56,6 +56,9 @@ export const initiateSchema = z.object({
   size_bytes: z.number().int().positive(),
   original_filename: z.string().max(512).optional(),
   wants_updates: z.boolean().default(false),
+  // Set when the contributor chose "my hymn isn't listed"; lets a hymn that
+  // isn't on the season + service list through, flagged for the reviewer.
+  hymn_not_listed: z.boolean().default(false),
   email: z.string().email().max(254).optional(),
   turnstile_token: z.string().min(1),
   // Required: no recording enters the corpus without a recorded license.

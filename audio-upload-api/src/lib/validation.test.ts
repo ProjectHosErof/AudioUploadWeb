@@ -44,3 +44,15 @@ describe('initiateSchema: phone recording formats', () => {
     assert.equal(initiateSchema.safeParse({ ...valid, content_type: 'video/mp4' }).success, false);
   });
 });
+
+describe('initiateSchema: "my hymn isn\'t listed"', () => {
+  it('defaults to a listed hymn', () => {
+    const parsed = initiateSchema.safeParse(valid);
+    assert.equal(parsed.success && parsed.data.hymn_not_listed, false);
+  });
+
+  it('carries the flag when the contributor chose it', () => {
+    const parsed = initiateSchema.safeParse({ ...valid, hymn_not_listed: true });
+    assert.equal(parsed.success && parsed.data.hymn_not_listed, true);
+  });
+});

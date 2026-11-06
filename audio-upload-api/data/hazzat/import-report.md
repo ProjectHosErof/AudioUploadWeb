@@ -33,7 +33,7 @@ These keep their slug and label and gain hazzat's placements, types and tunes.
 | `the-first-canticle` | The First Canticle | `1st-canticle` |
 | `the-second-canticle` | The Second Canticle | `2nd-canticle` |
 | `the-third-canticle` | The Third Canticle | `3rd-canticle-annual` |
-| `the-fourth-canticle` | The Fourth Canticle (Esmo E'epchois/E'erof | `4th-canticle` |
+| `the-fourth-canticle` | The Fourth Canticle (Esmo E'epchois/E'erof) | `4th-canticle` |
 | `adam-psali-for-first-canticle` | Adam Psali (Lobsh) for the First Canticle | `explanation-lobsh-of-the-1st-canticle-khen-oushot-annual` |
 | `adam-psali-for-second-canticle` | Adam Psali (Lobsh) for the Second Canticle | `explanation-lobsh-of-the-2nd-canticle-annual` |
 | `song-of-the-three-saintly-children` | The Song of the Three Saintly Children (Tenen) | `tenen` |
@@ -98,136 +98,136 @@ Two different hymns had the same title inside one season + service list, so the 
 
 | Season | Service | Hymns |
 | --- | --- | --- |
+| Annual | Vespers (Evening Raising of Incense) | 5 |
 | Annual | Vesper Praises | 2 |
+| Annual | Midnight Praises (Tasbeha) | 16 |
+| Annual | Matins (Morning Raising of Incense) | 4 |
 | Annual | Morning Praises | 9 |
-| Annual | Midnight Praises | 16 |
 | Annual | St. Basil Divine Liturgy | 28 |
 | Annual | St. Gregory Divine Liturgy | 25 |
 | Annual | St. Cyril Divine Liturgy | 20 |
-| Annual | Matins | 4 |
-| Annual | Vespers | 5 |
-| Annual | Crowning | 32 |
-| Annual | Venerations | 22 |
+| Annual | Venerations (Tamagid) | 22 |
+| Annual | Crowning (Wedding) | 32 |
 | Annual | Funeral | 5 |
 | Annual | Papal Hymns | 23 |
 | Annual | Reception of New Priest | 5 |
-| Nairouz | Midnight Praises | 2 |
+| Nairouz | Vespers (Evening Raising of Incense) | 6 |
+| Nairouz | Midnight Praises (Tasbeha) | 2 |
+| Nairouz | Matins (Morning Raising of Incense) | 6 |
 | Nairouz | St. Basil Divine Liturgy | 8 |
 | Nairouz | St. Gregory Divine Liturgy | 8 |
 | Nairouz | St. Cyril Divine Liturgy | 8 |
-| Nairouz | Matins | 6 |
-| Nairouz | Vespers | 6 |
+| Feast of the Cross | Vespers (Evening Raising of Incense) | 4 |
+| Feast of the Cross | Matins (Morning Raising of Incense) | 4 |
 | Feast of the Cross | St. Basil Divine Liturgy | 12 |
 | Feast of the Cross | St. Gregory Divine Liturgy | 12 |
 | Feast of the Cross | St. Cyril Divine Liturgy | 12 |
-| Feast of the Cross | Matins | 4 |
-| Feast of the Cross | Vespers | 4 |
-| Kiahk | Midnight Praises | 57 |
+| Kiahk | Vespers (Evening Raising of Incense) | 13 |
+| Kiahk | Midnight Praises (Tasbeha) | 57 |
+| Kiahk | Matins (Morning Raising of Incense) | 13 |
 | Kiahk | St. Basil Divine Liturgy | 27 |
 | Kiahk | St. Gregory Divine Liturgy | 27 |
 | Kiahk | St. Cyril Divine Liturgy | 27 |
-| Kiahk | Matins | 13 |
-| Kiahk | Vespers | 13 |
+| Nativity (Paramoune) | Vespers (Evening Raising of Incense) | 3 |
+| Nativity (Paramoune) | Matins (Morning Raising of Incense) | 3 |
 | Nativity (Paramoune) | St. Basil Divine Liturgy | 3 |
 | Nativity (Paramoune) | St. Gregory Divine Liturgy | 3 |
 | Nativity (Paramoune) | St. Cyril Divine Liturgy | 3 |
-| Nativity (Paramoune) | Matins | 3 |
-| Nativity (Paramoune) | Vespers | 3 |
+| Nativity | Matins (Morning Raising of Incense) | 17 |
 | Nativity | St. Basil Divine Liturgy | 20 |
 | Nativity | St. Gregory Divine Liturgy | 20 |
 | Nativity | St. Cyril Divine Liturgy | 20 |
-| Nativity | Matins | 17 |
+| Feast of Circumcision | Vespers (Evening Raising of Incense) | 6 |
+| Feast of Circumcision | Matins (Morning Raising of Incense) | 6 |
 | Feast of Circumcision | St. Basil Divine Liturgy | 5 |
 | Feast of Circumcision | St. Gregory Divine Liturgy | 5 |
 | Feast of Circumcision | St. Cyril Divine Liturgy | 5 |
-| Feast of Circumcision | Matins | 6 |
-| Feast of Circumcision | Vespers | 6 |
-| Epiphany (Paramoune) | Vespers | 3 |
+| Epiphany (Paramoune) | Vespers (Evening Raising of Incense) | 3 |
+| Epiphany | Matins (Morning Raising of Incense) | 15 |
 | Epiphany | St. Basil Divine Liturgy | 14 |
 | Epiphany | St. Gregory Divine Liturgy | 14 |
 | Epiphany | St. Cyril Divine Liturgy | 14 |
-| Epiphany | Matins | 15 |
 | Wedding at Cana of Galilee | St. Basil Divine Liturgy | 2 |
 | Wedding at Cana of Galilee | St. Gregory Divine Liturgy | 2 |
 | Wedding at Cana of Galilee | St. Cyril Divine Liturgy | 2 |
+| The Lord's Entry into the Temple | Vespers (Evening Raising of Incense) | 6 |
+| The Lord's Entry into the Temple | Matins (Morning Raising of Incense) | 6 |
 | The Lord's Entry into the Temple | St. Basil Divine Liturgy | 5 |
 | The Lord's Entry into the Temple | St. Gregory Divine Liturgy | 5 |
 | The Lord's Entry into the Temple | St. Cyril Divine Liturgy | 5 |
-| The Lord's Entry into the Temple | Matins | 6 |
-| The Lord's Entry into the Temple | Vespers | 6 |
-| Ninevah's Fast | St. Basil Divine Liturgy | 12 |
-| Ninevah's Fast | St. Gregory Divine Liturgy | 12 |
-| Ninevah's Fast | St. Cyril Divine Liturgy | 12 |
-| Ninevah's Fast | Matins | 6 |
-| Ninevah's Feast | St. Basil Divine Liturgy | 2 |
-| Ninevah's Feast | St. Gregory Divine Liturgy | 2 |
-| Ninevah's Feast | St. Cyril Divine Liturgy | 2 |
-| Ninevah's Feast | Matins | 1 |
+| Nineveh's Fast | Matins (Morning Raising of Incense) | 6 |
+| Nineveh's Fast | St. Basil Divine Liturgy | 12 |
+| Nineveh's Fast | St. Gregory Divine Liturgy | 12 |
+| Nineveh's Fast | St. Cyril Divine Liturgy | 12 |
+| Nineveh's Feast | Matins (Morning Raising of Incense) | 1 |
+| Nineveh's Feast | St. Basil Divine Liturgy | 2 |
+| Nineveh's Feast | St. Gregory Divine Liturgy | 2 |
+| Nineveh's Feast | St. Cyril Divine Liturgy | 2 |
+| Great Lent (Saturdays and Sundays) | Vespers (Evening Raising of Incense) | 5 |
+| Great Lent (Saturdays and Sundays) | Matins (Morning Raising of Incense) | 5 |
 | Great Lent (Saturdays and Sundays) | St. Basil Divine Liturgy | 13 |
 | Great Lent (Saturdays and Sundays) | St. Gregory Divine Liturgy | 13 |
 | Great Lent (Saturdays and Sundays) | St. Cyril Divine Liturgy | 13 |
-| Great Lent (Saturdays and Sundays) | Matins | 5 |
-| Great Lent (Saturdays and Sundays) | Vespers | 5 |
+| Great Lent (Weekdays) | Matins (Morning Raising of Incense) | 4 |
 | Great Lent (Weekdays) | St. Basil Divine Liturgy | 13 |
 | Great Lent (Weekdays) | St. Gregory Divine Liturgy | 13 |
 | Great Lent (Weekdays) | St. Cyril Divine Liturgy | 13 |
-| Great Lent (Weekdays) | Matins | 4 |
 | Annunciation | St. Basil Divine Liturgy | 1 |
 | Annunciation | St. Gregory Divine Liturgy | 1 |
 | Annunciation | St. Cyril Divine Liturgy | 1 |
+| Lazarus Saturday | Matins (Morning Raising of Incense) | 2 |
 | Lazarus Saturday | St. Basil Divine Liturgy | 5 |
 | Lazarus Saturday | St. Gregory Divine Liturgy | 5 |
 | Lazarus Saturday | St. Cyril Divine Liturgy | 5 |
-| Lazarus Saturday | Matins | 2 |
+| Palm Sunday | Vespers (Evening Raising of Incense) | 7 |
+| Palm Sunday | Matins (Morning Raising of Incense) | 7 |
 | Palm Sunday | St. Basil Divine Liturgy | 9 |
 | Palm Sunday | St. Gregory Divine Liturgy | 9 |
 | Palm Sunday | St. Cyril Divine Liturgy | 9 |
-| Palm Sunday | Matins | 7 |
-| Palm Sunday | Vespers | 7 |
-| Palm Sunday | Pascha | 3 |
-| Holy Week (General Hours) | Pascha | 18 |
+| Palm Sunday | Pascha (Holy Week) | 3 |
+| Holy Week (General Hours) | Pascha (Holy Week) | 18 |
 | Holy Week (Covenant Thursday) | St. Basil Divine Liturgy | 4 |
 | Holy Week (Covenant Thursday) | St. Gregory Divine Liturgy | 4 |
 | Holy Week (Covenant Thursday) | St. Cyril Divine Liturgy | 4 |
-| Holy Week (Covenant Thursday) | Pascha | 7 |
+| Holy Week (Covenant Thursday) | Pascha (Holy Week) | 7 |
 | Holy Week (Covenant Thursday) | Lakkan | 2 |
-| Holy Week (Good Friday) | Pascha | 15 |
+| Holy Week (Good Friday) | Pascha (Holy Week) | 15 |
+| Bright Saturday | Matins (Morning Raising of Incense) | 14 |
 | Bright Saturday | St. Basil Divine Liturgy | 6 |
 | Bright Saturday | St. Gregory Divine Liturgy | 6 |
 | Bright Saturday | St. Cyril Divine Liturgy | 6 |
-| Bright Saturday | Matins | 14 |
-| Bright Saturday | Pascha | 14 |
+| Bright Saturday | Pascha (Holy Week) | 14 |
+| Resurrection | Matins (Morning Raising of Incense) | 17 |
 | Resurrection | St. Basil Divine Liturgy | 26 |
 | Resurrection | St. Gregory Divine Liturgy | 26 |
 | Resurrection | St. Cyril Divine Liturgy | 26 |
-| Resurrection | Matins | 17 |
+| Ascension | Vespers (Evening Raising of Incense) | 6 |
+| Ascension | Matins (Morning Raising of Incense) | 6 |
 | Ascension | St. Basil Divine Liturgy | 15 |
 | Ascension | St. Gregory Divine Liturgy | 15 |
 | Ascension | St. Cyril Divine Liturgy | 15 |
-| Ascension | Matins | 6 |
-| Ascension | Vespers | 6 |
-| Pentecost | Midnight Praises | 2 |
+| Pentecost | Midnight Praises (Tasbeha) | 2 |
+| Pentecost | Matins (Morning Raising of Incense) | 10 |
 | Pentecost | St. Basil Divine Liturgy | 15 |
 | Pentecost | St. Gregory Divine Liturgy | 15 |
 | Pentecost | St. Cyril Divine Liturgy | 15 |
-| Pentecost | Matins | 10 |
-| Apostles Fast | St. Basil Divine Liturgy | 9 |
-| Apostles Fast | St. Gregory Divine Liturgy | 9 |
-| Apostles Fast | St. Cyril Divine Liturgy | 9 |
-| Apostles Fast | Matins | 1 |
-| Apostles Fast | Vespers | 1 |
-| Apostles Feast | St. Basil Divine Liturgy | 5 |
-| Apostles Feast | St. Gregory Divine Liturgy | 5 |
-| Apostles Feast | St. Cyril Divine Liturgy | 5 |
-| Apostles Feast | Matins | 3 |
-| Apostles Feast | Vespers | 3 |
-| Saint Mary's Fast/Feast | Midnight Praises | 8 |
+| Apostles' Fast | Vespers (Evening Raising of Incense) | 1 |
+| Apostles' Fast | Matins (Morning Raising of Incense) | 1 |
+| Apostles' Fast | St. Basil Divine Liturgy | 9 |
+| Apostles' Fast | St. Gregory Divine Liturgy | 9 |
+| Apostles' Fast | St. Cyril Divine Liturgy | 9 |
+| Apostles' Feast | Vespers (Evening Raising of Incense) | 3 |
+| Apostles' Feast | Matins (Morning Raising of Incense) | 3 |
+| Apostles' Feast | St. Basil Divine Liturgy | 5 |
+| Apostles' Feast | St. Gregory Divine Liturgy | 5 |
+| Apostles' Feast | St. Cyril Divine Liturgy | 5 |
+| Saint Mary's Fast/Feast | Midnight Praises (Tasbeha) | 8 |
 | Saint Mary's Fast/Feast | St. Basil Divine Liturgy | 7 |
 | Saint Mary's Fast/Feast | St. Gregory Divine Liturgy | 7 |
 | Saint Mary's Fast/Feast | St. Cyril Divine Liturgy | 7 |
-| Saint Mary's Fast/Feast | Venerations | 15 |
+| Saint Mary's Fast/Feast | Venerations (Tamagid) | 15 |
+| Transfiguration | Vespers (Evening Raising of Incense) | 6 |
+| Transfiguration | Matins (Morning Raising of Incense) | 6 |
 | Transfiguration | St. Basil Divine Liturgy | 6 |
 | Transfiguration | St. Gregory Divine Liturgy | 6 |
 | Transfiguration | St. Cyril Divine Liturgy | 6 |
-| Transfiguration | Matins | 6 |
-| Transfiguration | Vespers | 6 |

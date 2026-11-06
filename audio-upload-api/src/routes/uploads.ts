@@ -2,7 +2,7 @@ import { Hono, type Context } from 'hono';
 import { getSupabase } from '../lib/supabase';
 import { optionalUser } from '../lib/auth';
 import { getVocab } from '../lib/vocab';
-import { checkPlacement } from '../lib/placement';
+import { checkPlacement, placementDecision } from '../lib/placement';
 import { CONTENT_TYPE_TO_EXT, UUID_RE, initiateSchema } from '../lib/validation';
 import { verifyTurnstile } from '../middleware/turnstile';
 import { rateLimit } from '../middleware/rateLimit';
@@ -63,8 +63,11 @@ uploads.post('/initiate', rateLimit(), async (c) => {
 
   // The hymn must be one that is said in the chosen season + service, so the
   // corpus isn't mislabelled. See checkPlacement for the escape hatches.
-  const placement = checkPlacement(vocab, body.season_slug, body.service_slug, body.hymn_slug);
-  if (!placement.ok) {
+  const placement = placementDecision(
+    checkPlacement(vocab, body.season_slug, body.service_slug, body.hymn_slug),
+    body.hymn_not_listed,
+  );
+  if (!placement.accept) {
     const error =
       placement.reason === 'retired'
         ? 'This hymn has been replaced; please pick it again from the list.'
@@ -107,6 +110,7 @@ uploads.post('/initiate', rateLimit(), async (c) => {
     submitter_email: body.email ?? null,
     wants_updates: body.wants_updates,
     terms_version: body.accepted_terms_version,
+    placement_unlisted: placement.unlisted,
     upload_status: 'pending',
     contributor_id: contributorId,
   });

@@ -64,7 +64,7 @@ const SAMPLE_RECORDINGS = [
 /** The review queue: one item with a contributor name, one anonymous. */
 const SAMPLE_QUEUE = [
   { contributor: 'Mina A.', originalFilename: 'Voice Memo 2026-10-21 at 19.04.m4a' },
-  { contributor: null, originalFilename: 'tenen.mp3' },
+  { contributor: null, originalFilename: 'tenen.mp3', placementUnlisted: true },
 ].map((extra, i) => ({
   id: `10000000-0000-4000-8000-00000000000${i}`,
   title: i === 0 ? 'Tenen' : 'Golgotha',
