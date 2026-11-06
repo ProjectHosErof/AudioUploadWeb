@@ -17,7 +17,11 @@ interface Built {
   text: string;
 }
 
-/** Supabase's variable for the sign-in link. */
+/**
+ * Supabase's variable for the sign-in link. Its lifetime is the dashboard's
+ * Email OTP Expiration (Authentication → Sign In / Providers → Email), set to
+ * 3600 s; the copy below says "an hour" — change both together.
+ */
 export const CONFIRMATION_URL = '{{ .ConfirmationURL }}';
 
 const ignoreNote = 'Didn’t ask to sign in? You can ignore this email — nobody can sign in without this link.';
@@ -32,14 +36,14 @@ export function signInLink(url = CONFIRMATION_URL): Built {
       heading: 'Here’s your link',
       body:
         paragraph('Tap the button to sign in to Project Hos Erof.') +
-        paragraph('The link works once and expires soon, so use it from this device if you can.'),
+        paragraph('The link works once and expires in an hour, so use it from this device if you can.'),
       cta: { label: 'Sign in', url },
       footnote: ignoreNote,
     }),
     text: [
       'Your sign-in link for Project Hos Erof',
       '',
-      'Open this link to sign in. It works once and expires soon:',
+      'Open this link to sign in. It works once and expires in an hour:',
       url,
       '',
       ignoreNote,
@@ -56,7 +60,7 @@ export function confirmSignup(url = CONFIRMATION_URL): Built {
       eyebrow: 'Welcome',
       heading: 'One tap to finish',
       body:
-        paragraph('Welcome to Project Hos Erof. Confirm this is your email and you’ll be signed in.') +
+        paragraph('Welcome to Project Hos Erof. Confirm this is your email and you’ll be signed in. The link works once and expires in an hour.') +
         paragraph('Once you’re in, you can see every recording you’ve shared and whether it has joined the collection.'),
       cta: { label: 'Confirm and sign in', url },
       footnote: ignoreNote,
@@ -64,7 +68,7 @@ export function confirmSignup(url = CONFIRMATION_URL): Built {
     text: [
       'Confirm your email for Project Hos Erof',
       '',
-      'Open this link to confirm it’s you and sign in:',
+      'Open this link to confirm it’s you and sign in. It works once and expires in an hour:',
       url,
       '',
       'Once you’re in, you can see every recording you’ve shared and whether it has joined the collection.',
