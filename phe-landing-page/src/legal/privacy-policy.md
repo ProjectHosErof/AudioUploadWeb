@@ -1,10 +1,10 @@
 # Privacy Policy
 
-**Effective date:** [EFFECTIVE DATE]
+**Effective date:** November 7, 2026
 
 Project Hos Erof ("**we**", "**us**") collects recordings of Coptic hymns so we can preserve them and build tools that recognize them. This policy explains what we collect on hoserof.org, why, who helps us run the service, and the choices you have. It's written to match how the site actually works. If that ever changes, we'll update this page first.
 
-Project Hos Erof is operated by [OPERATOR LEGAL NAME], [MAILING ADDRESS]. Questions or requests: **contact@hoserof.org**.
+Project Hos Erof is operated by Anthony Riad, doing business as Project Hos Erof. Questions or requests: **contact@hoserof.org**. A mailing address is available on request.
 
 ## 1. What we collect
 
@@ -89,4 +89,4 @@ We're based in the United States, and our providers store data in the United Sta
 If we change this policy, we'll update the date at the top. If a change materially affects how we use information we already have, we'll tell contributors and subscribers by email before it takes effect.
 
 ## 11. Contact
-**contact@hoserof.org** · [OPERATOR LEGAL NAME], [MAILING ADDRESS]
+**contact@hoserof.org** · Anthony Riad, doing business as Project Hos Erof · Mailing address available on request

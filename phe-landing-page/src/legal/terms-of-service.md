@@ -1,8 +1,8 @@
 # Terms of Service
 
-**Effective date:** [EFFECTIVE DATE] · **Version:** 2026-1
+**Effective date:** November 7, 2026 · **Version:** 2026-1
 
-These Terms are an agreement between you and [OPERATOR LEGAL NAME] ("**Project Hos Erof**", "**we**", "**us**") about your use of hoserof.org and its services (the "**Service**"). By using the Service, and in particular by uploading a recording, you agree to them. Our [Privacy Policy](/privacy) explains how we handle personal information.
+These Terms are an agreement between you and Anthony Riad, doing business as Project Hos Erof ("**Project Hos Erof**", "**we**", "**us**") about your use of hoserof.org and its services (the "**Service**"). By using the Service, and in particular by uploading a recording, you agree to them. Our [Privacy Policy](/privacy) explains how we handle personal information.
 
 ## 1. Who can use the Service
 1.1 You must be **13 or older** to upload a recording, create an account or join the mailing list.
@@ -88,4 +88,4 @@ We may update these Terms. Each version has a version number. **A recording stay
 - These Terms and the Privacy Policy are the whole agreement between you and us about the Service.
 
 ## 13. Contact
-**contact@hoserof.org** · [OPERATOR LEGAL NAME], [MAILING ADDRESS]
+**contact@hoserof.org** · Anthony Riad, doing business as Project Hos Erof · Mailing address available on request

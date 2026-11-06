@@ -1,6 +1,6 @@
 # Copyright Policy (DMCA)
 
-**Effective date:** [EFFECTIVE DATE]
+**Effective date:** November 7, 2026
 
 Project Hos Erof respects copyright. Recordings are contributed by members of the community. Most Coptic hymns are centuries-old traditional works, but a particular **recording** or **arrangement** can still belong to someone. If you believe a recording on our Service infringes your copyright, tell us as described below.
 
@@ -8,8 +8,8 @@ Project Hos Erof respects copyright. Recordings are contributed by members of th
 Send a written notice to our designated copyright agent:
 
 > **Copyright Agent, Project Hos Erof**
-> [OPERATOR LEGAL NAME]
-> [MAILING ADDRESS]
+> Anthony Riad, doing business as Project Hos Erof
+> Postal address: available on request — email legal@hoserof.org
 > Email: **legal@hoserof.org**
 
 Under 17 U.S.C. §512(c)(3), your notice must include:
