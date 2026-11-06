@@ -37,6 +37,8 @@ jobs:
       - run: npm test
       - run: npm run check:vocab
       - run: npm run check:placement
+      # The Supabase sign-in email copies must match src/emails/auth.ts.
+      - run: npm run check:emails
 
   web:
     name: Site (types, lint, end-to-end + accessibility)

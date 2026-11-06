@@ -16,3 +16,6 @@ __pycache__/
 
 # Local copies of exported datasets — the versioned artifacts live in R2.
 ml-export/out/
+
+# Email previews (npm run emails:preview) — regenerated, not committed
+email-previews/
