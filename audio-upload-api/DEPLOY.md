@@ -180,6 +180,9 @@ Database changes are additive and go first; the Worker after; the site last.
    fails; 0011 (`subscribers.confirmation_sent_at`) or every newsletter
    signup fails; 0013 (`recordings.placement_unlisted`) or every upload
    fails.
+   0014 (`beta_testers`) is needed before the beta pages work. After the
+   beta, delete testers' details within 3 months, as the Privacy Policy
+   promises: `DELETE FROM public.beta_testers;` in the Supabase SQL editor.
    After 0012 (`enrichment_worker`), set its password in the Supabase SQL
    editor (`ALTER ROLE enrichment_worker PASSWORD '…';`, generate it with
    `openssl rand -hex 24 | pbcopy` so it never prints) and add the GitHub

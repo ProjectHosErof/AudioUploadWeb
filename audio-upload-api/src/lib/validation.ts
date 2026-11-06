@@ -138,3 +138,33 @@ export const helpSchema = z.object({
 });
 
 export type HelpInput = z.infer<typeof helpSchema>;
+
+/** The beta join form's closed choices; mirrored by CHECKs in migration 0014. */
+export const BETA_DEVICES = ['iphone', 'android', 'tablet', 'computer'] as const;
+export const BETA_ROLES = ['chanter', 'choir', 'parishioner', 'servant', 'other'] as const;
+export const BETA_AGES = ['under-25', '25-44', '45-64', '65-plus'] as const;
+
+/** Body of POST /beta/apply. Consent is required: the beta is a set of emails. */
+export const betaApplySchema = z.object({
+  name: z.string().trim().min(1).max(100),
+  email: z.string().trim().toLowerCase().email().max(254),
+  parish: z.string().trim().max(120).optional(),
+  device: z.enum(BETA_DEVICES),
+  role: z.enum(BETA_ROLES).optional(),
+  age_range: z.enum(BETA_AGES).optional(),
+  consent: z.literal(true),
+  turnstile_token: z.string().min(1),
+});
+
+export type BetaApplyInput = z.infer<typeof betaApplySchema>;
+
+/** Body of POST /admin/beta/:id/decision. */
+export const betaDecisionSchema = z.object({
+  decision: z.enum(['accept', 'decline']),
+  notify: z.boolean().default(true),
+});
+
+/** Body of POST /admin/beta/end: the survey link to send with the thank-you. */
+export const betaEndSchema = z.object({
+  surveyUrl: z.string().trim().url().max(500).refine((u) => u.startsWith('https://'), 'Must be an https:// link'),
+});

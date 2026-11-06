@@ -23,6 +23,9 @@ export interface Captured {
   initiate: Record<string, unknown>[];
   subscribe: Record<string, unknown>[];
   help: Record<string, unknown>[];
+  beta: Record<string, unknown>[];
+  betaDecisions: { id: string; body: Record<string, unknown> }[];
+  betaEnd: Record<string, unknown>[];
 }
 
 const TURNSTILE_STUB = `
@@ -83,6 +86,28 @@ const SAMPLE_QUEUE = [
   ...extra,
 }));
 
+/** Beta admin data: two people waiting, two testers (one stuck, one going well). */
+function sampleBeta() {
+  const daysAgo = (d: number) => new Date(Date.now() - d * 86_400_000).toISOString();
+  const person = (id: string, name: string, extra: object = {}) => ({
+    id, name, email: `${name.split(' ')[0].toLowerCase()}@example.com`,
+    parish: 'St. Mark, Cleveland', device: 'iphone', ageRange: '45-64', role: 'chanter', appliedAt: daysAgo(2), ...extra,
+  });
+  return {
+    waiting: [
+      person('30000000-0000-4000-8000-000000000001', 'Marina Gerges'),
+      person('30000000-0000-4000-8000-000000000002', 'Bishoy Fahmy', { device: 'android', role: null, ageRange: null, parish: null }),
+    ],
+    testers: [
+      { ...person('30000000-0000-4000-8000-000000000003', 'Mina Abadir'), acceptedAt: daysAgo(9), checkinSentAt: daysAgo(2), surveySentAt: null as string | null,
+        progress: { signedIn: true, uploads: 4, notListed: 1, lastUpload: daysAgo(1) } },
+      { ...person('30000000-0000-4000-8000-000000000004', 'Kirollos Hanna'), acceptedAt: daysAgo(8), checkinSentAt: null, surveySentAt: null as string | null,
+        progress: { signedIn: false, uploads: 0, notListed: 0, lastUpload: null } },
+    ] as Record<string, unknown>[] & { surveySentAt?: string | null }[],
+    counts: { declined: 1, withdrawn: 0, unconfirmed: 3 },
+  };
+}
+
 /** A session in the shape supabase-js saves, valid for an hour. */
 function savedSession() {
   const b64 = (o: object) => Buffer.from(JSON.stringify(o)).toString('base64url');
@@ -129,6 +154,34 @@ async function mockNetwork(page: Page, opts: MockOptions, captured: Captured) {
       json: { readyRecordings: opts.readyRecordings, totalRecordings: opts.readyRecordings, readySeconds: 0, contributors: 1 },
     }),
   );
+  await page.route('http://api.test/beta/apply', async (route) => {
+    captured.beta.push(route.request().postDataJSON());
+    await route.fulfill({ json: { ok: true, message: 'Check your email to confirm your request.' } });
+  });
+
+  // The admin beta list remembers decisions, so an accepted person moves across.
+  const beta = sampleBeta();
+  await page.route('http://api.test/admin/beta', (route) => route.fulfill({ json: beta }));
+  await page.route(/http:\/\/api\.test\/admin\/beta\/[^/]+\/decision/, async (route) => {
+    const id = route.request().url().split('/').at(-2)!;
+    const body = route.request().postDataJSON();
+    captured.betaDecisions.push({ id, body });
+    const i = beta.waiting.findIndex((w) => w.id === id);
+    const [person] = beta.waiting.splice(i, 1);
+    if (body.decision === 'accept') {
+      beta.testers.push({ ...person, acceptedAt: new Date().toISOString(), checkinSentAt: null, surveySentAt: null, progress: { signedIn: false, uploads: 0, notListed: 0, lastUpload: null } });
+    } else {
+      beta.counts.declined += 1;
+    }
+    await route.fulfill({ json: { id, status: body.decision === 'accept' ? 'accepted' : 'declined', emailed: body.decision === 'accept' || body.notify } });
+  });
+  await page.route('http://api.test/admin/beta/end', async (route) => {
+    captured.betaEnd.push(route.request().postDataJSON());
+    const unsent = beta.testers.filter((t) => !t.surveySentAt);
+    unsent.forEach((t) => { t.surveySentAt = new Date().toISOString(); });
+    await route.fulfill({ json: { sent: unsent.length, remaining: 0 } });
+  });
+
   await page.route('http://api.test/help', async (route) => {
     captured.help.push(route.request().postDataJSON());
     await route.fulfill({ json: { reference: 'K7Q2XM' } });
@@ -158,14 +211,14 @@ async function mockNetwork(page: Page, opts: MockOptions, captured: Captured) {
 export const test = base.extend<{ mock: MockOptions; captured: Captured }>({
   mock: [{ readyRecordings: 1, signedIn: false }, { option: true }],
   captured: async ({ page, mock }, provide) => {
-    const captured: Captured = { initiate: [], subscribe: [], help: [] };
+    const captured: Captured = { initiate: [], subscribe: [], help: [], beta: [], betaDecisions: [], betaEnd: [] };
     await mockNetwork(page, mock, captured);
     await provide(captured);
   },
   // Make sure every test's page has the mocks installed, even if it never
   // asks for `captured`.
   page: async ({ page, mock }, provide) => {
-    await mockNetwork(page, mock, { initiate: [], subscribe: [], help: [] });
+    await mockNetwork(page, mock, { initiate: [], subscribe: [], help: [], beta: [], betaDecisions: [], betaEnd: [] });
     if (mock.signedIn) {
       await page.addInitScript(
         ([key, value]) => window.localStorage.setItem(key, value),

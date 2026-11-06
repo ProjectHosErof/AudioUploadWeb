@@ -2,7 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { test, expect, settle, axeViolations } from './fixtures';
 
 /** axe-core, WCAG 2.2 AA tags, on every public route — at rest, after animations. */
-const paths = ['/', '/privacy', '/terms', '/dmca', '/help', '/login', '/subscribed', '/unsubscribed', '/does-not-exist'];
+const paths = ['/', '/privacy', '/terms', '/dmca', '/help', '/beta', '/beta/confirmed', '/login', '/subscribed', '/unsubscribed', '/does-not-exist'];
 
 for (const path of paths) {
   test(`${path} has no WCAG 2.2 AA violations`, async ({ page }) => {
@@ -43,7 +43,7 @@ async function tinyText(page: import('@playwright/test').Page) {
   });
 }
 
-for (const path of ['/', '/login', '/help']) {
+for (const path of ['/', '/login', '/help', '/beta']) {
   test(`${path} has no text under 12px`, async ({ page }) => {
     await page.goto(path);
     await settle(page);
