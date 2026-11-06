@@ -2,14 +2,17 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Upload, Music, CheckCircle2 } from "lucide-react";
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
-import Select, { type MultiValue, type SingleValue } from "react-select";
+import Select, { type MultiValue, type SelectInstance, type SingleValue } from "react-select";
 import {
+  hymnSlugsFor,
   hymnsFor,
   language_options,
+  matchesOption,
   service_options,
   season_options,
+  vocab,
 } from "../options.data";
-import type { HymnGroup, SelectOption } from "../options.data";
+import type { SelectOption } from "../options.data";
 import { TURNSTILE_SITE_KEY } from "../config";
 import { TERMS_VERSION } from "../legal/terms";
 import { ACCEPTED_AUDIO, ACCEPTED_AUDIO_LABEL, MAX_UPLOAD_BYTES, resolveContentType, uploadRecording, UploadError } from "../services/uploadApi";
@@ -31,6 +34,39 @@ function formatSize(bytes: number): string {
   if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
+
+/** The last hymn option when a list applies: switches to the whole catalogue. */
+const NOT_LISTED = "__not-listed__";
+const NOT_LISTED_OPTION: SelectOption = { value: NOT_LISTED, label: "My hymn isn't listed — show all hymns" };
+
+/** A hymn's own name (the full list may add where it's sung). */
+const HYMN_NAME = new Map(vocab.hymns.map((h) => [h.slug, h.label]));
+
+/** Search on the English and Arabic names; the "isn't listed" option always shows. */
+const filterOption = (o: { data: SelectOption }, input: string) =>
+  o.data.value === NOT_LISTED || matchesOption(o.data, input);
+
+/** Room for an open menu: the field moves up under the sticky nav if the menu wouldn't fit below it. */
+const MENU_HEIGHT = 300;
+function makeRoomForMenu(inputId: string) {
+  const field = document.getElementById(inputId)?.closest<HTMLElement>(".rs-dark");
+  if (!field) return;
+  const below = window.innerHeight - field.getBoundingClientRect().bottom;
+  if (below < Math.min(MENU_HEIGHT, window.innerHeight * 0.45) + 16) {
+    field.scrollIntoView({ block: "start", behavior: "instant" });
+  }
+}
+
+/** Shared props that keep each menu on screen and searchable. */
+const selectProps = (inputId: string) => ({
+  inputId,
+  classNamePrefix: "react-select",
+  filterOption,
+  menuPlacement: "bottom" as const,
+  menuShouldScrollIntoView: false,
+  maxMenuHeight: MENU_HEIGHT,
+  onMenuOpen: () => makeRoomForMenu(inputId),
+});
 
 /** A form check that failed on submit; its message tracks the form as it's fixed. */
 type FormCheck = "missing" | "file" | "terms" | "email";
@@ -62,6 +98,11 @@ export function UploadForm() {
   // An upload attempt that failed (server, storage, verification). Stays until
   // the next submit: it describes that attempt, not the form.
   const [submitError, setSubmitError] = useState("");
+  // "My hymn isn't listed": the whole catalogue instead of the pair's list.
+  const [showAll, setShowAll] = useState(false);
+  // Says what a season/service change did to the chosen hymn.
+  const [hymnNotice, setHymnNotice] = useState("");
+  const hymnSelectRef = useRef<SelectInstance<SelectOption, false>>(null);
   const [failedCheck, setFailedCheck] = useState<FormCheck | null>(null);
   // Set after a successful upload; replaces the form with a thank-you panel.
   const [submitted, setSubmitted] = useState<{ reference: string; email: string } | null>(null);
@@ -79,6 +120,12 @@ export function UploadForm() {
 
   // Move focus to the result so screen-reader and keyboard users hear it.
   useEffect(() => { if (submitted) successRef.current?.focus(); }, [submitted]);
+
+  // Bring a new error into view and to screen readers' attention. Done in an
+  // effect, after the message has rendered: after an await, React may commit
+  // later than the next animation frame, which then found nothing to focus.
+  const [errorFocusRequest, setErrorFocusRequest] = useState(0);
+  useEffect(() => { if (errorFocusRequest) errorRef.current?.focus(); }, [errorFocusRequest]);
 
   /** Check type and size as soon as a file is chosen, not after uploading. */
   function chooseFile(f: File | null) {
@@ -127,8 +174,7 @@ export function UploadForm() {
   const shownError = failedCheck ? checkMessage(failedCheck) : submitError;
 
   function focusError() {
-    // Bring the message into view and to screen readers' attention.
-    requestAnimationFrame(() => errorRef.current?.focus());
+    setErrorFocusRequest((n) => n + 1);
   }
 
   function fail(message: string) {
@@ -146,18 +192,54 @@ export function UploadForm() {
   const isHymnDisabled = !selectedService || !selectedSeason;
 
   // Only the hymns said in the chosen season + service (the API enforces the
-  // same rule), grouped by hymn type.
+  // same rule), unless the contributor said theirs isn't listed.
   const hymnChoices = useMemo(
-    () => (selectedSeason && selectedService ? hymnsFor(selectedSeason.value, selectedService.value) : null),
-    [selectedSeason, selectedService],
+    () => (selectedSeason && selectedService ? hymnsFor(selectedSeason.value, selectedService.value, { all: showAll }) : null),
+    [selectedSeason, selectedService, showAll],
   );
+  const hymnMenu = hymnChoices?.filtered ? [...hymnChoices.options, NOT_LISTED_OPTION] : hymnChoices?.options ?? [];
 
-  /** After a season/service change, keep the hymn only if it is still listed. */
+  function chooseHymn(option: SingleValue<SelectOption>) {
+    setHymnNotice("");
+    if (option?.value === NOT_LISTED) {
+      setShowAll(true);
+      // Reopen on the whole catalogue once it has rendered.
+      setTimeout(() => { hymnSelectRef.current?.focus(); hymnSelectRef.current?.openMenu("first"); }, 0);
+      return;
+    }
+    setSelectedHymn(option);
+  }
+
+  /**
+   * After a season/service change, keep the hymn if it's still listed. Each
+   * season has its own version of many hymns (its own "Trisagion (Agios)"), so
+   * one with the same name is swapped in; otherwise the hymn is cleared. Either
+   * way the contributor is told.
+   */
   function keepHymnIfListed(season: SelectOption | null, service: SelectOption | null) {
-    const stillListed =
-      season && service && selectedHymn &&
-      hymnsFor(season.value, service.value).groups.some((g) => g.options.some((o) => o.value === selectedHymn.value));
-    if (!stillListed) setSelectedHymn(null);
+    setHymnNotice("");
+    if (!selectedHymn) {
+      setShowAll(false);
+      return;
+    }
+    if (!season || !service) {
+      setSelectedHymn(null);
+      setShowAll(false);
+      return;
+    }
+    const allowed = hymnSlugsFor(season.value, service.value);
+    // Chosen from the whole catalogue ("isn't listed") or still listed: keep it.
+    if (showAll || !allowed || allowed.has(selectedHymn.value)) return;
+    const name = HYMN_NAME.get(selectedHymn.value) ?? selectedHymn.label;
+    const where = `${season.label} · ${service.label}`;
+    const counterpart = [...allowed].find((slug) => HYMN_NAME.get(slug) === name);
+    if (counterpart) {
+      setSelectedHymn({ value: counterpart, label: name });
+      setHymnNotice(`Switched to the ${where} version of “${name}”.`);
+    } else {
+      setSelectedHymn(null);
+      setHymnNotice(`“${name}” isn't on the list for ${where} — please choose again.`);
+    }
   }
 
   function isValidEmail(e: string): boolean {
@@ -222,6 +304,11 @@ export function UploadForm() {
           // The email is sent whenever it's given, so the contributor hears
           // about the review; the newsletter is only joined if they also ticked.
           wants_updates: checked && Boolean(emailValue.trim()),
+          // Off the pair's list (picked via "my hymn isn't listed"): a reviewer confirms it.
+          hymn_not_listed: (() => {
+            const listed = hymnSlugsFor(selectedSeason!.value, selectedService!.value);
+            return listed !== null && !listed.has(selectedHymn!.value);
+          })(),
           email: emailValue.trim() || undefined,
           turnstile_token: turnstileToken,
           accepted_terms_version: TERMS_VERSION,
@@ -233,6 +320,8 @@ export function UploadForm() {
       setSelectedService(null);
       setSelectedSeason(null);
       setSelectedHymn(null);
+      setShowAll(false);
+      setHymnNotice("");
       setSelectedLanguage([]);
       setFile(null);
       setChecked(false);
@@ -365,8 +454,7 @@ export function UploadForm() {
                 <label className="codex-label" htmlFor="upload-service">Service *</label>
                 <div className="rs-dark">
                   <Select
-                    classNamePrefix="react-select"
-                    inputId="upload-service"
+                    {...selectProps("upload-service")}
                     options={service_options}
                     value={selectedService}
                     onChange={(option: SingleValue<SelectOption>) => {
@@ -382,8 +470,7 @@ export function UploadForm() {
                 <label className="codex-label" htmlFor="upload-season">Season *</label>
                 <div className="rs-dark">
                   <Select
-                    classNamePrefix="react-select"
-                    inputId="upload-season"
+                    {...selectProps("upload-season")}
                     options={season_options}
                     value={selectedSeason}
                     onChange={(option: SingleValue<SelectOption>) => {
@@ -402,12 +489,13 @@ export function UploadForm() {
               <div>
                 <label className="codex-label" htmlFor="upload-hymn">Hymn / Response Title *</label>
                 <div className="rs-dark">
-                  <Select<SelectOption, false, HymnGroup>
-                    classNamePrefix="react-select"
-                    inputId="upload-hymn"
-                    options={hymnChoices?.groups ?? []}
+                  <Select<SelectOption, false>
+                    {...selectProps("upload-hymn")}
+                    ref={hymnSelectRef}
+                    options={hymnMenu}
                     value={selectedHymn}
-                    onChange={(option: SingleValue<SelectOption>) => setSelectedHymn(option)}
+                    onChange={chooseHymn}
+                    classNames={{ option: ({ data }) => (data.value === NOT_LISTED ? "rs-not-listed" : "") }}
                     placeholder="Select or type a hymn/response"
                     isClearable
                     isDisabled={isHymnDisabled}
@@ -418,8 +506,7 @@ export function UploadForm() {
                 <label className="codex-label" htmlFor="upload-language">Language *</label>
                 <div className="rs-dark">
                   <Select<SelectOption, true>
-                    classNamePrefix="react-select"
-                    inputId="upload-language"
+                    {...selectProps("upload-language")}
                     options={language_options}
                     value={selectedLanguage}
                     onChange={(option: MultiValue<SelectOption>) => {
@@ -445,9 +532,21 @@ export function UploadForm() {
               }}>
                 {hymnChoices.filtered
                   ? `Showing ${hymnChoices.count} hymns for ${selectedSeason.label} · ${selectedService.label}.`
-                  : `No hymn list for this season and service yet, so all ${hymnChoices.count} hymns are shown.`}
+                  : showAll
+                    ? `Showing all ${hymnChoices.count} hymns. A reviewer will confirm where this one is sung.`
+                    : `No hymn list for this season and service yet, so all ${hymnChoices.count} hymns are shown.`}
               </p>
             )}
+
+            {/* What a season/service change did to the chosen hymn */}
+            <p aria-live="polite" style={{
+              fontFamily: 'var(--font-ui)',
+              fontSize: '0.8125rem',
+              color: 'var(--gold)',
+              margin: hymnNotice ? '-0.75rem 0 1.5rem' : 0,
+            }}>
+              {hymnNotice}
+            </p>
 
             {/* Locked-field hint */}
             {isHymnDisabled && (

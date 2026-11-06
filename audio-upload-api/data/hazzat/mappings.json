@@ -270,5 +270,72 @@
     "Unspecified",
     "Not listed",
     "Not listed (not on hazzat.com)"
-  ]
+  ],
+  "seasonLabels": {
+    "_comment": "Label corrections for seasons (slugs unchanged): spelling and apostrophes.",
+    "ninevah-fast": "Nineveh's Fast",
+    "ninevah-feast": "Nineveh's Feast",
+    "apostles-fast": "Apostles' Fast",
+    "apostles-feast": "Apostles' Feast"
+  },
+  "serviceLabels": {
+    "_comment": "Service labels with the name most parishioners use (slugs unchanged).",
+    "vespers": "Vespers (Evening Raising of Incense)",
+    "matins": "Matins (Morning Raising of Incense)",
+    "midnight-praises": "Midnight Praises (Tasbeha)",
+    "venerations": "Venerations (Tamagid)",
+    "pascha": "Pascha (Holy Week)",
+    "ceremony-crowning": "Crowning (Wedding)"
+  },
+  "serviceOrder": [
+    "_comment: the order of a church day (evening, night, morning, liturgy), then Holy Week and occasions; escape values last. Must list every service.",
+    "vespers",
+    "vesper-praises",
+    "midnight-praises",
+    "matins",
+    "morning-praises",
+    "st-basil-liturgy",
+    "st-gregory-liturgy",
+    "st-cyril-liturgy",
+    "pascha",
+    "lakkan",
+    "venerations",
+    "melodies",
+    "ceremony-baptism",
+    "ceremony-crowning",
+    "unction",
+    "funeral",
+    "papal",
+    "reception-of-new-priest",
+    "other",
+    "unknown"
+  ],
+  "languages": [
+    "_comment: languages a recording can be in, in dropdown order. Slugs are stored on recordings; never rename one.",
+    {
+      "slug": "lang-coptic",
+      "label": "Coptic"
+    },
+    {
+      "slug": "lang-arabic",
+      "label": "Arabic"
+    },
+    {
+      "slug": "lang-english",
+      "label": "English"
+    },
+    {
+      "slug": "lang-greek",
+      "label": "Greek"
+    }
+  ],
+  "hymnLabelFixes": {
+    "_comment": "Exact current hymn label -> corrected label, applied to every hymn with that label before de-duplication. A fix that matches nothing fails the import.",
+    "The Fourth Canticle (Esmo E'epchois/E'erof": "The Fourth Canticle (Esmo E'epchois/E'erof)",
+    "Alleluia The Thought of Man": "Alleluia: The Thought of Man",
+    "Alleluia I Shall Go In": "Alleluia: I Shall Go In",
+    "Hymn After Praise of the Three Men": "Hymn After the Praise of the Three Young Men",
+    "Another Hymn After Praise of the Three Young Men": "Another Hymn After the Praise of the Three Young Men",
+    "Verses of the Cymbals": "Verses of Cymbals"
+  }
 }

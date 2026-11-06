@@ -602,3 +602,18 @@ body {
   .recordings-cards { display: none; }
   .recordings-table { display: block; }
 }
+
+/* Dropdowns: an opened menu scrolls its field up under the sticky nav, and a
+   long chosen name wraps instead of being cut off. */
+.rs-dark { scroll-margin-top: 72px; }
+.rs-dark .react-select__single-value {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+/* "My hymn isn't listed" reads as an action, set apart from the hymns. */
+.rs-dark .react-select__option.rs-not-listed {
+  font-style: italic;
+  color: var(--gold) !important;
+  border-top: 1px solid var(--ink-mid);
+}

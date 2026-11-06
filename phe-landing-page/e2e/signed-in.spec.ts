@@ -121,3 +121,9 @@ test('review queue cards show the language', async ({ page }) => {
   await page.goto('/admin');
   await expect(page.getByText('Liturgy of St. Basil · Annual · Coptic').first()).toBeVisible();
 });
+
+test('a hymn picked as "not listed" asks the reviewer to confirm where it\'s sung', async ({ page }) => {
+  await page.goto('/admin');
+  await expect(page.getByText("Not on our list for Annual · Liturgy of St. Basil — please confirm where it's sung.")).toBeVisible();
+  await expect(page.getByText('Not on our list')).toHaveCount(1);
+});

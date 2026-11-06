@@ -63,6 +63,7 @@ interface QueueRow {
   content_type: string;
   file_size_bytes: string | number | null;
   original_filename: string | null;
+  placement_unlisted: boolean;
   created_at: string;
   submitter_email: string | null;
   services: { label: string } | null;
@@ -95,7 +96,7 @@ admin.get('/queue', async (c) => {
     .from('recordings')
     .select(
       `id, hymn_label, languages, duration_seconds, sample_rate_hz, channels, codec,
-       content_type, file_size_bytes, original_filename, created_at, submitter_email,
+       content_type, file_size_bytes, original_filename, placement_unlisted, created_at, submitter_email,
        services(label), seasons(label), contributors(email, display_name)`,
       { count: 'exact' },
     )
@@ -123,6 +124,8 @@ admin.get('/queue', async (c) => {
     contentType: row.content_type,
     fileSizeBytes: row.file_size_bytes === null ? null : Number(row.file_size_bytes),
     originalFilename: row.original_filename,
+    // Not on our list for this season + service; the reviewer confirms it.
+    placementUnlisted: row.placement_unlisted,
     uploadedAt: row.created_at,
     contributor: row.contributors?.display_name ?? row.contributors?.email ?? row.submitter_email,
     // Enrichment fills the technical fields; without them there is nothing to

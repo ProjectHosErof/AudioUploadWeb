@@ -1,0 +1,1 @@
+ALTER TABLE "recordings" ADD COLUMN "placement_unlisted" boolean DEFAULT false NOT NULL;

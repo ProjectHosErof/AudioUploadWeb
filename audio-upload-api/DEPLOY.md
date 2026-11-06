@@ -178,7 +178,8 @@ Database changes are additive and go first; the Worker after; the site last.
    Migrations add columns the new Worker reads or writes, so they must be in
    place before it deploys: 0010 (`recordings.terms_version`) or every upload
    fails; 0011 (`subscribers.confirmation_sent_at`) or every newsletter
-   signup fails.
+   signup fails; 0013 (`recordings.placement_unlisted`) or every upload
+   fails.
    After 0012 (`enrichment_worker`), set its password in the Supabase SQL
    editor (`ALTER ROLE enrichment_worker PASSWORD '…';`, generate it with
    `openssl rand -hex 24 | pbcopy` so it never prints) and add the GitHub
@@ -186,7 +187,9 @@ Database changes are additive and go first; the Worker after; the site last.
    `postgresql://enrichment_worker.<project-ref>:<password>@<pooler-host>:5432/postgres`.
    The hourly **Enrichment** workflow reuses the backup's read-only
    `SRC_R2_*` secrets.
-2. `npm run seed` if the vocabulary changed.
+2. `npm run seed` if the vocabulary changed, **before the site goes out**: the
+   Worker validates languages and hymns against the reference tables, so a
+   new entry in the form (e.g. Greek) is refused until it is seeded.
 3. Pre-flight: `npm run check:vocab && npm run check:placement && npm test && npx tsc --noEmit`,
    then `npm run deploy`.
 4. Merge to `main` — Cloudflare Pages builds and publishes the site.

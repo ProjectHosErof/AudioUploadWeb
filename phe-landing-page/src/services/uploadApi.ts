@@ -11,6 +11,8 @@ export interface InitiateRequest {
   service_slug: string;
   season_slug: string;
   hymn_slug: string;
+  /** Picked via "my hymn isn't listed": not on the season + service list. */
+  hymn_not_listed?: boolean;
   languages: string[];
   content_type: string;
   size_bytes: number;

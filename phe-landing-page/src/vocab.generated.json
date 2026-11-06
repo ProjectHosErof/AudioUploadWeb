@@ -69,13 +69,13 @@
   },
   {
    "slug": "ninevah-fast",
-   "label": "Ninevah's Fast",
+   "label": "Nineveh's Fast",
    "labelAr": "صوم أهل نينوى",
    "sortOrder": 12
   },
   {
    "slug": "ninevah-feast",
-   "label": "Ninevah's Feast",
+   "label": "Nineveh's Feast",
    "labelAr": "فصح أهل نينوى",
    "sortOrder": 13
   },
@@ -153,13 +153,13 @@
   },
   {
    "slug": "apostles-fast",
-   "label": "Apostles Fast",
+   "label": "Apostles' Fast",
    "labelAr": "صوم الرسل",
    "sortOrder": 26
   },
   {
    "slug": "apostles-feast",
-   "label": "Apostles Feast",
+   "label": "Apostles' Feast",
    "labelAr": "عيد الرسل",
    "sortOrder": 27
   },
@@ -190,83 +190,83 @@
  ],
  "services": [
   {
-   "slug": "vesper-praises",
-   "label": "Vesper Praises",
+   "slug": "vespers",
+   "label": "Vespers (Evening Raising of Incense)",
    "sortOrder": 1
   },
   {
-   "slug": "morning-praises",
-   "label": "Morning Praises",
+   "slug": "vesper-praises",
+   "label": "Vesper Praises",
    "sortOrder": 2
   },
   {
    "slug": "midnight-praises",
-   "label": "Midnight Praises",
+   "label": "Midnight Praises (Tasbeha)",
    "sortOrder": 3
+  },
+  {
+   "slug": "matins",
+   "label": "Matins (Morning Raising of Incense)",
+   "sortOrder": 4
+  },
+  {
+   "slug": "morning-praises",
+   "label": "Morning Praises",
+   "sortOrder": 5
   },
   {
    "slug": "st-basil-liturgy",
    "label": "St. Basil Divine Liturgy",
-   "sortOrder": 4
+   "sortOrder": 6
   },
   {
    "slug": "st-gregory-liturgy",
    "label": "St. Gregory Divine Liturgy",
-   "sortOrder": 5
+   "sortOrder": 7
   },
   {
    "slug": "st-cyril-liturgy",
    "label": "St. Cyril Divine Liturgy",
-   "sortOrder": 6
-  },
-  {
-   "slug": "matins",
-   "label": "Matins",
-   "sortOrder": 7
-  },
-  {
-   "slug": "vespers",
-   "label": "Vespers",
    "sortOrder": 8
   },
   {
-   "slug": "melodies",
-   "label": "Melodies",
-   "sortOrder": 9
-  },
-  {
-   "slug": "ceremony-baptism",
-   "label": "Baptism",
-   "sortOrder": 10
-  },
-  {
-   "slug": "ceremony-crowning",
-   "label": "Crowning",
-   "sortOrder": 11
-  },
-  {
-   "slug": "unction",
-   "label": "Unction",
-   "sortOrder": 12
-  },
-  {
-   "slug": "venerations",
-   "label": "Venerations",
-   "sortOrder": 13
-  },
-  {
-   "slug": "funeral",
-   "label": "Funeral",
-   "sortOrder": 14
-  },
-  {
    "slug": "pascha",
-   "label": "Pascha",
-   "sortOrder": 15
+   "label": "Pascha (Holy Week)",
+   "sortOrder": 9
   },
   {
    "slug": "lakkan",
    "label": "Lakkan",
+   "sortOrder": 10
+  },
+  {
+   "slug": "venerations",
+   "label": "Venerations (Tamagid)",
+   "sortOrder": 11
+  },
+  {
+   "slug": "melodies",
+   "label": "Melodies",
+   "sortOrder": 12
+  },
+  {
+   "slug": "ceremony-baptism",
+   "label": "Baptism",
+   "sortOrder": 13
+  },
+  {
+   "slug": "ceremony-crowning",
+   "label": "Crowning (Wedding)",
+   "sortOrder": 14
+  },
+  {
+   "slug": "unction",
+   "label": "Unction",
+   "sortOrder": 15
+  },
+  {
+   "slug": "funeral",
+   "label": "Funeral",
    "sortOrder": 16
   },
   {
@@ -292,16 +292,20 @@
  ],
  "languages": [
   {
-   "slug": "lang-english",
-   "label": "English"
-  },
-  {
    "slug": "lang-coptic",
    "label": "Coptic"
   },
   {
    "slug": "lang-arabic",
    "label": "Arabic"
+  },
+  {
+   "slug": "lang-english",
+   "label": "English"
+  },
+  {
+   "slug": "lang-greek",
+   "label": "Greek"
   }
  ],
  "hymnTypes": [
@@ -602,7 +606,7 @@
   },
   {
    "slug": "another-hymn-after-praise-of-three-young-men",
-   "label": "Another Hymn After Praise of the Three Young Men",
+   "label": "Another Hymn After the Praise of the Three Young Men",
    "labelAr": null,
    "hazzatId": null,
    "sourceUrl": null,
@@ -977,8 +981,8 @@
    "tunes": []
   },
   {
-   "slug": "hymn-after-praise-of-three-young-men",
-   "label": "Hymn After Praise of the Three Men",
+   "slug": "hymn-after-first-canticle",
+   "label": "Hymn After the First Canticle",
    "labelAr": null,
    "hazzatId": null,
    "sourceUrl": null,
@@ -988,8 +992,8 @@
    "tunes": []
   },
   {
-   "slug": "hymn-after-first-canticle",
-   "label": "Hymn After the First Canticle",
+   "slug": "hymn-after-praise-of-three-young-men",
+   "label": "Hymn After the Praise of the Three Young Men",
    "labelAr": null,
    "hazzatId": null,
    "sourceUrl": null,
@@ -1288,7 +1292,7 @@
   },
   {
    "slug": "the-fourth-canticle",
-   "label": "The Fourth Canticle (Esmo E'epchois/E'erof",
+   "label": "The Fourth Canticle (Esmo E'epchois/E'erof)",
    "labelAr": "الهوس الرابع",
    "hazzatId": "4th-canticle",
    "sourceUrl": "Open on hazzat",
@@ -1913,7 +1917,7 @@
   },
   {
    "slug": "procession-of-the-lamb-ninevehs-fast",
-   "label": "Alleluia I Shall Go In",
+   "label": "Alleluia: I Shall Go In",
    "labelAr": "تقديم الحمل",
    "hazzatId": "procession-of-the-lamb-ninevehs-fast",
    "sourceUrl": "Open on hazzat",
@@ -1928,7 +1932,7 @@
   },
   {
    "slug": "alleluia-the-thought-of-man",
-   "label": "Alleluia The Thought of Man",
+   "label": "Alleluia: The Thought of Man",
    "labelAr": "إن فكر الإنسان",
    "hazzatId": "alleluia-the-thought-of-man",
    "sourceUrl": "Open on hazzat",
@@ -1967,7 +1971,7 @@
   },
   {
    "slug": "amen-lord-have-mercy",
-   "label": "Amen.  Lord Have Mercy",
+   "label": "Amen. Lord Have Mercy",
    "labelAr": "أمين كيرياليسون",
    "hazzatId": "amen-lord-have-mercy",
    "sourceUrl": "Open on hazzat",
@@ -7296,6 +7300,38 @@
    "tunes": []
   },
   {
+   "slug": "verses-of-cymbals-nairouz",
+   "label": "Verses of Cymbals",
+   "labelAr": null,
+   "hazzatId": "verses-of-cymbals-nairouz",
+   "sourceUrl": "Open on hazzat",
+   "rhythm": null,
+   "active": true,
+   "types": [
+    "verses-of-cymbals"
+   ],
+   "tunes": [
+    "festal"
+   ]
+  },
+  {
+   "slug": "verses-of-cymbals-feast-of-the-cross",
+   "label": "Verses of Cymbals",
+   "labelAr": null,
+   "hazzatId": "verses-of-cymbals-feast-of-the-cross",
+   "sourceUrl": "Open on hazzat",
+   "rhythm": "adam",
+   "active": true,
+   "types": [
+    "aspasmos-adam",
+    "verses-of-cymbals"
+   ],
+   "tunes": [
+    "adam",
+    "festal"
+   ]
+  },
+  {
    "slug": "verses-of-cymbals-paramoune-of-nativity",
    "label": "Verses of Cymbals",
    "labelAr": "أرباع الناقوس",
@@ -7324,6 +7360,21 @@
    ]
   },
   {
+   "slug": "verses-of-cymbals-feast-of-circumcision",
+   "label": "Verses of Cymbals",
+   "labelAr": null,
+   "hazzatId": "verses-of-cymbals-feast-of-circumcision",
+   "sourceUrl": "Open on hazzat",
+   "rhythm": null,
+   "active": true,
+   "types": [
+    "verses-of-cymbals"
+   ],
+   "tunes": [
+    "annual"
+   ]
+  },
+  {
    "slug": "verses-of-cymbals-paramoune-of-epiphany",
    "label": "Verses of Cymbals",
    "labelAr": "أرباع الناقوس",
@@ -7335,6 +7386,21 @@
     "verses-of-cymbals"
    ],
    "tunes": []
+  },
+  {
+   "slug": "verses-of-cymbals-epiphany",
+   "label": "Verses of Cymbals",
+   "labelAr": null,
+   "hazzatId": "verses-of-cymbals-epiphany",
+   "sourceUrl": "Open on hazzat",
+   "rhythm": null,
+   "active": true,
+   "types": [
+    "verses-of-cymbals"
+   ],
+   "tunes": [
+    "festal"
+   ]
   },
   {
    "slug": "verses-of-cymbals-the-lords-entry-into-the-temple",
@@ -7350,6 +7416,19 @@
    "tunes": [
     "festal"
    ]
+  },
+  {
+   "slug": "verses-of-cymbals-ninevehs-fast",
+   "label": "Verses of Cymbals",
+   "labelAr": "أرباع الناقوس",
+   "hazzatId": "verses-of-cymbals-ninevehs-fast",
+   "sourceUrl": "Open on hazzat",
+   "rhythm": null,
+   "active": true,
+   "types": [
+    "verses-of-cymbals"
+   ],
+   "tunes": []
   },
   {
    "slug": "verses-of-cymbals-great-lent-saturdays-sundays",
@@ -7395,6 +7474,21 @@
    ]
   },
   {
+   "slug": "verses-of-the-cymbals",
+   "label": "Verses of Cymbals",
+   "labelAr": null,
+   "hazzatId": "verses-of-the-cymbals",
+   "sourceUrl": "Open on hazzat",
+   "rhythm": "adam",
+   "active": true,
+   "types": [
+    "aspasmos-adam"
+   ],
+   "tunes": [
+    "adam"
+   ]
+  },
+  {
    "slug": "verses-of-cymbals-passion-pascha-week-covenant-thursday",
    "label": "Verses of Cymbals",
    "labelAr": "أرباع الناقوس",
@@ -7424,6 +7518,25 @@
    "tunes": [
     "annual",
     "festal"
+   ]
+  },
+  {
+   "slug": "verses-of-cymbals-ascension",
+   "label": "Verses of Cymbals",
+   "labelAr": null,
+   "hazzatId": "verses-of-cymbals-ascension",
+   "sourceUrl": "Open on hazzat",
+   "rhythm": null,
+   "active": true,
+   "types": [
+    "aspasmos-adam",
+    "aspasmos-watos",
+    "verses-of-cymbals"
+   ],
+   "tunes": [
+    "adam",
+    "festal",
+    "watos"
    ]
   },
   {
@@ -7461,6 +7574,23 @@
    ]
   },
   {
+   "slug": "verses-of-the-cymbals-transfiguration",
+   "label": "Verses of Cymbals",
+   "labelAr": null,
+   "hazzatId": "verses-of-the-cymbals-transfiguration",
+   "sourceUrl": "Open on hazzat",
+   "rhythm": null,
+   "active": true,
+   "types": [
+    "aspasmos-adam",
+    "aspasmos-watos"
+   ],
+   "tunes": [
+    "adam",
+    "watos"
+   ]
+  },
+  {
    "slug": "verses-of-cymbals-coptic-weddings",
    "label": "Verses of Cymbals",
    "labelAr": null,
@@ -7490,132 +7620,6 @@
    ],
    "tunes": [
     "annual"
-   ]
-  },
-  {
-   "slug": "verses-of-cymbals-nairouz",
-   "label": "Verses of the Cymbals",
-   "labelAr": null,
-   "hazzatId": "verses-of-cymbals-nairouz",
-   "sourceUrl": "Open on hazzat",
-   "rhythm": null,
-   "active": true,
-   "types": [
-    "verses-of-cymbals"
-   ],
-   "tunes": [
-    "festal"
-   ]
-  },
-  {
-   "slug": "verses-of-cymbals-feast-of-the-cross",
-   "label": "Verses of the Cymbals",
-   "labelAr": null,
-   "hazzatId": "verses-of-cymbals-feast-of-the-cross",
-   "sourceUrl": "Open on hazzat",
-   "rhythm": "adam",
-   "active": true,
-   "types": [
-    "aspasmos-adam",
-    "verses-of-cymbals"
-   ],
-   "tunes": [
-    "adam",
-    "festal"
-   ]
-  },
-  {
-   "slug": "verses-of-cymbals-feast-of-circumcision",
-   "label": "Verses of the Cymbals",
-   "labelAr": null,
-   "hazzatId": "verses-of-cymbals-feast-of-circumcision",
-   "sourceUrl": "Open on hazzat",
-   "rhythm": null,
-   "active": true,
-   "types": [
-    "verses-of-cymbals"
-   ],
-   "tunes": [
-    "annual"
-   ]
-  },
-  {
-   "slug": "verses-of-cymbals-epiphany",
-   "label": "Verses of the Cymbals",
-   "labelAr": null,
-   "hazzatId": "verses-of-cymbals-epiphany",
-   "sourceUrl": "Open on hazzat",
-   "rhythm": null,
-   "active": true,
-   "types": [
-    "verses-of-cymbals"
-   ],
-   "tunes": [
-    "festal"
-   ]
-  },
-  {
-   "slug": "verses-of-cymbals-ninevehs-fast",
-   "label": "Verses of the Cymbals",
-   "labelAr": "أرباع الناقوس",
-   "hazzatId": "verses-of-cymbals-ninevehs-fast",
-   "sourceUrl": "Open on hazzat",
-   "rhythm": null,
-   "active": true,
-   "types": [
-    "verses-of-cymbals"
-   ],
-   "tunes": []
-  },
-  {
-   "slug": "verses-of-the-cymbals",
-   "label": "Verses of the Cymbals",
-   "labelAr": null,
-   "hazzatId": "verses-of-the-cymbals",
-   "sourceUrl": "Open on hazzat",
-   "rhythm": "adam",
-   "active": true,
-   "types": [
-    "aspasmos-adam"
-   ],
-   "tunes": [
-    "adam"
-   ]
-  },
-  {
-   "slug": "verses-of-cymbals-ascension",
-   "label": "Verses of the Cymbals",
-   "labelAr": null,
-   "hazzatId": "verses-of-cymbals-ascension",
-   "sourceUrl": "Open on hazzat",
-   "rhythm": null,
-   "active": true,
-   "types": [
-    "aspasmos-adam",
-    "aspasmos-watos",
-    "verses-of-cymbals"
-   ],
-   "tunes": [
-    "adam",
-    "festal",
-    "watos"
-   ]
-  },
-  {
-   "slug": "verses-of-the-cymbals-transfiguration",
-   "label": "Verses of the Cymbals",
-   "labelAr": null,
-   "hazzatId": "verses-of-the-cymbals-transfiguration",
-   "sourceUrl": "Open on hazzat",
-   "rhythm": null,
-   "active": true,
-   "types": [
-    "aspasmos-adam",
-    "aspasmos-watos"
-   ],
-   "tunes": [
-    "adam",
-    "watos"
    ]
   },
   {

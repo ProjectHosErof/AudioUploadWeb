@@ -23,6 +23,8 @@ export interface QueueItem {
   contentType: string;
   fileSizeBytes: number | null;
   originalFilename: string | null;
+  /** Picked via "my hymn isn't listed": confirm where it's sung before accepting. */
+  placementUnlisted?: boolean;
   uploadedAt: string;
   contributor: string | null;
   /** False until the offline ffprobe job has run — there is less to judge on. */

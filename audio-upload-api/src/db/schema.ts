@@ -275,6 +275,9 @@ export const recordings = pgTable(
     // (ACCEPTED_TERMS_VERSIONS in src/lib/validation.ts). Null only for
     // recordings that predate the Terms (before migration 0010).
     termsVersion: varchar('terms_version', { length: 20 }),
+    // The contributor chose "my hymn isn't listed": the hymn isn't on our list
+    // for this season + service, so a reviewer confirms where it's sung.
+    placementUnlisted: boolean('placement_unlisted').default(false).notNull(),
 
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),

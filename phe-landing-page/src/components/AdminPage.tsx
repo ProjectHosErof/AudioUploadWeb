@@ -161,6 +161,11 @@ function ReviewCard({ item, onResolved, onError }: CardProps) {
             {formatLength(item.durationSeconds)}
             {technicalLine(item) && ` · ${technicalLine(item)}`}
           </p>
+          {item.placementUnlisted && (
+            <p style={{ ...metaStyle, color: 'var(--gold)', marginTop: '0.5rem' }}>
+              Not on our list for {[item.season, item.service].filter(Boolean).join(' · ')} — please confirm where it's sung.
+            </p>
+          )}
         </div>
 
         <div className="queue-meta" style={{ fontFamily: 'var(--font-ui)', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
