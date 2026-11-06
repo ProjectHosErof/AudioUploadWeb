@@ -2,6 +2,7 @@ import { getSupabase } from './lib/supabase';
 import { deleteObject, listRawObjects } from './storage/r2';
 import { isSweepEnabled, maxSweepDeletions, planSweep } from './lib/sweepGuard';
 import { sendReviewDigests } from './jobs/digest';
+import { runBetaJobs } from './jobs/beta';
 
 /**
  * Scheduled janitor (Cloudflare Cron Trigger). Keeps the DB and the R2 bucket
@@ -113,7 +114,7 @@ const DIGEST_CRON = '0 16 * * *';
 /**
  * Two schedules share this handler, so it dispatches on which one fired:
  *   every 15 min — the janitor
- *   16:00 UTC    — the review digest (noon US Eastern, early evening in Cairo,
+ *   16:00 UTC    — the review digest, then the beta's daily jobs (noon US Eastern, early evening in Cairo,
  *                  which is a reasonable hour across most of the contributor
  *                  base; there is no per-contributor timezone to work from)
  */
@@ -127,6 +128,8 @@ export async function scheduled(
     // unlike the fetch path it has to be configured. API_ORIGIN falls back to
     // the deployed Worker URL.
     await sendReviewDigests(env, env.API_ORIGIN);
+    // The beta program's daily work: check-ins, the waiting summary, retention.
+    await runBetaJobs(env, env.API_ORIGIN);
     return;
   }
 

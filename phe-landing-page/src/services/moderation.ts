@@ -8,7 +8,7 @@
  * admin check (ADR-010).
  */
 import { API_BASE_URL } from "../config";
-import { supabase } from "../lib/supabaseClient";
+import { getSupabase } from "../lib/supabaseClient";
 
 export interface QueueItem {
   id: string;
@@ -23,6 +23,8 @@ export interface QueueItem {
   contentType: string;
   fileSizeBytes: number | null;
   originalFilename: string | null;
+  /** Picked via "my hymn isn't listed": confirm where it's sung before accepting. */
+  placementUnlisted?: boolean;
   uploadedAt: string;
   contributor: string | null;
   /** False until the offline ffprobe job has run — there is less to judge on. */
@@ -53,6 +55,7 @@ export class ModerationError extends Error {
 }
 
 async function authHeaders(): Promise<Record<string, string>> {
+  const supabase = await getSupabase();
   if (!supabase) throw new ModerationError("Sign-in is not configured.", 401);
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
@@ -149,3 +152,59 @@ export const REJECTION_REASONS = [
   "Incomplete or cut off",
   "Duplicate of an existing recording",
 ] as const;
+
+// ------------------------------------------------------------------
+// Beta program (admin)
+// ------------------------------------------------------------------
+
+export interface BetaApplicant {
+  id: string;
+  name: string;
+  email: string;
+  parish: string | null;
+  device: string;
+  ageRange: string | null;
+  role: string | null;
+  appliedAt: string;
+}
+
+export interface BetaTester extends BetaApplicant {
+  acceptedAt: string | null;
+  checkinSentAt: string | null;
+  surveySentAt: string | null;
+  progress: { signedIn: boolean; uploads: number; notListed: number; lastUpload: string | null };
+}
+
+export interface BetaOverview {
+  waiting: BetaApplicant[];
+  testers: BetaTester[];
+  counts: { declined: number; withdrawn: number; unconfirmed: number };
+}
+
+export async function fetchBeta(): Promise<BetaOverview> {
+  const res = await fetch(`${API_BASE_URL}/admin/beta`, { headers: await authHeaders() });
+  if (!res.ok) throw new ModerationError(await readError(res, "Could not load the beta list."), res.status);
+  return (await res.json()) as BetaOverview;
+}
+
+/** Accept (sends the welcome) or decline (sends a short note when `notify`). */
+export async function decideBeta(id: string, decision: "accept" | "decline", notify: boolean): Promise<{ emailed: boolean }> {
+  const res = await fetch(`${API_BASE_URL}/admin/beta/${id}/decision`, {
+    method: "POST",
+    headers: { ...(await authHeaders()), "Content-Type": "application/json" },
+    body: JSON.stringify({ decision, notify }),
+  });
+  if (!res.ok) throw new ModerationError(await readError(res, "Could not record that."), res.status);
+  return (await res.json()) as { emailed: boolean };
+}
+
+/** Thank-you + survey to every tester not yet sent one; repeat to send the rest. */
+export async function endBeta(surveyUrl: string): Promise<{ sent: number; remaining: number }> {
+  const res = await fetch(`${API_BASE_URL}/admin/beta/end`, {
+    method: "POST",
+    headers: { ...(await authHeaders()), "Content-Type": "application/json" },
+    body: JSON.stringify({ surveyUrl }),
+  });
+  if (!res.ok) throw new ModerationError(await readError(res, "Could not send the survey."), res.status);
+  return (await res.json()) as { sent: number; remaining: number };
+}

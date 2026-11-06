@@ -71,6 +71,41 @@
       "when": 1793045001829,
       "tag": "0009_backup_reader",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793052491808,
+      "tag": "0010_recording_terms_version",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1793381284064,
+      "tag": "0011_subscriber_confirmation_cooldown",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1793381429474,
+      "tag": "0012_enrichment_worker",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1793996160652,
+      "tag": "0013_placement_unlisted",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1794002579210,
+      "tag": "0014_beta_testers",
+      "breakpoints": true
     }
   ]
 }

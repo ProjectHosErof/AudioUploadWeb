@@ -1,60 +1,83 @@
-import { useMemo, useRef, useState } from "react";
-import { Upload, Music } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { Upload, Music, CheckCircle2 } from "lucide-react";
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
-import type { AudioFile } from "../App";
-import Select, { type MultiValue, type SingleValue } from "react-select";
+import Select, { type MultiValue, type SelectInstance, type SingleValue } from "react-select";
 import {
+  hymnSlugsFor,
   hymnsFor,
   language_options,
+  matchesOption,
   service_options,
   season_options,
+  vocab,
 } from "../options.data";
-import type { HymnGroup, SelectOption } from "../options.data";
+import type { SelectOption } from "../options.data";
 import { TURNSTILE_SITE_KEY } from "../config";
-import { resolveContentType, uploadRecording, UploadError } from "../services/uploadApi";
+import { TERMS_VERSION } from "../legal/terms";
+import { ACCEPTED_AUDIO, ACCEPTED_AUDIO_LABEL, MAX_UPLOAD_BYTES, resolveContentType, uploadRecording, UploadCancelled, UploadError } from "../services/uploadApi";
+import { useAuth } from '../auth/useAuth';
 
-interface UploadFormProps {
-  onUpload: (file: Omit<AudioFile, "id" | "uploadedAt">) => void;
+// Named as in the Service dropdown, so the guidelines and the form agree.
+const serviceTypes = [
+  'The Divine Liturgy (St. Basil, St. Gregory, St. Cyril)',
+  'Vespers and Matins (Raising of Incense)',
+  'Midnight Praises (Tasbeha), Vesper Praises and Morning Praises',
+  'Pascha (Holy Week)',
+  'Venerations (Tamagid) and Melodies',
+  'Ceremonies: Baptism, Crowning (Wedding), Reception of New Priest',
+  '…and more. If yours isn\'t in the form\'s list, choose “My hymn isn\'t listed”.',
+];
+
+/** Bytes → "12.3 MB". */
+function formatSize(bytes: number): string {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-const serviceTypes = [
-  'St. Basil / St. Gregory / St. Cyril Divine Liturgy',
-  'Matins & Vespers',
-  'Vesper Praises',
-  'Morning & Midnight Praises',
-  'Melodies',
-  'Ceremonies (Baptism, Crowning, Ordination)',
-  'Venerations',
-  '...and more',
-];
+/** The last hymn option when a list applies: switches to the whole catalogue. */
+const NOT_LISTED = "__not-listed__";
+const NOT_LISTED_OPTION: SelectOption = { value: NOT_LISTED, label: "My hymn isn't listed — show all hymns" };
 
-const faqs = [
-  {
-    q: 'What happens to my recording?',
-    a: 'Your recording becomes part of a curated dataset used to train and develop the technology behind a future Coptic Orthodox platform currently in development. This is Phase 1 of that larger initiative — contributions made here are foundational to what the community will eventually access.',
-  },
-  {
-    q: 'Is contributing free?',
-    a: 'Completely free. Your recording is a gift to the community, and this project will always remain open and free to access.',
-  },
-  {
-    q: 'Will my personal information be shared?',
-    a: 'No. Email addresses are only used for project updates if you opt in, and are never shared with third parties.',
-  },
-];
+/** A hymn's own name (the full list may add where it's sung). */
+const HYMN_NAME = new Map(vocab.hymns.map((h) => [h.slug, h.label]));
 
-const uploadSteps = [
-  'Select the type of service and the season the hymn/response is said',
-  'Select the hymn/response and the language(s) used in the audio file',
-  'Select your hymn audio file — accepted formats: WAV, MP3, FLAC, AIFF, OGG',
-  'Optionally enter your email to receive project updates and become a tester',
-  'Click Upload Track',
-];
+/** Search on the English and Arabic names; the "isn't listed" option always shows. */
+const filterOption = (o: { data: SelectOption }, input: string) =>
+  o.data.value === NOT_LISTED || matchesOption(o.data, input);
 
-export function UploadForm({ onUpload }: UploadFormProps) {
-  const [title, setTitle] = useState("");
-  const [artist] = useState("");
+/** Room for an open menu: the field moves up under the sticky nav if the menu wouldn't fit below it. */
+const MENU_HEIGHT = 300;
+function makeRoomForMenu(inputId: string) {
+  const field = document.getElementById(inputId)?.closest<HTMLElement>(".rs-dark");
+  if (!field) return;
+  const below = window.innerHeight - field.getBoundingClientRect().bottom;
+  if (below < Math.min(MENU_HEIGHT, window.innerHeight * 0.45) + 16) {
+    field.scrollIntoView({ block: "start", behavior: "instant" });
+  }
+}
+
+/** Shared props that keep each menu on screen and searchable. */
+const selectProps = (inputId: string) => ({
+  inputId,
+  classNamePrefix: "react-select",
+  filterOption,
+  menuPlacement: "bottom" as const,
+  menuShouldScrollIntoView: false,
+  maxMenuHeight: MENU_HEIGHT,
+  onMenuOpen: () => makeRoomForMenu(inputId),
+});
+
+/** A form check that failed on submit; its message tracks the form as it's fixed. */
+type FormCheck = "missing" | "file" | "terms" | "email";
+
+export function UploadForm() {
+  const { session } = useAuth();
+  // Signed-in contributors get their account email prefilled; typing replaces it.
+  const accountEmail = session?.user?.email ?? "";
+  const [emailEdited, setEmailEdited] = useState(false);
   const [file, setFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedService, setSelectedService] = useState<SelectOption | null>(null);
@@ -62,33 +85,164 @@ export function UploadForm({ onUpload }: UploadFormProps) {
   const [selectedHymn, setSelectedHymn] = useState<SelectOption | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState<readonly SelectOption[]>([]);
   const [checked, setChecked] = useState(false);
+  // Agreement to the Terms + Contributor License; required, and sent with the
+  // upload so the recording records which license version it was given under.
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [email, setEmail] = useState("");
+  // What the field shows and what gets sent: the typed value once edited,
+  // otherwise the signed-in account's email.
+  const emailValue = emailEdited ? email : email || accountEmail;
   const [emailError, setEmailError] = useState("");
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  // An upload attempt that failed (server, storage, verification). Stays until
+  // the next submit: it describes that attempt, not the form.
   const [submitError, setSubmitError] = useState("");
+  // "My hymn isn't listed": the whole catalogue instead of the pair's list.
+  const [showAll, setShowAll] = useState(false);
+  // Says what a season/service change did to the chosen hymn.
+  const [hymnNotice, setHymnNotice] = useState("");
+  const hymnSelectRef = useRef<SelectInstance<SelectOption, false>>(null);
+  // The upload in flight, so it can be cancelled; and a note once it was.
+  const uploadAbort = useRef<AbortController | null>(null);
+  const [cancelNote, setCancelNote] = useState("");
+  const [failedCheck, setFailedCheck] = useState<FormCheck | null>(null);
+  // Set after a successful upload; replaces the form with a thank-you panel.
+  const [submitted, setSubmitted] = useState<{ reference: string; email: string } | null>(null);
   const turnstileRef = useRef<TurnstileInstance>(null);
+  const errorRef = useRef<HTMLParagraphElement>(null);
+  const successRef = useRef<HTMLDivElement>(null);
+
+  // Warn before closing the tab mid-upload: the file would be lost.
+  useEffect(() => {
+    if (!isSubmitting) return;
+    const warn = (e: BeforeUnloadEvent) => { e.preventDefault(); };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [isSubmitting]);
+
+  // Move focus to the result so screen-reader and keyboard users hear it.
+  useEffect(() => { if (submitted) successRef.current?.focus(); }, [submitted]);
+
+  // Bring a new error into view and to screen readers' attention. Done in an
+  // effect, after the message has rendered: after an await, React may commit
+  // later than the next animation frame, which then found nothing to focus.
+  const [errorFocusRequest, setErrorFocusRequest] = useState(0);
+  useEffect(() => { if (errorFocusRequest) errorRef.current?.focus(); }, [errorFocusRequest]);
+
+  /** Check type and size as soon as a file is chosen, not after uploading. */
+  function chooseFile(f: File | null) {
+    setFile(f);
+    if (!f) { setFileError(""); return; }
+    if (!resolveContentType(f)) {
+      setFileError(`That file type isn't supported. Please use ${ACCEPTED_AUDIO_LABEL}.`);
+    } else if (f.size > MAX_UPLOAD_BYTES) {
+      setFileError(`That file is ${formatSize(f.size)}; the limit is ${formatSize(MAX_UPLOAD_BYTES)}.`);
+    } else {
+      setFileError("");
+    }
+  }
+
+  /** What's still missing, as "a service, a season and a hymn"; empty when nothing is. */
+  function missingList(): string {
+    const missing = [
+      !selectedService && "a service",
+      !selectedSeason && "a season",
+      !selectedHymn && "a hymn",
+      selectedLanguage.length === 0 && "at least one language",
+      !file && "an audio file",
+    ].filter((m): m is string => Boolean(m));
+    if (missing.length <= 1) return missing[0] ?? "";
+    return `${missing.slice(0, -1).join(", ")} and ${missing[missing.length - 1]}`;
+  }
+
+  /** The current message for a failed check, or "" once the user has fixed it. */
+  function checkMessage(check: FormCheck): string {
+    switch (check) {
+      case "missing": {
+        const list = missingList();
+        return list ? `Please choose ${list}.` : "";
+      }
+      case "file":
+        return fileError;
+      case "terms":
+        return agreedToTerms ? "" : "Please confirm you agree to the Terms and Contributor License.";
+      case "email": {
+        const value = emailValue.trim();
+        return value && !isValidEmail(value) ? "Please enter a valid email address, or leave it empty." : "";
+      }
+    }
+  }
+
+  const shownError = failedCheck ? checkMessage(failedCheck) : submitError;
+
+  function focusError() {
+    setErrorFocusRequest((n) => n + 1);
+  }
+
+  function fail(message: string) {
+    setFailedCheck(null);
+    setSubmitError(message);
+    focusError();
+  }
+
+  function failCheck(check: FormCheck) {
+    setSubmitError("");
+    setFailedCheck(check);
+    focusError();
+  }
 
   const isHymnDisabled = !selectedService || !selectedSeason;
-  const isLanguageDisabled = !selectedService || !selectedSeason;
 
   // Only the hymns said in the chosen season + service (the API enforces the
-  // same rule), grouped by hymn type.
+  // same rule), unless the contributor said theirs isn't listed.
   const hymnChoices = useMemo(
-    () => (selectedSeason && selectedService ? hymnsFor(selectedSeason.value, selectedService.value) : null),
-    [selectedSeason, selectedService],
+    () => (selectedSeason && selectedService ? hymnsFor(selectedSeason.value, selectedService.value, { all: showAll }) : null),
+    [selectedSeason, selectedService, showAll],
   );
+  const hymnMenu = hymnChoices?.filtered ? [...hymnChoices.options, NOT_LISTED_OPTION] : hymnChoices?.options ?? [];
 
-  /** After a season/service change, keep the hymn only if it is still listed. */
-  function keepHymnIfListed(season: SelectOption | null, service: SelectOption | null) {
-    const stillListed =
-      season && service && selectedHymn &&
-      hymnsFor(season.value, service.value).groups.some((g) => g.options.some((o) => o.value === selectedHymn.value));
-    if (!stillListed) {
-      setSelectedHymn(null);
-      setTitle("");
+  function chooseHymn(option: SingleValue<SelectOption>) {
+    setHymnNotice("");
+    if (option?.value === NOT_LISTED) {
+      setShowAll(true);
+      // Reopen on the whole catalogue once it has rendered.
+      setTimeout(() => { hymnSelectRef.current?.focus(); hymnSelectRef.current?.openMenu("first"); }, 0);
+      return;
     }
-    if (!season || !service) setSelectedLanguage([]);
+    setSelectedHymn(option);
+  }
+
+  /**
+   * After a season/service change, keep the hymn if it's still listed. Each
+   * season has its own version of many hymns (its own "Trisagion (Agios)"), so
+   * one with the same name is swapped in; otherwise the hymn is cleared. Either
+   * way the contributor is told.
+   */
+  function keepHymnIfListed(season: SelectOption | null, service: SelectOption | null) {
+    setHymnNotice("");
+    if (!selectedHymn) {
+      setShowAll(false);
+      return;
+    }
+    if (!season || !service) {
+      setSelectedHymn(null);
+      setShowAll(false);
+      return;
+    }
+    const allowed = hymnSlugsFor(season.value, service.value);
+    // Chosen from the whole catalogue ("isn't listed") or still listed: keep it.
+    if (showAll || !allowed || allowed.has(selectedHymn.value)) return;
+    const name = HYMN_NAME.get(selectedHymn.value) ?? selectedHymn.label;
+    const where = `${season.label} · ${service.label}`;
+    const counterpart = [...allowed].find((slug) => HYMN_NAME.get(slug) === name);
+    if (counterpart) {
+      setSelectedHymn({ value: counterpart, label: name });
+      setHymnNotice(`Switched to the ${where} version of “${name}”.`);
+    } else {
+      setSelectedHymn(null);
+      setHymnNotice(`“${name}” isn't on the list for ${where} — please choose again.`);
+    }
   }
 
   function isValidEmail(e: string): boolean {
@@ -99,71 +253,97 @@ export function UploadForm({ onUpload }: UploadFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError("");
+    setFailedCheck(null);
 
-    if (!selectedService || !selectedSeason || !selectedHymn || selectedLanguage.length === 0 || !file) {
-      setSubmitError("Please select a service, season, hymn, at least one language, and an audio file.");
+    // The form is noValidate, so every check happens here, with a message the
+    // user can see (a hidden file input can't show the browser's own bubble).
+    if (missingList()) {
+      failCheck("missing");
       return;
     }
-
-    if (checked && (!email || !isValidEmail(email))) {
-      setEmailError("Please enter a valid email address");
+    if (fileError) {
+      failCheck("file");
+      return;
+    }
+    if (!agreedToTerms) {
+      failCheck("terms");
+      return;
+    }
+    if (emailValue.trim() && !isValidEmail(emailValue.trim())) {
+      setEmailError("Please enter a valid email address.");
+      failCheck("email");
       return;
     }
     setEmailError("");
 
-    const contentType = resolveContentType(file);
+    const contentType = resolveContentType(file!);
     if (!contentType) {
-      setSubmitError("Unsupported file type. Please use WAV, MP3, FLAC, AIFF, or OGG.");
+      fail(`That file type isn't supported. Please use ${ACCEPTED_AUDIO_LABEL}.`);
       return;
     }
     if (!TURNSTILE_SITE_KEY) {
-      setSubmitError("Verification isn't configured yet. Please try again later.");
+      fail("Verification isn't configured yet. Please try again later.");
       return;
     }
     if (!turnstileToken) {
-      setSubmitError("Please complete the verification challenge below.");
+      fail("Please complete the verification check just above the button.");
       return;
     }
 
+    // Captured now: the form is cleared once the upload succeeds.
+    const sentTo = emailValue.trim();
+    uploadAbort.current = new AbortController();
+    setCancelNote("");
     setIsSubmitting(true);
     setUploadProgress(0);
     try {
       const recordingId = await uploadRecording(
         {
-          service_slug: selectedService.value,
-          season_slug: selectedSeason.value,
-          hymn_slug: selectedHymn.value,
+          service_slug: selectedService!.value,
+          season_slug: selectedSeason!.value,
+          hymn_slug: selectedHymn!.value,
           languages: selectedLanguage.map((l) => l.value),
           content_type: contentType,
-          size_bytes: file.size,
-          original_filename: file.name,
-          wants_updates: checked,
-          email: checked && email ? email : undefined,
+          size_bytes: file!.size,
+          original_filename: file!.name,
+          // The email is sent whenever it's given, so the contributor hears
+          // about the review; the newsletter is only joined if they also ticked.
+          wants_updates: checked && Boolean(emailValue.trim()),
+          // Off the pair's list (picked via "my hymn isn't listed"): a reviewer confirms it.
+          hymn_not_listed: (() => {
+            const listed = hymnSlugsFor(selectedSeason!.value, selectedService!.value);
+            return listed !== null && !listed.has(selectedHymn!.value);
+          })(),
+          email: emailValue.trim() || undefined,
           turnstile_token: turnstileToken,
-          file,
+          accepted_terms_version: TERMS_VERSION,
+          file: file!,
         },
         (pct) => setUploadProgress(pct),
+        uploadAbort.current.signal,
       );
 
-      // Keep the local gallery behavior for now.
-      onUpload({ title, artist, fileUrl: URL.createObjectURL(file) });
-
-      setTitle("");
-      setSelectedService(null);
-      setSelectedSeason(null);
+      // Ready for the next one. A choir often records several hymns from the
+      // same service, so service, season, languages and email stay; the hymn,
+      // the file and the consent (which covers who is heard) are per recording.
       setSelectedHymn(null);
-      setSelectedLanguage([]);
+      setShowAll(false);
+      setHymnNotice("");
       setFile(null);
       setChecked(false);
-      setEmail("");
+      setAgreedToTerms(false);
       setEmailError("");
       setUploadProgress(null);
-      alert(`Thank you for your submission! Reference: ${recordingId.slice(0, 8)}`);
+      setSubmitted({ reference: recordingId.slice(0, 8).toUpperCase(), email: sentTo });
     } catch (err) {
-      setSubmitError(
-        err instanceof UploadError ? err.message : "Something went wrong. Please try again.",
-      );
+      setUploadProgress(null);
+      if (err instanceof UploadCancelled) {
+        setCancelNote("Upload cancelled — your choices are still here.");
+      } else {
+        fail(err instanceof UploadError ? err.message : "Something went wrong. Please try again.");
+      }
     } finally {
+      uploadAbort.current = null;
       // A Turnstile token is single-use — reset the widget for the next attempt.
       turnstileRef.current?.reset();
       setTurnstileToken(null);
@@ -176,10 +356,10 @@ export function UploadForm({ onUpload }: UploadFormProps) {
       <div style={{ maxWidth: '760px', margin: '0 auto' }}>
 
         {/* Section header — h2 size intentionally unchanged */}
-        <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <p style={{
             fontFamily: 'var(--font-ui)',
-            fontSize: '0.625rem',
+            fontSize: '0.75rem',
             letterSpacing: '0.22em',
             textTransform: 'uppercase',
             color: 'var(--crimson-label)',
@@ -200,151 +380,39 @@ export function UploadForm({ onUpload }: UploadFormProps) {
           <div style={{ width: '2.5rem', height: '1px', background: 'var(--crimson)', margin: '0 auto' }} />
         </div>
 
-        {/* What we need */}
-        <div style={{
-          border: '1px solid var(--ink-mid)',
-          padding: '2.25rem',
-          marginBottom: '2.5rem',
-          backgroundColor: 'var(--ink-soft)',
+        {/* What we need — the short version, then the full guidelines on demand */}
+        <p style={{
+          fontFamily: 'var(--font-ui)',
+          fontSize: '1.0625rem',
+          lineHeight: 1.75,
+          color: 'var(--text-muted)',
+          textAlign: 'center',
+          maxWidth: '36rem',
+          margin: '0 auto 1rem',
         }}>
-          <p style={{
-            fontFamily: 'var(--font-ui)',
-            fontSize: '0.625rem',
-            letterSpacing: '0.2em',
-            textTransform: 'uppercase',
-            color: 'var(--crimson-label)',
-            marginBottom: '1.25rem',
-          }}>
-            What We Need
-          </p>
-          <p style={{
-            fontFamily: 'var(--font-ui)',
-            fontSize: '1.0625rem',
-            lineHeight: 1.8,
-            color: 'var(--text-muted)',
-            marginBottom: '0.75rem',
-          }}>
-            These recordings will form a training dataset for a future platform currently in development for the Coptic Orthodox community.
-          </p>
-          <p style={{
-            fontFamily: 'var(--font-ui)',
-            fontSize: '1.0625rem',
-            lineHeight: 1.8,
-            color: 'var(--text-muted)',
-            marginBottom: '1.5rem',
-          }}>
-            We are looking for hymns and responses across different feasts,
-            seasons, and tunes. Please do{' '}
-            <em style={{ color: 'var(--parchment-dim)' }}>not</em>{' '}
-            submit entire liturgies or full service recordings.
-          </p>
-          <div style={{ textAlign: 'center' }}>
-            {serviceTypes.map((s, i) => (
-              <p key={i} style={{
-                fontFamily: 'var(--font-ui)',
-                fontSize: '1.0625rem',
-                color: s === '...and more' ? 'var(--gold-muted)' : 'var(--text-muted)',
-                fontStyle: s === '...and more' ? 'italic' : 'normal',
-                margin: '0 0 0.5rem',
-              }}>
-                {s}
-              </p>
-            ))}
+          Short hymns and responses from any season or service — please, not full liturgies.
+          Any audio quality is welcome; phone recordings are perfect.
+        </p>
+        <details className="codex-details" style={{ margin: '0 auto 2.5rem', maxWidth: '36rem' }}>
+          <summary>What to record — full guidelines</summary>
+          <div style={{ paddingTop: '1rem' }}>
+            <p style={{ fontFamily: 'var(--font-ui)', fontSize: '1.0625rem', lineHeight: 1.75, color: 'var(--text-muted)', margin: '0 0 0.75rem' }}>
+              Every recording joins the project's collection of Coptic hymns, which will help build tools for learning them. Recordings are never sold or published as a dataset.
+            </p>
+            <p style={{ fontFamily: 'var(--font-ui)', fontSize: '1.0625rem', lineHeight: 1.75, color: 'var(--text-muted)', margin: '0 0 1rem' }}>
+              We're looking for hymns and responses across different feasts, seasons, and tunes. Please do{' '}
+              <em style={{ color: 'var(--parchment-dim)' }}>not</em> submit entire liturgies or full service recordings.
+              Hymns and responses from services such as:
+            </p>
+            <ul style={{ margin: 0, paddingLeft: '1.25rem', listStyle: 'disc' }}>
+              {serviceTypes.map((s) => (
+                <li key={s} style={{ fontFamily: 'var(--font-ui)', fontSize: '1rem', lineHeight: 1.7, color: 'var(--text-muted)' }}>
+                  {s}
+                </li>
+              ))}
+            </ul>
           </div>
-        </div>
-
-        {/* FAQ */}
-        <div style={{ marginBottom: '2.5rem' }}>
-          <p style={{
-            fontFamily: 'var(--font-ui)',
-            fontSize: '0.625rem',
-            letterSpacing: '0.2em',
-            textTransform: 'uppercase',
-            color: 'var(--crimson-label)',
-            marginBottom: '1.25rem',
-          }}>
-            Common Questions
-          </p>
-          {faqs.map((item, i) => (
-            <div key={i} style={{
-              borderTop: '1px solid var(--ink-mid)',
-              padding: '1.25rem 0',
-              display: 'grid',
-              gridTemplateColumns: '1fr 1.5fr',
-              gap: '2rem',
-              alignItems: 'start',
-            }}>
-              <p style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: '1.25rem',
-                fontWeight: 400,
-                color: 'var(--parchment)',
-                margin: 0,
-                lineHeight: 1.3,
-              }}>
-                {item.q}
-              </p>
-              <p style={{
-                fontFamily: 'var(--font-ui)',
-                fontSize: '1.0625rem',
-                lineHeight: 1.75,
-                color: 'var(--text-muted)',
-                margin: 0,
-              }}>
-                {item.a}
-              </p>
-            </div>
-          ))}
-          <div style={{ borderTop: '1px solid var(--ink-mid)' }} />
-        </div>
-
-        {/* Steps */}
-        <div style={{ marginBottom: '3rem' }}>
-          <p style={{
-            fontFamily: 'var(--font-ui)',
-            fontSize: '0.625rem',
-            letterSpacing: '0.2em',
-            textTransform: 'uppercase',
-            color: 'var(--crimson-label)',
-            marginBottom: '1.25rem',
-          }}>
-            Steps to Upload
-          </p>
-          {uploadSteps.map((step, i) => (
-            <div
-              key={i}
-              style={{
-                display: 'flex',
-                gap: '1.25rem',
-                alignItems: 'flex-start',
-                borderTop: '1px solid var(--ink-mid)',
-                padding: '1rem 0',
-              }}
-            >
-              <span style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: '1.375rem',
-                fontWeight: 300,
-                color: 'var(--crimson-label)',
-                lineHeight: 1.1,
-                minWidth: '1.25rem',
-                paddingTop: '0.05rem',
-              }}>
-                {i + 1}
-              </span>
-              <p style={{
-                fontFamily: 'var(--font-ui)',
-                fontSize: '1.0625rem',
-                lineHeight: 1.7,
-                color: 'var(--text-muted)',
-                margin: 0,
-              }}>
-                {step}
-              </p>
-            </div>
-          ))}
-          <div style={{ borderTop: '1px solid var(--ink-mid)' }} />
-        </div>
+        </details>
 
         {/* Form panel with corner accents */}
         <div style={{
@@ -358,15 +426,48 @@ export function UploadForm({ onUpload }: UploadFormProps) {
           <span className="codex-corner codex-corner--bl" />
           <span className="codex-corner codex-corner--br" />
 
-          <form onSubmit={handleSubmit}>
+          {submitted ? (
+            <div ref={successRef} tabIndex={-1} role="status" style={{ textAlign: 'center', padding: '1rem 0', outline: 'none' }}>
+              <CheckCircle2 aria-hidden="true" style={{ width: '2.5rem', height: '2.5rem', color: 'var(--gold)', margin: '0 auto 1.25rem' }} />
+              <p style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.75rem, 4vw, 2.25rem)', fontWeight: 300, color: 'var(--parchment)', margin: '0 0 0.75rem' }}>
+                Thank you — your recording is in.
+              </p>
+              <p style={{ fontFamily: 'var(--font-ui)', fontSize: '1.0625rem', lineHeight: 1.7, color: 'var(--text-muted)', margin: '0 auto 0.5rem', maxWidth: '34rem' }}>
+                A reviewer will listen to it soon.{' '}
+                {submitted.email ? (
+                  <>We'll email <span style={{ color: 'var(--parchment)' }}>{submitted.email}</span> once it's been reviewed.</>
+                ) : session ? (
+                  "You'll see the outcome in your contributions."
+                ) : (
+                  'Sign in to see when it\'s been reviewed.'
+                )}
+              </p>
+              <p style={{ fontFamily: 'var(--font-ui)', fontSize: '0.875rem', color: 'var(--gold-muted)', margin: '0 0 2rem' }}>
+                Reference: <span style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '0.08em' }}>{submitted.reference}</span>
+              </p>
+              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <button type="button" className="hero-cta" onClick={() => setSubmitted(null)}>
+                  Upload another
+                </button>
+                <Link to={session ? '/dashboard' : '/login'} className="hero-cta" style={{ background: 'transparent' }}>
+                  {session ? 'See my contributions' : 'Sign in to track it'}
+                </Link>
+              </div>
+              <p style={{ fontFamily: 'var(--font-ui)', fontSize: '0.9375rem', color: 'var(--text-muted)', margin: '1.75rem 0 0' }}>
+                Something wrong with this upload?{' '}
+                <Link to={`/help?topic=upload&ref=${submitted.reference}&from=/`} style={{ color: 'var(--gold)', textDecoration: 'underline', textUnderlineOffset: '3px' }}>Get help</Link>
+              </p>
+            </div>
+          ) : (
+          <form onSubmit={handleSubmit} noValidate aria-describedby={shownError ? 'upload-error' : undefined}>
 
             {/* Service & Season */}
             <div className="grid sm:grid-cols-2 gap-4" style={{ marginBottom: '1.5rem' }}>
               <div>
-                <label className="codex-label">Service *</label>
+                <label className="codex-label" htmlFor="upload-service">Service *</label>
                 <div className="rs-dark">
                   <Select
-                    classNamePrefix="react-select"
+                    {...selectProps("upload-service")}
                     options={service_options}
                     value={selectedService}
                     onChange={(option: SingleValue<SelectOption>) => {
@@ -379,10 +480,10 @@ export function UploadForm({ onUpload }: UploadFormProps) {
                 </div>
               </div>
               <div>
-                <label className="codex-label">Season *</label>
+                <label className="codex-label" htmlFor="upload-season">Season *</label>
                 <div className="rs-dark">
                   <Select
-                    classNamePrefix="react-select"
+                    {...selectProps("upload-season")}
                     options={season_options}
                     value={selectedSeason}
                     onChange={(option: SingleValue<SelectOption>) => {
@@ -399,16 +500,15 @@ export function UploadForm({ onUpload }: UploadFormProps) {
             {/* Hymn & Language */}
             <div className="grid sm:grid-cols-2 gap-4" style={{ marginBottom: isHymnDisabled ? '0.5rem' : '1.5rem' }}>
               <div>
-                <label className="codex-label">Hymn / Response Title *</label>
+                <label className="codex-label" htmlFor="upload-hymn">Hymn / Response Title *</label>
                 <div className="rs-dark">
-                  <Select<SelectOption, false, HymnGroup>
-                    classNamePrefix="react-select"
-                    options={hymnChoices?.groups ?? []}
+                  <Select<SelectOption, false>
+                    {...selectProps("upload-hymn")}
+                    ref={hymnSelectRef}
+                    options={hymnMenu}
                     value={selectedHymn}
-                    onChange={(option: SingleValue<SelectOption>) => {
-                      setSelectedHymn(option);
-                      setTitle(option?.label ?? "");
-                    }}
+                    onChange={chooseHymn}
+                    classNames={{ option: ({ data }) => (data.value === NOT_LISTED ? "rs-not-listed" : "") }}
                     placeholder="Select or type a hymn/response"
                     isClearable
                     isDisabled={isHymnDisabled}
@@ -416,10 +516,10 @@ export function UploadForm({ onUpload }: UploadFormProps) {
                 </div>
               </div>
               <div>
-                <label className="codex-label">Language *</label>
+                <label className="codex-label" htmlFor="upload-language">Language *</label>
                 <div className="rs-dark">
                   <Select<SelectOption, true>
-                    classNamePrefix="react-select"
+                    {...selectProps("upload-language")}
                     options={language_options}
                     value={selectedLanguage}
                     onChange={(option: MultiValue<SelectOption>) => {
@@ -428,7 +528,6 @@ export function UploadForm({ onUpload }: UploadFormProps) {
                     placeholder="Select language(s)"
                     isClearable
                     isMulti
-                    isDisabled={isLanguageDisabled}
                   />
                 </div>
               </div>
@@ -438,7 +537,7 @@ export function UploadForm({ onUpload }: UploadFormProps) {
             {hymnChoices && selectedSeason && selectedService && (
               <p style={{
                 fontFamily: 'var(--font-ui)',
-                fontSize: '0.6875rem',
+                fontSize: '0.75rem',
                 letterSpacing: '0.06em',
                 fontStyle: 'italic',
                 color: 'var(--gold-muted)',
@@ -446,54 +545,72 @@ export function UploadForm({ onUpload }: UploadFormProps) {
               }}>
                 {hymnChoices.filtered
                   ? `Showing ${hymnChoices.count} hymns for ${selectedSeason.label} · ${selectedService.label}.`
-                  : `No hymn list for this season and service yet, so all ${hymnChoices.count} hymns are shown.`}
+                  : showAll
+                    ? `Showing all ${hymnChoices.count} hymns. A reviewer will confirm where this one is sung.`
+                    : `No hymn list for this season and service yet, so all ${hymnChoices.count} hymns are shown.`}
               </p>
             )}
+
+            {/* What a season/service change did to the chosen hymn */}
+            <p aria-live="polite" style={{
+              fontFamily: 'var(--font-ui)',
+              fontSize: '0.8125rem',
+              color: 'var(--gold)',
+              margin: hymnNotice ? '-0.75rem 0 1.5rem' : 0,
+            }}>
+              {hymnNotice}
+            </p>
 
             {/* Locked-field hint */}
             {isHymnDisabled && (
               <p style={{
                 fontFamily: 'var(--font-ui)',
-                fontSize: '0.6875rem',
+                fontSize: '0.75rem',
                 letterSpacing: '0.06em',
                 fontStyle: 'italic',
                 color: 'var(--gold-muted)',
                 margin: '0 0 1.5rem',
               }}>
-                Select a service and season to unlock hymn and language fields.
+                Select a service and season to see the hymns for them.
               </p>
             )}
 
             {/* File drop zone */}
             <div style={{ marginBottom: '1.5rem' }}>
-              <label className="codex-label">
-                Audio File (WAV, MP3, FLAC, AIFF, OGG) *
-              </label>
-              <div
+              <span className="codex-label" id="file-label">
+                Audio File ({ACCEPTED_AUDIO_LABEL}) *
+              </span>
+              {/* A real <label> around a visually hidden (not display:none) input:
+                  Tab focuses it, Enter/Space opens the picker, screen readers
+                  announce it — and drag-and-drop still works. */}
+              <label
+                htmlFor="file-input"
                 className={`file-zone${isDragging ? ' file-zone--active' : ''}`}
+                style={{ display: 'block', cursor: 'pointer' }}
                 onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
                 onDragLeave={() => setIsDragging(false)}
                 onDrop={(e) => {
                   e.preventDefault();
                   setIsDragging(false);
                   const dropped = e.dataTransfer.files[0];
-                  if (dropped) setFile(dropped);
+                  if (dropped) chooseFile(dropped);
                 }}
-                onClick={() => document.getElementById('file-input')?.click()}
               >
                 <input
                   type="file"
                   id="file-input"
-                  style={{ display: 'none' }}
-                  onChange={(e) => setFile(e.target.files?.[0] || null)}
-                  accept=".wav,.mp3,.aiff,.flac,.ogg,audio/wav,audio/wave,audio/x-wav,audio/mpeg,audio/mp3,audio/x-aiff,audio/aiff,audio/flac,audio/x-flac,audio/ogg,audio/vorbis,application/ogg"
-                  required
+                  className="sr-only"
+                  aria-labelledby="file-label"
+                  aria-describedby={fileError ? 'file-error' : undefined}
+                  aria-invalid={fileError ? true : undefined}
+                  onChange={(e) => chooseFile(e.target.files?.[0] || null)}
+                  accept={ACCEPTED_AUDIO}
                 />
                 {file ? (
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.625rem' }}>
                     <Music style={{ width: '1.125rem', height: '1.125rem', color: 'var(--gold)' }} />
-                    <span style={{ fontFamily: 'var(--font-ui)', fontSize: '1rem', color: 'var(--parchment)' }}>
-                      {file.name}
+                    <span style={{ fontFamily: 'var(--font-ui)', fontSize: '1rem', color: 'var(--parchment)', overflowWrap: 'anywhere' }}>
+                      {file.name} <span style={{ color: 'var(--text-muted)' }}>· {formatSize(file.size)} · change</span>
                     </span>
                   </div>
                 ) : (
@@ -504,7 +621,7 @@ export function UploadForm({ onUpload }: UploadFormProps) {
                       color: 'var(--text-muted)',
                       margin: '0 0 0.4rem',
                     }}>
-                      Drop your audio file here, or click to browse
+                      Drop your audio file here, or choose one
                     </p>
                     <p style={{
                       fontFamily: 'var(--font-ui)',
@@ -514,11 +631,16 @@ export function UploadForm({ onUpload }: UploadFormProps) {
                       color: 'var(--gold-muted)',
                       margin: 0,
                     }}>
-                      WAV · MP3 · FLAC · AIFF · OGG
+                      M4A · MP3 · WAV · FLAC · AIFF · OGG · WebM
                     </p>
                   </>
                 )}
-              </div>
+              </label>
+              {fileError && (
+                <p id="file-error" role="alert" style={{ fontFamily: 'var(--font-ui)', fontSize: '0.9375rem', color: 'var(--crimson-label)', margin: '0.5rem 0 0' }}>
+                  {fileError}
+                </p>
+              )}
             </div>
 
             {/* Audio quality hint */}
@@ -529,16 +651,98 @@ export function UploadForm({ onUpload }: UploadFormProps) {
               color: 'var(--gold-muted)',
               margin: '-0.75rem 0 1.75rem',
             }}>
-              Any quality is welcome — WAV and FLAC preferred where possible.
+              WAV or FLAC are welcome too, but not needed.
             </p>
 
-            {/* Newsletter opt-in */}
+            {/* Consent: Terms + Contributor License (required) */}
             <div style={{ marginBottom: '1.75rem' }}>
               <label className="codex-checkbox-row">
                 <input
                   type="checkbox"
                   className="codex-checkbox"
+                  checked={agreedToTerms}
+                  onChange={(e) => setAgreedToTerms(e.target.checked)}
+                  required
+                />
+                <div>
+                  <p style={{
+                    fontFamily: 'var(--font-ui)',
+                    fontSize: '1.0625rem',
+                    fontWeight: 500,
+                    color: 'var(--parchment)',
+                    margin: '0 0 0.3rem',
+                  }}>
+                    I agree to the{' '}
+                    <a href="/terms" target="_blank" rel="noopener" style={{ color: 'var(--gold)', textDecoration: 'underline', textUnderlineOffset: '3px' }}>Terms and Contributor License</a> *
+                  </p>
+                  <p style={{
+                    fontFamily: 'var(--font-ui)',
+                    fontSize: '1.0625rem',
+                    color: 'var(--text-muted)',
+                    margin: 0,
+                  }}>
+                    I'm 13 or older, I have the right to share this recording, and everyone who can be heard in it
+                    (or a parent, for anyone under 18) agreed to it being used by Project Hos Erof as the Terms describe.
+                    See our <a href="/privacy" target="_blank" rel="noopener" style={{ color: 'var(--gold)', textDecoration: 'underline', textUnderlineOffset: '3px' }}>Privacy Policy</a>.
+                  </p>
+                </div>
+              </label>
+            </div>
+
+            {/* Email (optional): hear back about this recording. Kept separate
+                from the newsletter, which is its own opt-in below. */}
+            <div style={{ marginBottom: '1.25rem' }}>
+              <label className="codex-label" htmlFor="upload-email">Email (optional)</label>
+              <input
+                id="upload-email"
+                type="email"
+                autoComplete="email"
+                aria-invalid={emailError ? true : undefined}
+                aria-describedby={emailError ? 'upload-email-hint upload-email-error' : 'upload-email-hint'}
+                value={emailValue}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setEmailEdited(true);
+                  if (emailError) setEmailError("");
+                  if (!e.target.value.trim()) setChecked(false);
+                }}
+                onBlur={() => {
+                  if (emailValue && !isValidEmail(emailValue)) {
+                    setEmailError("Please enter a valid email address.");
+                  }
+                }}
+                className={`codex-input${emailError ? ' codex-input--error' : ''}`}
+                placeholder="your.email@example.com"
+              />
+              <p id="upload-email-hint" style={{
+                fontFamily: 'var(--font-ui)',
+                fontSize: '0.875rem',
+                color: 'var(--text-muted)',
+                margin: '0.5rem 0 0',
+              }}>
+                We'll let you know when your recording has been reviewed.
+              </p>
+              {emailError && (
+                <p id="upload-email-error" role="alert" style={{
+                  fontFamily: 'var(--font-ui)',
+                  fontSize: '0.9375rem',
+                  color: 'var(--crimson-label)',
+                  margin: '0.5rem 0 0',
+                }}>
+                  {emailError}
+                </p>
+              )}
+            </div>
+
+            {/* Newsletter opt-in: needs an email to send to. */}
+            <div style={{ marginBottom: '1.75rem' }}>
+              <label className="codex-checkbox-row" style={{ opacity: emailValue.trim() ? 1 : 0.6 }}>
+                <input
+                  type="checkbox"
+                  className="codex-checkbox"
                   checked={checked}
+                  disabled={!emailValue.trim()}
+                  aria-describedby="upload-updates-hint"
                   onChange={(e) => setChecked(e.target.checked)}
                 />
                 <div>
@@ -549,59 +753,20 @@ export function UploadForm({ onUpload }: UploadFormProps) {
                     color: 'var(--parchment)',
                     margin: '0 0 0.3rem',
                   }}>
-                    Get Updates & Become a Tester
+                    Also send me project updates — and an invitation to test new features
                   </p>
-                  <p style={{
+                  <p id="upload-updates-hint" style={{
                     fontFamily: 'var(--font-ui)',
-                    fontSize: '1.0625rem',
+                    fontSize: '0.9375rem',
                     color: 'var(--text-muted)',
-                    margin: '0 0 0.25rem',
-                  }}>
-                    Hear what happens to your recording, receive project updates, and sign up to become a future tester.
-                  </p>
-                  <p style={{
-                    fontFamily: 'var(--font-ui)',
-                    fontSize: '0.875rem',
-                    color: 'var(--gold-muted)',
-                    fontStyle: 'italic',
                     margin: 0,
                   }}>
-                    Already signed up? No need to re-enter your email.
+                    {emailValue.trim()
+                      ? "We'll send a link to confirm first. Unsubscribe anytime."
+                      : 'Add your email above to get updates.'}
                   </p>
                 </div>
               </label>
-
-              {checked && (
-                <div style={{ marginTop: '1rem' }}>
-                  <label className="codex-label">Email Address *</label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value);
-                      if (emailError) setEmailError("");
-                    }}
-                    onBlur={() => {
-                      if (email && !isValidEmail(email)) {
-                        setEmailError("Please enter a valid email address");
-                      }
-                    }}
-                    className={`codex-input${emailError ? ' codex-input--error' : ''}`}
-                    placeholder="your.email@example.com"
-                    required={checked}
-                  />
-                  {emailError && (
-                    <p style={{
-                      fontFamily: 'var(--font-ui)',
-                      fontSize: '0.9375rem',
-                      color: 'var(--crimson-label)',
-                      margin: '0.5rem 0 0',
-                    }}>
-                      {emailError}
-                    </p>
-                  )}
-                </div>
-              )}
             </div>
 
             {/* Bot verification */}
@@ -628,10 +793,38 @@ export function UploadForm({ onUpload }: UploadFormProps) {
               )}
             </div>
 
-            {/* Upload progress */}
+            {/* Upload progress, with a way out of a long upload */}
             {isSubmitting && uploadProgress !== null && (
-              <div style={{ marginBottom: '1.25rem' }} aria-live="polite">
-                <div style={{ height: '2px', background: 'var(--ink-mid)', overflow: 'hidden' }}>
+              <div style={{ marginBottom: '1.25rem' }}>
+                {uploadProgress < 100 && (
+                  <div style={{ textAlign: 'right', marginBottom: '0.5rem' }}>
+                    <button
+                      type="button"
+                      onClick={() => uploadAbort.current?.abort()}
+                      style={{
+                        fontFamily: 'var(--font-ui)',
+                        fontSize: '0.875rem',
+                        color: 'var(--text-muted)',
+                        background: 'none',
+                        border: 'none',
+                        textDecoration: 'underline',
+                        textUnderlineOffset: '3px',
+                        cursor: 'pointer',
+                        padding: '0.375rem 0',
+                      }}
+                    >
+                      Cancel upload
+                    </button>
+                  </div>
+                )}
+                <div
+                  role="progressbar"
+                  aria-label="Upload progress"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={uploadProgress}
+                  style={{ height: '2px', background: 'var(--ink-mid)', overflow: 'hidden' }}
+                >
                   <div style={{
                     height: '100%',
                     width: `${uploadProgress}%`,
@@ -642,15 +835,31 @@ export function UploadForm({ onUpload }: UploadFormProps) {
               </div>
             )}
 
+            {/* After a cancel: calm, not an error */}
+            <p role="status" style={{
+              fontFamily: 'var(--font-ui)',
+              fontSize: '0.9375rem',
+              color: 'var(--text-muted)',
+              margin: cancelNote && !isSubmitting ? '0 0 1rem' : 0,
+            }}>
+              {!isSubmitting && cancelNote}
+            </p>
+
             {/* Submit error */}
-            {submitError && (
-              <p style={{
+            {shownError && (
+              <p id="upload-error" ref={errorRef} tabIndex={-1} role="alert" style={{
                 fontFamily: 'var(--font-ui)',
                 fontSize: '0.9375rem',
                 color: 'var(--crimson-label)',
                 margin: '0 0 1rem',
               }}>
-                {submitError}
+                {shownError}
+              </p>
+            )}
+            {/* A failed attempt (not a missing field): offer a person to ask. */}
+            {submitError && !failedCheck && (
+              <p style={{ fontFamily: 'var(--font-ui)', fontSize: '0.9375rem', color: 'var(--text-muted)', margin: '-0.5rem 0 1rem' }}>
+                Still stuck? <Link to="/help?topic=upload&from=/" style={{ color: 'var(--gold)', textDecoration: 'underline', textUnderlineOffset: '3px' }}>Get help</Link>
               </p>
             )}
 
@@ -661,10 +870,11 @@ export function UploadForm({ onUpload }: UploadFormProps) {
                 ? uploadProgress !== null && uploadProgress < 100
                   ? `Uploading… ${uploadProgress}%`
                   : 'Finishing…'
-                : 'Upload Track'}
+                : 'Share Recording'}
             </button>
 
           </form>
+          )}
         </div>
 
       </div>

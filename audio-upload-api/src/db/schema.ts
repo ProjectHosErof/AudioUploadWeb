@@ -196,10 +196,45 @@ export const subscribers = pgTable('subscribers', {
   token: uuid('token').defaultRandom().notNull().unique(),
   confirmedAt: timestamp('confirmed_at', { withTimezone: true }),
   unsubscribedAt: timestamp('unsubscribed_at', { withTimezone: true }),
+  // When the last confirmation email was sent. POST /subscribe sends at most
+  // one per address per day (src/lib/subscribeCooldown.ts), so the public form
+  // can't be used to flood an inbox.
+  confirmationSentAt: timestamp('confirmation_sent_at', { withTimezone: true }),
   // Where the signup came from: 'landing' (the Stay Informed form) or
   // 'upload' (the opt-in checkbox on the upload form).
   source: varchar('source', { length: 30 }).default('landing').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// ==========================================
+// 3d. BETA TESTERS — people who asked to join the beta through the open link.
+//     Same double opt-in as `subscribers`: a row reaches the admin list only
+//     after its confirmation link is followed (status 'pending'). Acceptance
+//     starts the welcome / day-7 check-in / end-of-beta survey sequence.
+//     RLS on with no policy (migration 0014): only the Worker reads it.
+// ==========================================
+
+export const betaTesters = pgTable('beta_testers', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  // Lowercase, enforced by a CHECK in migration 0014 (as on subscribers).
+  email: varchar('email', { length: 255 }).notNull().unique(),
+  name: varchar('name', { length: 100 }).notNull(),
+  parish: varchar('parish', { length: 120 }),
+  device: varchar('device', { length: 20 }).notNull(),
+  ageRange: varchar('age_range', { length: 10 }),
+  role: varchar('role', { length: 20 }),
+  // Capability for the confirm and leave links (as subscribers.token).
+  token: uuid('token').defaultRandom().notNull().unique(),
+  // unconfirmed → pending → accepted | declined; any → withdrawn (src/lib/beta.ts).
+  status: varchar('status', { length: 12 }).default('unconfirmed').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  confirmationSentAt: timestamp('confirmation_sent_at', { withTimezone: true }),
+  confirmedAt: timestamp('confirmed_at', { withTimezone: true }),
+  decidedAt: timestamp('decided_at', { withTimezone: true }),
+  decidedBy: varchar('decided_by', { length: 255 }),
+  checkinSentAt: timestamp('checkin_sent_at', { withTimezone: true }),
+  surveySentAt: timestamp('survey_sent_at', { withTimezone: true }),
+  withdrawnAt: timestamp('withdrawn_at', { withTimezone: true }),
 });
 
 // ==========================================
@@ -267,6 +302,13 @@ export const recordings = pgTable(
     }),
     submitterEmail: varchar('submitter_email', { length: 255 }),
     wantsUpdates: boolean('wants_updates').default(false).notNull(),
+    // Version of the Terms / Contributor License accepted at upload
+    // (ACCEPTED_TERMS_VERSIONS in src/lib/validation.ts). Null only for
+    // recordings that predate the Terms (before migration 0010).
+    termsVersion: varchar('terms_version', { length: 20 }),
+    // The contributor chose "my hymn isn't listed": the hymn isn't on our list
+    // for this season + service, so a reviewer confirms where it's sung.
+    placementUnlisted: boolean('placement_unlisted').default(false).notNull(),
 
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),

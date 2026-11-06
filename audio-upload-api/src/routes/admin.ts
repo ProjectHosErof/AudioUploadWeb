@@ -2,7 +2,10 @@ import { Hono } from 'hono';
 import { getSupabase } from '../lib/supabase';
 import { bearerToken, verifyUser } from '../lib/auth';
 import { requireAdmin, resolveAdmin, type AdminIdentity } from '../lib/admin';
-import { UUID_RE, reviewSchema } from '../lib/validation';
+import { UUID_RE, betaDecisionSchema, betaEndSchema, reviewSchema } from '../lib/validation';
+import { MAX_EMAILS_PER_RUN, nextStatus, progressFor, type BetaStatus, type ProgressContributor, type ProgressRecording } from '../lib/beta';
+import { sendBetaDecline, sendBetaSurvey, sendBetaWelcome } from '../lib/betaMail';
+import { apiUrl } from '../lib/urls';
 import { presignGet } from '../storage/r2';
 
 /**
@@ -50,6 +53,8 @@ admin.get('/me', async (c) => {
 // Everything below is admin-only.
 admin.use('/queue', requireAdmin());
 admin.use('/recordings/*', requireAdmin());
+admin.use('/beta', requireAdmin());
+admin.use('/beta/*', requireAdmin());
 
 // Shape of a queue row (labels arrive via PostgREST FK-embedded resources).
 interface QueueRow {
@@ -63,6 +68,7 @@ interface QueueRow {
   content_type: string;
   file_size_bytes: string | number | null;
   original_filename: string | null;
+  placement_unlisted: boolean;
   created_at: string;
   submitter_email: string | null;
   services: { label: string } | null;
@@ -95,7 +101,7 @@ admin.get('/queue', async (c) => {
     .from('recordings')
     .select(
       `id, hymn_label, languages, duration_seconds, sample_rate_hz, channels, codec,
-       content_type, file_size_bytes, original_filename, created_at, submitter_email,
+       content_type, file_size_bytes, original_filename, placement_unlisted, created_at, submitter_email,
        services(label), seasons(label), contributors(email, display_name)`,
       { count: 'exact' },
     )
@@ -123,6 +129,8 @@ admin.get('/queue', async (c) => {
     contentType: row.content_type,
     fileSizeBytes: row.file_size_bytes === null ? null : Number(row.file_size_bytes),
     originalFilename: row.original_filename,
+    // Not on our list for this season + service; the reviewer confirms it.
+    placementUnlisted: row.placement_unlisted,
     uploadedAt: row.created_at,
     contributor: row.contributors?.display_name ?? row.contributors?.email ?? row.submitter_email,
     // Enrichment fills the technical fields; without them there is nothing to
@@ -262,3 +270,153 @@ admin.post('/recordings/:id/review', async (c) => {
 });
 
 
+
+// ------------------------------------------------------------------
+// Beta program (src/lib/beta.ts). Applications reach this list only once
+// their address is confirmed (status 'pending').
+// ------------------------------------------------------------------
+
+interface BetaRow {
+  id: string;
+  email: string;
+  name: string;
+  parish: string | null;
+  device: string;
+  age_range: string | null;
+  role: string | null;
+  token: string;
+  status: BetaStatus;
+  created_at: string;
+  confirmed_at: string | null;
+  decided_at: string | null;
+  checkin_sent_at: string | null;
+  survey_sent_at: string | null;
+}
+
+const BETA_COLUMNS =
+  'id, email, name, parish, device, age_range, role, token, status, created_at, confirmed_at, decided_at, checkin_sent_at, survey_sent_at';
+
+/** Waiting requests, testers with their progress, and the other counts. */
+admin.get('/beta', async (c) => {
+  const supabase = getSupabase(c.env);
+  const { data, error } = await supabase.from('beta_testers').select(BETA_COLUMNS).order('created_at', { ascending: true });
+  if (error) {
+    console.error('beta list failed', error);
+    return c.json({ error: 'Could not load the beta list.' }, 500);
+  }
+  const rows = (data ?? []) as BetaRow[];
+  const testers = rows.filter((r) => r.status === 'accepted');
+  const emails = testers.map((t) => t.email);
+
+  // Progress from existing data: one query each, for all testers at once.
+  let contributors: ProgressContributor[] = [];
+  let recordings: ProgressRecording[] = [];
+  if (emails.length) {
+    const found = await supabase.from('contributors').select('id, email, auth_user_id').in('email', emails);
+    if (found.error) console.error('beta progress contributors failed', found.error);
+    contributors = (found.data ?? []) as ProgressContributor[];
+    const ids = contributors.map((k) => k.id);
+    const cols = 'id, contributor_id, submitter_email, placement_unlisted, created_at';
+    const [byAccount, byEmail] = await Promise.all([
+      ids.length
+        ? supabase.from('recordings').select(cols).eq('upload_status', 'completed').in('contributor_id', ids)
+        : Promise.resolve({ data: [], error: null }),
+      supabase.from('recordings').select(cols).eq('upload_status', 'completed').in('submitter_email', emails),
+    ]);
+    if (byAccount.error || byEmail.error) console.error('beta progress recordings failed', byAccount.error ?? byEmail.error);
+    const seen = new Map<string, ProgressRecording>();
+    for (const r of [...(byAccount.data ?? []), ...(byEmail.data ?? [])] as (ProgressRecording & { id: string })[]) seen.set(r.id, r);
+    recordings = [...seen.values()];
+  }
+
+  const view = (r: BetaRow) => ({
+    id: r.id,
+    name: r.name,
+    email: r.email,
+    parish: r.parish,
+    device: r.device,
+    ageRange: r.age_range,
+    role: r.role,
+    appliedAt: r.confirmed_at ?? r.created_at,
+  });
+  const count = (s: BetaStatus) => rows.filter((r) => r.status === s).length;
+  return c.json({
+    waiting: rows.filter((r) => r.status === 'pending').map(view),
+    testers: testers.map((t) => ({
+      ...view(t),
+      acceptedAt: t.decided_at,
+      checkinSentAt: t.checkin_sent_at,
+      surveySentAt: t.survey_sent_at,
+      progress: progressFor(t.email, contributors, recordings),
+    })),
+    counts: { declined: count('declined'), withdrawn: count('withdrawn'), unconfirmed: count('unconfirmed') },
+  });
+});
+
+/** Accept (sends the welcome) or decline (a short note only if asked). */
+admin.post('/beta/:id/decision', async (c) => {
+  const id = c.req.param('id');
+  if (!UUID_RE.test(id)) return c.json({ error: 'Unknown request' }, 404);
+  const parsed = betaDecisionSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return c.json({ error: 'Invalid request' }, 400);
+  const { decision, notify } = parsed.data;
+
+  const supabase = getSupabase(c.env);
+  const { data: row, error } = await supabase.from('beta_testers').select(BETA_COLUMNS).eq('id', id).maybeSingle();
+  if (error) {
+    console.error('beta decision lookup failed', error);
+    return c.json({ error: 'Could not record that just now.' }, 500);
+  }
+  if (!row) return c.json({ error: 'Unknown request' }, 404);
+  const tester = row as BetaRow;
+  const status = nextStatus(tester.status, decision);
+  if (!status) return c.json({ error: 'This request has already been handled.' }, 409);
+
+  const { user } = c.get('admin');
+  // Conditional on the status we read, so two admins can't both decide it.
+  const updated = await supabase
+    .from('beta_testers')
+    .update({ status, decided_at: new Date().toISOString(), decided_by: user.email })
+    .eq('id', id)
+    .eq('status', tester.status)
+    .select('id')
+    .maybeSingle();
+  if (updated.error) {
+    console.error('beta decision failed', updated.error);
+    return c.json({ error: 'Could not record that just now.' }, 500);
+  }
+  if (!updated.data) return c.json({ error: 'This request has already been handled.' }, 409);
+
+  const recipient = { email: tester.email, name: tester.name, token: tester.token };
+  let emailed = false;
+  if (status === 'accepted') emailed = await sendBetaWelcome(c.env, apiUrl(c), recipient);
+  else if (notify) emailed = await sendBetaDecline(c.env, recipient);
+  return c.json({ id, status, emailed });
+});
+
+/** End the beta: thank-you + survey to every tester not yet sent one. Repeatable. */
+admin.post('/beta/end', async (c) => {
+  const parsed = betaEndSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return c.json({ error: 'Please give the survey’s https:// link.' }, 400);
+
+  const supabase = getSupabase(c.env);
+  const { data, error } = await supabase
+    .from('beta_testers')
+    .select('id, email, name, token')
+    .eq('status', 'accepted')
+    .is('survey_sent_at', null)
+    .order('decided_at', { ascending: true });
+  if (error) {
+    console.error('beta end lookup failed', error);
+    return c.json({ error: 'Could not send the survey just now.' }, 500);
+  }
+  const due = data ?? [];
+  let sent = 0;
+  for (const t of due.slice(0, MAX_EMAILS_PER_RUN)) {
+    if (await sendBetaSurvey(c.env, apiUrl(c), t, parsed.data.surveyUrl)) {
+      await supabase.from('beta_testers').update({ survey_sent_at: new Date().toISOString() }).eq('id', t.id);
+      sent++;
+    }
+  }
+  return c.json({ sent, remaining: due.length - sent });
+});

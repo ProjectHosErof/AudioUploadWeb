@@ -20,6 +20,21 @@ export type PlacementResult =
  * linked hymns yet (nothing to check against, e.g. Unction), or when the
  * placement exists. A retired hymn is always refused.
  */
+/**
+ * What to do with an upload given its placement check. A hymn off the season
+ * + service list is accepted only when the contributor said it isn't listed,
+ * and then flagged so a reviewer confirms where it's sung. A retired hymn is
+ * refused either way.
+ */
+export function placementDecision(
+  result: PlacementResult,
+  notListed: boolean,
+): { accept: true; unlisted: boolean } | { accept: false; reason: 'retired' | 'not_in_season_service' } {
+  if (result.ok) return { accept: true, unlisted: false };
+  if (result.reason === 'not_in_season_service' && notListed) return { accept: true, unlisted: true };
+  return { accept: false, reason: result.reason };
+}
+
 export function checkPlacement(
   vocab: Pick<Vocab, 'retiredHymns' | 'hymnsByPair'>,
   season: string,

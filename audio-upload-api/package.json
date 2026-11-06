@@ -14,6 +14,9 @@
     "admins": "tsx scripts/manage-admins.ts",
     "check:vocab": "tsx scripts/check-vocab.ts",
     "check:placement": "tsx scripts/check-placement.ts",
+    "check:emails": "tsx scripts/check-supabase-templates.ts",
+    "emails:supabase": "tsx scripts/build-supabase-templates.ts",
+    "emails:preview": "tsx scripts/email-gallery.ts",
     "cors:set": "tsx scripts/set-r2-cors.ts",
     "import:hazzat": "python3 scripts/import_hazzat.py",
     "test": "tsx --test src/**/*.test.ts"

@@ -38,6 +38,30 @@ export function rateLimit(): MiddlewareHandler<{ Bindings: Env }> {
  * opt-in means the mail is only ever a confirm request, but the volume still
  * matters.
  */
+/** "Get help" mails the support inbox: the same tight ceiling, its own binding. */
+export function helpRateLimit(): MiddlewareHandler<{ Bindings: Env }> {
+  return async (c, next) => {
+    const ip = clientIp((n) => c.req.header(n));
+    const { success } = await c.env.HELP_LIMITER.limit({ key: ip });
+    if (!success) {
+      return c.json({ error: 'Too many requests. Please wait a minute and try again.' }, 429);
+    }
+    await next();
+  };
+}
+
+/** Joining the beta sends a confirmation email: the same tight ceiling, its own binding. */
+export function betaRateLimit(): MiddlewareHandler<{ Bindings: Env }> {
+  return async (c, next) => {
+    const ip = clientIp((n) => c.req.header(n));
+    const { success } = await c.env.BETA_LIMITER.limit({ key: ip });
+    if (!success) {
+      return c.json({ error: 'Too many requests. Please wait a minute and try again.' }, 429);
+    }
+    await next();
+  };
+}
+
 export function subscribeRateLimit(): MiddlewareHandler<{ Bindings: Env }> {
   return async (c, next) => {
     const ip = clientIp((n) => c.req.header(n));

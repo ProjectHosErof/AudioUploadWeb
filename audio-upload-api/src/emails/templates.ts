@@ -1,5 +1,6 @@
 import type { EmailMessage } from '../lib/email';
 import { esc, greeting, paragraph, render } from './layout';
+import type { HelpInput } from '../lib/validation';
 
 /**
  * One function per message.
@@ -122,7 +123,7 @@ export function reviewDigest(
       ? `Thank you — “${trimTitle(accepted[0].hymnLabel)}” is now in the collection`
       : `Thank you — ${accepted.length} of your recordings are in the collection`;
     heading = onlyOne ? 'Your recording is in' : 'Your recordings are in';
-    preheader = 'We listened, and your singing is now part of the archive.';
+    preheader = 'We listened, and your singing is now part of the collection.';
   } else if (accepted.length === 0) {
     subject = onlyOne
       ? `About your recording of “${trimTitle(declined[0].hymnLabel)}”`
@@ -130,9 +131,9 @@ export function reviewDigest(
     heading = onlyOne ? 'Not this one — but thank you' : 'Not these ones — but thank you';
     preheader = 'We couldn’t add these — but please do send more.';
   } else {
-    subject = `${accepted.length} of your recordings are in the collection`;
+    subject = `${accepted.length} of your recordings ${accepted.length === 1 ? 'is' : 'are'} now in the collection`;
     heading = 'Your recordings have been reviewed';
-    preheader = `${accepted.length} added to the archive, ${declined.length} we couldn’t use.`;
+    preheader = `${accepted.length} added to the collection, ${declined.length} we couldn’t use.`;
   }
 
   // --- Body ---------------------------------------------------------------
@@ -142,8 +143,8 @@ export function reviewDigest(
     parts.push(
       paragraph(
         onlyOne && declined.length === 0
-          ? 'We listened to your recording, and it is now part of the archive:'
-          : `We listened to everything you sent. ${accepted.length === 1 ? 'This one is' : 'These are'} now part of the archive:`,
+          ? 'We listened to your recording, and it is now part of the collection:'
+          : `We listened to everything you sent. ${accepted.length === 1 ? 'This one is' : 'These are'} now part of the collection:`,
       ),
       acceptedList(accepted),
       paragraph('That might sound like a small thing. It isn’t. Hymns like these have travelled from voice to voice for generations, mostly without ever being written down — and yours will help teach a system to recognise them, so that one day someone who hears one can simply ask what it is.'),
@@ -172,8 +173,8 @@ export function reviewDigest(
     ...(accepted.length
       ? [
           accepted.length === 1 && declined.length === 0
-            ? 'We listened to your recording, and it is now part of the archive:'
-            : 'We listened to everything you sent. Now part of the archive:',
+            ? 'We listened to your recording, and it is now part of the collection:'
+            : 'We listened to everything you sent. Now part of the collection:',
           ...accepted.map((i) => `  * ${i.hymnLabel}`),
           '',
         ]
@@ -211,4 +212,57 @@ export function reviewDigest(
     }),
     text,
   };
+}
+
+/** What each "Get help" topic is called in the support inbox. */
+export const HELP_TOPIC_LABELS: Record<HelpInput['topic'], string> = {
+  upload: 'Problem uploading',
+  'sign-in': 'Sign-in trouble',
+  remove: 'Remove my recording or data',
+  hymn: 'Wrong or missing hymn',
+  feedback: 'Feedback or an idea',
+  other: 'Something else',
+};
+
+export interface SupportMeta {
+  /** Short reference shown to the person, e.g. "K7Q2XM". */
+  reference: string;
+  userAgent: string | null;
+  receivedAt: Date;
+}
+
+/**
+ * A "Get help" request, for the support inbox. Plain on purpose: it's read by
+ * us, not a contributor. Reply-To is the person, so answering is just Reply.
+ * Everything a person typed is escaped.
+ */
+export function supportRequest(input: HelpInput, meta: SupportMeta): Built {
+  const topic = HELP_TOPIC_LABELS[input.topic];
+  const firstWords = input.message.replace(/\s+/g, ' ').trim();
+  const snippet = firstWords.length > 50 ? `${firstWords.slice(0, 49).trimEnd()}…` : firstWords;
+  const subject = `[${topic}] #${meta.reference} — ${snippet}`;
+
+  const rows: [string, string][] = [
+    ['Topic', topic],
+    ['From', input.name ? `${input.name} <${input.email}>` : input.email],
+    ['Recording reference', input.recording_ref ?? '—'],
+    ['Page', input.page ?? '—'],
+    ['Signed in', input.signed_in ? 'yes' : 'no'],
+    ['Device', meta.userAgent ?? '—'],
+    ['Received', meta.receivedAt.toISOString().replace('T', ' ').slice(0, 16) + ' UTC'],
+    ['Support reference', `#${meta.reference}`],
+  ];
+
+  const cell = 'padding:4px 12px 4px 0;vertical-align:top;font:14px Helvetica,Arial,sans-serif;';
+  const html = [
+    `<div style="font:15px/1.6 Helvetica,Arial,sans-serif;color:#222;max-width:640px">`,
+    `<p style="white-space:pre-wrap;margin:0 0 16px">${esc(input.message)}</p>`,
+    `<table style="border-collapse:collapse;border-top:1px solid #ddd;padding-top:8px">`,
+    ...rows.map(([k, v]) => `<tr><td style="${cell}color:#777">${esc(k)}</td><td style="${cell}">${esc(v)}</td></tr>`),
+    `</table>`,
+    `<p style="font-size:13px;color:#777;margin-top:16px">Reply to this email to answer ${esc(input.email)}.</p>`,
+    `</div>`,
+  ].join('');
+  const text = [input.message, '', ...rows.map(([k, v]) => `${k}: ${v}`), '', `Reply to this email to answer ${input.email}.`].join('\n');
+  return { subject, html, text };
 }

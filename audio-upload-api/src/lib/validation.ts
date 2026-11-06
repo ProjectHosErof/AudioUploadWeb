@@ -17,6 +17,16 @@ export const CONTENT_TYPE_TO_EXT: Record<string, string> = {
   'audio/ogg': 'ogg',
   'application/ogg': 'ogg',
   'audio/vorbis': 'ogg',
+  // Phone recorders: iPhone Voice Memos and most Android apps produce M4A
+  // (AAC in an MP4 container); browsers report it under several names.
+  'audio/mp4': 'm4a',
+  'audio/x-m4a': 'm4a',
+  'audio/m4a': 'm4a',
+  'audio/aac': 'aac',
+  'audio/x-aac': 'aac',
+  // WhatsApp voice notes and browser recorders.
+  'audio/webm': 'webm',
+  'audio/opus': 'opus',
 };
 
 export const ALLOWED_CONTENT_TYPES = Object.keys(CONTENT_TYPE_TO_EXT);
@@ -26,6 +36,15 @@ export const ALLOWED_CONTENT_TYPES = Object.keys(CONTENT_TYPE_TO_EXT);
  * is validated against the DB reference tables in the route; here we only check
  * shape, the content-type allowlist, and a positive declared size.
  */
+/**
+ * Versions of the Terms (with its Contributor License) an upload may claim to
+ * have accepted. Mirrors TERMS_VERSION in phe-landing-page/src/legal/terms.ts.
+ * When the Terms change, ADD the new version here (and deploy the Worker)
+ * before the frontend starts sending it; keep older ones until no deployed
+ * frontend can still send them.
+ */
+export const ACCEPTED_TERMS_VERSIONS = ['2026-1'] as const;
+
 export const initiateSchema = z.object({
   service_slug: z.string().min(1).max(100),
   season_slug: z.string().min(1).max(100),
@@ -37,8 +56,15 @@ export const initiateSchema = z.object({
   size_bytes: z.number().int().positive(),
   original_filename: z.string().max(512).optional(),
   wants_updates: z.boolean().default(false),
+  // Set when the contributor chose "my hymn isn't listed"; lets a hymn that
+  // isn't on the season + service list through, flagged for the reviewer.
+  hymn_not_listed: z.boolean().default(false),
   email: z.string().email().max(254).optional(),
   turnstile_token: z.string().min(1),
+  // Required: no recording enters the corpus without a recorded license.
+  accepted_terms_version: z.enum(ACCEPTED_TERMS_VERSIONS, {
+    errorMap: () => ({ message: 'You must agree to the current Terms to upload' }),
+  }),
 });
 
 export type InitiateInput = z.infer<typeof initiateSchema>;
@@ -79,7 +105,66 @@ export type ReviewInput = z.infer<typeof reviewSchema>;
  */
 export const subscribeSchema = z.object({
   email: z.string().trim().email().max(254),
+  // Bot check: without it the form could be used to mail any address.
+  turnstile_token: z.string().min(1),
   source: z.enum(['landing', 'upload']).optional(),
 });
 
 export type SubscribeInput = z.infer<typeof subscribeSchema>;
+
+/** What a "Get help" request is about; labels live with the email template. */
+export const HELP_TOPICS = ['upload', 'sign-in', 'remove', 'hymn', 'feedback', 'other'] as const;
+
+/**
+ * Body of POST /help. It becomes one email to the support inbox; nothing is
+ * stored. The person's address is required because the reply is the answer.
+ */
+export const helpSchema = z.object({
+  topic: z.enum(HELP_TOPICS),
+  message: z.string().trim().min(10).max(4000),
+  email: z.string().trim().email().max(254),
+  name: z.string().trim().max(100).optional(),
+  // The reference shown after an upload: the first 8 hex digits of its id.
+  recording_ref: z
+    .string()
+    .trim()
+    .regex(/^[0-9a-f]{8}$/i)
+    .transform((r) => r.toUpperCase())
+    .optional(),
+  page: z.string().trim().max(200).optional(),
+  signed_in: z.boolean().default(false),
+  // Bot check: without it the form could flood the inbox.
+  turnstile_token: z.string().min(1),
+});
+
+export type HelpInput = z.infer<typeof helpSchema>;
+
+/** The beta join form's closed choices; mirrored by CHECKs in migration 0014. */
+export const BETA_DEVICES = ['iphone', 'android', 'tablet', 'computer'] as const;
+export const BETA_ROLES = ['chanter', 'choir', 'parishioner', 'servant', 'other'] as const;
+export const BETA_AGES = ['under-25', '25-44', '45-64', '65-plus'] as const;
+
+/** Body of POST /beta/apply. Consent is required: the beta is a set of emails. */
+export const betaApplySchema = z.object({
+  name: z.string().trim().min(1).max(100),
+  email: z.string().trim().toLowerCase().email().max(254),
+  parish: z.string().trim().max(120).optional(),
+  device: z.enum(BETA_DEVICES),
+  role: z.enum(BETA_ROLES).optional(),
+  age_range: z.enum(BETA_AGES).optional(),
+  consent: z.literal(true),
+  turnstile_token: z.string().min(1),
+});
+
+export type BetaApplyInput = z.infer<typeof betaApplySchema>;
+
+/** Body of POST /admin/beta/:id/decision. */
+export const betaDecisionSchema = z.object({
+  decision: z.enum(['accept', 'decline']),
+  notify: z.boolean().default(true),
+});
+
+/** Body of POST /admin/beta/end: the survey link to send with the thank-you. */
+export const betaEndSchema = z.object({
+  surveyUrl: z.string().trim().url().max(500).refine((u) => u.startsWith('https://'), 'Must be an https:// link'),
+});
