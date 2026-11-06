@@ -50,7 +50,7 @@ const SAMPLE_RECORDINGS = [
 ].map(([review_status, review_reason, duplicate_of_id, hymn_label], i) => ({
   id: `00000000-0000-4000-8000-00000000000${i}`,
   hymn_label,
-  languages: ['coptic', 'arabic'],
+  languages: ['lang-coptic', 'lang-arabic'],
   duration_seconds: 245 + i * 61,
   created_at: `2026-10-2${i}T12:00:00Z`,
   review_status,
@@ -70,7 +70,7 @@ const SAMPLE_QUEUE = [
   title: i === 0 ? 'Tenen' : 'Golgotha',
   service: 'Liturgy of St. Basil',
   season: 'Annual',
-  languages: ['Coptic'],
+  languages: ['lang-coptic'],
   durationSeconds: 245,
   sampleRateHz: 44100,
   channels: 1,
@@ -115,7 +115,7 @@ async function mockNetwork(page: Page, opts: MockOptions, captured: Captured) {
   await page.route('http://supabase.test/auth/v1/logout**', (route) => route.fulfill({ status: 204, body: '' }));
   await page.route('http://supabase.test/rest/v1/recordings**', (route) => route.fulfill({ json: SAMPLE_RECORDINGS }));
   await page.route('http://supabase.test/rest/v1/languages**', (route) =>
-    route.fulfill({ json: [{ slug: 'coptic', label: 'Coptic' }, { slug: 'arabic', label: 'Arabic' }] }),
+    route.fulfill({ json: [{ slug: 'lang-coptic', label: 'Coptic' }, { slug: 'lang-arabic', label: 'Arabic' }, { slug: 'lang-greek', label: 'Greek' }] }),
   );
   await page.route('http://api.test/me/link', (route) => route.fulfill({ json: { ok: true } }));
   await page.route('http://api.test/admin/me', (route) => route.fulfill({ json: { isAdmin: true } }));

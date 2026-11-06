@@ -66,7 +66,7 @@ interface RecordingRow {
 /** Cached for the page's lifetime — the vocabulary is tiny and effectively static. */
 let languageLabels: Map<string, string> | null = null;
 
-async function getLanguageLabels(): Promise<Map<string, string>> {
+export async function getLanguageLabels(): Promise<Map<string, string>> {
   if (languageLabels) return languageLabels;
   const supabase = await getSupabase();
   if (!supabase) return new Map();

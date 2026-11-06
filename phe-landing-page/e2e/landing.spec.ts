@@ -1,4 +1,4 @@
-import { test, expect } from './fixtures';
+import { test, expect, settle } from './fixtures';
 
 test('the hero buttons land on the form and on How it works', async ({ page }) => {
   await page.goto('/');
@@ -68,4 +68,35 @@ test('newsletter signup sends a bot-check token', async ({ page, captured }) => 
   await page.getByRole('button', { name: 'Notify Me' }).click();
   await expect(page.locator('#notify')).toContainText('Check your email.');
   expect(captured.subscribe[0]).toMatchObject({ email: 'someone@example.com', turnstile_token: 'test-token' });
+});
+
+test.describe('a phone held sideways', () => {
+  test.use({ viewport: { width: 844, height: 390 } });
+  test('shows "Add Your Voice" on the first screen', async ({ page }) => {
+    await page.goto('/');
+    await settle(page); // measured at rest, after the entrance animation
+    const cta = page.getByRole('link', { name: 'Add Your Voice' });
+    await expect(cta).toBeVisible();
+    const box = (await cta.boundingBox())!;
+    expect(box.y + box.height).toBeLessThanOrEqual(390);
+  });
+});
+
+test('the recording guidelines match the FAQ and the form', async ({ page }) => {
+  await page.goto('/#upload');
+  await page.getByText('What to record — full guidelines').click();
+  const panel = page.locator('#upload details');
+  await expect(panel).toContainText('never sold or published as a dataset');
+  await expect(panel).toContainText("My hymn isn't listed");
+  await expect(panel).not.toContainText('training dataset');
+  await expect(panel).not.toContainText('Ordination');
+});
+
+test('search engines and phones get a sitemap and a home-screen icon', async ({ page, request }) => {
+  for (const path of ['/sitemap.xml', '/apple-touch-icon.png']) {
+    expect((await request.get(path)).status(), path).toBe(200);
+  }
+  expect(await (await request.get('/robots.txt')).text()).toContain('Sitemap: https://hoserof.org/sitemap.xml');
+  await page.goto('/');
+  await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute('href', '/apple-touch-icon.png');
 });

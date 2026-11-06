@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { usePageTitle } from '../lib/usePageTitle';
 import { Nav } from './Nav';
-import { language_options } from '../options.data';
+import { getLanguageLabels } from '../services/recordings';
 import {
   ModerationError,
   REJECTION_REASONS,
@@ -51,11 +51,13 @@ const eyebrowStyle: React.CSSProperties = {
   color: 'var(--crimson-label)',
 };
 
-const LANGUAGE_LABELS = new Map(language_options.map((o) => [o.value, o.label]));
-
-/** "Coptic / Arabic" from the stored slugs; an unknown slug shows as itself. */
-function languageLabels(slugs: string[]): string {
-  return slugs.map((s) => LANGUAGE_LABELS.get(s) ?? s).join(' / ');
+/**
+ * "Coptic / Arabic" from the stored slugs; an unknown slug shows as itself.
+ * Names come from the small languages table rather than the form's hymn
+ * vocabulary, which would add ~220 KB to this page for four words.
+ */
+function languageLabels(slugs: string[], names: ReadonlyMap<string, string>): string {
+  return slugs.map((s) => names.get(s) ?? s).join(' / ');
 }
 
 const metaStyle: React.CSSProperties = {
@@ -81,9 +83,10 @@ interface CardProps {
   item: QueueItem;
   onResolved: (id: string, note: string) => void;
   onError: (message: string) => void;
+  languageNames: ReadonlyMap<string, string>;
 }
 
-function ReviewCard({ item, onResolved, onError }: CardProps) {
+function ReviewCard({ item, onResolved, onError, languageNames }: CardProps) {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [loadingAudio, setLoadingAudio] = useState(false);
   const [rejecting, setRejecting] = useState(false);
@@ -155,7 +158,7 @@ function ReviewCard({ item, onResolved, onError }: CardProps) {
             {item.title}
           </h2>
           <p style={metaStyle}>
-            {[item.service, item.season, languageLabels(item.languages)].filter(Boolean).join(' · ') || '—'}
+            {[item.service, item.season, languageLabels(item.languages, languageNames)].filter(Boolean).join(' · ') || '—'}
           </p>
           <p style={{ ...metaStyle, fontSize: '0.8125rem', marginTop: '0.25rem' }}>
             {formatLength(item.durationSeconds)}
@@ -320,6 +323,13 @@ export function AdminPage() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [reviewedCount, setReviewedCount] = useState(0);
+  const [languageNames, setLanguageNames] = useState<ReadonlyMap<string, string>>(new Map());
+
+  useEffect(() => {
+    let active = true;
+    getLanguageLabels().then((names) => { if (active) setLanguageNames(names); });
+    return () => { active = false; };
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -435,6 +445,7 @@ export function AdminPage() {
                   item={item}
                   onResolved={handleResolved}
                   onError={setError}
+                  languageNames={languageNames}
                 />
               ))}
             </div>

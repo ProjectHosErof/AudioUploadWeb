@@ -5,3 +5,5 @@ Disallow: /dashboard
 Disallow: /login
 Disallow: /subscribed
 Disallow: /unsubscribed
+
+Sitemap: https://hoserof.org/sitemap.xml

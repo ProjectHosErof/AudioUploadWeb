@@ -127,3 +127,46 @@ test('a hymn picked as "not listed" asks the reviewer to confirm where it\'s sun
   await expect(page.getByText("Not on our list for Annual · Liturgy of St. Basil — please confirm where it's sung.")).toBeVisible();
   await expect(page.getByText('Not on our list')).toHaveCount(1);
 });
+
+test('the dashboard fits a 320px screen, even with long names', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 640 });
+  await page.route('http://supabase.test/rest/v1/recordings**', (route) =>
+    route.fulfill({
+      json: [{
+        id: '00000000-0000-4000-8000-000000000009',
+        hymn_label: 'Adam Praise on the Sunday Adam Psali for the Lord Jesus (I praise the Virgin)',
+        languages: ['lang-coptic', 'lang-greek'],
+        duration_seconds: 300,
+        created_at: '2026-11-01T12:00:00Z',
+        review_status: 'processing',
+        error_message: null,
+        review_reason: null,
+        duplicate_of_id: null,
+        services: { label: 'Vespers (Evening Raising of Incense)' },
+        seasons: { label: "Saint Mary's Fast/Feast" },
+      }],
+    }),
+  );
+  await page.goto('/dashboard');
+  await expect(page.getByText('Under review', { exact: true }).filter({ visible: true })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
+  for (const label of ['Total Recordings', 'Duration Uploaded', 'In the Collection']) {
+    const fits = await page.getByText(label, { exact: true }).evaluate((el) => {
+      const card = el.parentElement!.getBoundingClientRect();
+      const r = el.getBoundingClientRect();
+      return r.left >= card.left - 0.5 && r.right <= card.right + 0.5 && el.scrollWidth <= el.clientWidth + 1;
+    });
+    expect(fits, label).toBe(true);
+  }
+  // The badge isn't squeezed: its text fits on one line.
+  const badge = page.getByText('Under review', { exact: true }).filter({ visible: true });
+  expect(await badge.evaluate((e) => e.scrollWidth <= e.clientWidth + 1)).toBe(true);
+});
+
+test('the review page names languages without downloading the hymn list', async ({ page }) => {
+  const chunks: string[] = [];
+  page.on('request', (r) => chunks.push(new URL(r.url()).pathname));
+  await page.goto('/admin');
+  await expect(page.getByText('Liturgy of St. Basil · Annual · Coptic').first()).toBeVisible();
+  expect(chunks.filter((c) => /\/assets\/options\.data-/.test(c))).toEqual([]);
+});

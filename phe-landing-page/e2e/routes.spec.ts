@@ -9,7 +9,9 @@ const routes: { path: string; title: string; h1: RegExp }[] = [
   { path: '/dmca', title: 'Copyright Policy · Project Hos Erof', h1: /Copyright Policy/ },
   { path: '/login', title: 'Sign in · Project Hos Erof', h1: /Sign in/ },
   { path: '/subscribed', title: 'Subscription confirmed · Project Hos Erof', h1: /on the list/ },
-  { path: '/subscribed?status=unknown', title: 'Subscription confirmed · Project Hos Erof', h1: /expired/ },
+  { path: '/subscribed?status=unknown', title: 'Link expired · Project Hos Erof', h1: /expired/ },
+  { path: '/subscribed?status=error', title: 'Couldn’t confirm · Project Hos Erof', h1: /couldn’t confirm/ },
+  { path: '/unsubscribed?status=unknown', title: 'Nothing to remove · Project Hos Erof', h1: /Nothing to remove/ },
   { path: '/unsubscribed', title: 'Unsubscribed · Project Hos Erof', h1: /won’t hear from us/ },
   { path: '/does-not-exist', title: 'Page not found · Project Hos Erof', h1: /Page not found/ },
 ];
@@ -80,4 +82,11 @@ test('the legal pages describe themselves, and the home page gets its own back',
   await expect(page).toHaveURL(/\/$/);
   await expect(description).toHaveAttribute('content', home!);
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://hoserof.org/');
+});
+
+test('an expired confirmation link offers to sign up again', async ({ page }) => {
+  await page.goto('/subscribed?status=unknown');
+  await page.getByRole('link', { name: 'Sign up again' }).click();
+  await expect(page).toHaveURL(/\/#notify$/);
+  await expect(page.locator('#notify-email')).toBeVisible();
 });
