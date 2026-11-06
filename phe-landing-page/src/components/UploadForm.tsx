@@ -121,6 +121,12 @@ export function UploadForm() {
   // Move focus to the result so screen-reader and keyboard users hear it.
   useEffect(() => { if (submitted) successRef.current?.focus(); }, [submitted]);
 
+  // Bring a new error into view and to screen readers' attention. Done in an
+  // effect, after the message has rendered: after an await, React may commit
+  // later than the next animation frame, which then found nothing to focus.
+  const [errorFocusRequest, setErrorFocusRequest] = useState(0);
+  useEffect(() => { if (errorFocusRequest) errorRef.current?.focus(); }, [errorFocusRequest]);
+
   /** Check type and size as soon as a file is chosen, not after uploading. */
   function chooseFile(f: File | null) {
     setFile(f);
@@ -168,8 +174,7 @@ export function UploadForm() {
   const shownError = failedCheck ? checkMessage(failedCheck) : submitError;
 
   function focusError() {
-    // Bring the message into view and to screen readers' attention.
-    requestAnimationFrame(() => errorRef.current?.focus());
+    setErrorFocusRequest((n) => n + 1);
   }
 
   function fail(message: string) {
