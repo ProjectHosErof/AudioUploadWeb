@@ -7,6 +7,7 @@ const routes: { path: string; title: string; h1: RegExp }[] = [
   { path: '/privacy', title: 'Privacy Policy · Project Hos Erof', h1: /Privacy Policy/ },
   { path: '/terms', title: 'Terms of Service · Project Hos Erof', h1: /Terms of Service/ },
   { path: '/dmca', title: 'Copyright Policy · Project Hos Erof', h1: /Copyright Policy/ },
+  { path: '/help', title: 'Get help · Project Hos Erof', h1: /Get help/ },
   { path: '/login', title: 'Sign in · Project Hos Erof', h1: /Sign in/ },
   { path: '/subscribed', title: 'Subscription confirmed · Project Hos Erof', h1: /on the list/ },
   { path: '/subscribed?status=unknown', title: 'Link expired · Project Hos Erof', h1: /expired/ },

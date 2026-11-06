@@ -83,7 +83,10 @@ function DeclineReason({ track, maxWidth }: { track: MyRecording; maxWidth?: str
       marginTop: '0.5rem',
       maxWidth,
     }}>
-      {track.reviewReason}
+      {track.reviewReason}{' '}
+      <Link to={`/help?topic=other&ref=${track.id.slice(0, 8).toUpperCase()}&from=/dashboard`} style={{ color: 'var(--gold)', textDecoration: 'underline', textUnderlineOffset: '3px' }}>
+        Questions about this?
+      </Link>
     </span>
   );
 }
@@ -345,6 +348,9 @@ export function DashboardPage() {
                   Try again
                 </button>
               )}
+              <p style={{ fontFamily: 'var(--font-ui)', fontSize: '0.9375rem', color: 'var(--text-muted)', margin: '1.25rem 0 0' }}>
+                Keeps happening? <Link to="/help?from=/dashboard" style={{ color: 'var(--gold)', textDecoration: 'underline', textUnderlineOffset: '3px' }}>Get help</Link>
+              </p>
             </div>
           )}
 

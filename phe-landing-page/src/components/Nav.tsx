@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
+import { BETA } from '../config';
 import { useAuth } from '../auth/useAuth';
 
 /**
@@ -72,6 +73,17 @@ export function Nav() {
             {label}
           </a>
         ))}
+
+      <Link
+        to={`/help?from=${encodeURIComponent(location.pathname)}`}
+        onClick={close}
+        aria-current={current('/help')}
+        style={{ ...linkStyle, color: color('/help') }}
+        onMouseEnter={hoverOn('var(--gold)')}
+        onMouseLeave={hoverOn(color('/help'))}
+      >
+        Help
+      </Link>
 
       {enabled && (
         session ? (
@@ -146,21 +158,34 @@ export function Nav() {
           borderBottom: '1px solid var(--ink-mid)',
         }}
       >
-        <Link
-          to="/"
-          onClick={close}
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: '1.1875rem',
-            fontWeight: 300,
-            letterSpacing: '0.03em',
-            color: 'var(--parchment)',
-            textDecoration: 'none',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          Project Hos Erof
-        </Link>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', minWidth: 0 }}>
+          <Link
+            to="/"
+            onClick={close}
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: '1.1875rem',
+              fontWeight: 300,
+              letterSpacing: '0.03em',
+              color: 'var(--parchment)',
+              textDecoration: 'none',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            Project Hos Erof
+          </Link>
+          {/* While the beta runs: says so, and is the shortest way to tell us. */}
+          {BETA && (
+            <Link
+              to={`/help?topic=feedback&from=${encodeURIComponent(location.pathname)}`}
+              onClick={close}
+              className="beta-badge"
+              aria-label="Beta — get help or send feedback"
+            >
+              Beta
+            </Link>
+          )}
+        </div>
 
         {/* Wide screens: inline. */}
         <div className="nav-links-inline">{links}</div>

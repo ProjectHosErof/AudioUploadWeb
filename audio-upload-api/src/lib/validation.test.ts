@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { ACCEPTED_TERMS_VERSIONS, initiateSchema } from './validation';
+import { ACCEPTED_TERMS_VERSIONS, helpSchema, initiateSchema } from './validation';
 
 const valid = {
   service_slug: 'liturgy',
@@ -55,4 +55,33 @@ describe('initiateSchema: "my hymn isn\'t listed"', () => {
     const parsed = initiateSchema.safeParse({ ...valid, hymn_not_listed: true });
     assert.equal(parsed.success && parsed.data.hymn_not_listed, true);
   });
+});
+
+describe('helpSchema', () => {
+  const ok = {
+    topic: 'upload',
+    message: 'The upload stopped at 40% twice.',
+    email: 'mina@example.com',
+    turnstile_token: 'token',
+  };
+
+  it('accepts a request and uppercases the recording reference', () => {
+    const parsed = helpSchema.safeParse({ ...ok, recording_ref: '0f1e2d3c', page: '/' });
+    assert.equal(parsed.success, true);
+    assert.equal(parsed.success && parsed.data.recording_ref, '0F1E2D3C');
+    assert.equal(parsed.success && parsed.data.signed_in, false);
+  });
+
+  for (const [name, change] of [
+    ['an unknown topic', { topic: 'billing' }],
+    ['a message that is too short', { message: 'help' }],
+    ['a message that is too long', { message: 'x'.repeat(4001) }],
+    ['a bad email', { email: 'not-an-email' }],
+    ['a malformed reference', { recording_ref: 'XYZ' }],
+    ['no bot-check token', { turnstile_token: '' }],
+  ] as const) {
+    it(`rejects ${name}`, () => {
+      assert.equal(helpSchema.safeParse({ ...ok, ...change }).success, false);
+    });
+  }
 });

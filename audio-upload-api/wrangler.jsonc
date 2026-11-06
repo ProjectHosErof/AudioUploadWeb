@@ -47,6 +47,13 @@
         "type": "ratelimit",
         "namespace_id": "1002",
         "simple": { "limit": 3, "period": 60 }
+      },
+      {
+        // "Get help" mails the support inbox; the same tight ceiling.
+        "name": "HELP_LIMITER",
+        "type": "ratelimit",
+        "namespace_id": "1003",
+        "simple": { "limit": 3, "period": 60 }
       }
     ]
   },
@@ -74,6 +81,8 @@
     // Where replies go: forwarded to the project mailbox by Cloudflare Email
     // Routing, so the Gmail address never appears in mail.
     "EMAIL_REPLY_TO": "contact@hoserof.org",
+    // Where "Get help" requests go (Email Routing forwards it to the mailbox).
+    "SUPPORT_INBOX": "support@hoserof.org",
     // This Worker's own public origin. The fetch path reads it from the
     // request; a scheduled run has no request, so unsubscribe links in the
     // digest need it configured.

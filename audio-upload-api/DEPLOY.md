@@ -187,6 +187,10 @@ Database changes are additive and go first; the Worker after; the site last.
    `postgresql://enrichment_worker.<project-ref>:<password>@<pooler-host>:5432/postgres`.
    The hourly **Enrichment** workflow reuses the backup's read-only
    `SRC_R2_*` secrets.
+   "Get help" (`POST /help`) mails `SUPPORT_INBOX` (support@hoserof.org) with
+   Reply-To set to the person; the address must exist in Email Routing. It
+   stores nothing and needs no migration. Turn the site's Beta badge off after
+   the beta with the Pages variable `VITE_BETA=false`.
 2. `npm run seed` if the vocabulary changed, **before the site goes out**: the
    Worker validates languages and hymns against the reference tables, so a
    new entry in the form (e.g. Greek) is refused until it is seeded.

@@ -58,6 +58,7 @@ export function Footer() {
                 { label: 'Upload a Recording', href: '/#upload' },
                 { label: 'About', href: '/#about' },
                 { label: 'Stay Informed', href: '/#notify' },
+                { label: 'Get Help', href: '/help?from=footer' },
               ].map(({ label, href }) => (
                 <a
                   key={label}
@@ -131,6 +132,7 @@ export function Footer() {
               { label: 'Privacy', href: '/privacy' },
               { label: 'Terms', href: '/terms' },
               { label: 'Copyright', href: '/dmca' },
+              { label: 'Help', href: '/help?from=footer' },
             ].map(({ label, href }, i) => (
               <span key={href}>
                 {i > 0 && ' · '}
