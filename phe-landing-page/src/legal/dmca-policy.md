@@ -1,6 +1,6 @@
 # Copyright Policy (DMCA)
 
-**Effective date:** [EFFECTIVE DATE]
+**Effective date:** November 7, 2026
 
 Project Hos Erof respects copyright. Recordings are contributed by members of the community. Most Coptic hymns are centuries-old traditional works, but a particular **recording** or **arrangement** can still belong to someone. If you believe a recording on our Service infringes your copyright, tell us as described below.
 

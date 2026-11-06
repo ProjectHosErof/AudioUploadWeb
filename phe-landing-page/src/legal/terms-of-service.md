@@ -1,6 +1,6 @@
 # Terms of Service
 
-**Effective date:** [EFFECTIVE DATE] · **Version:** 2026-1
+**Effective date:** November 7, 2026 · **Version:** 2026-1
 
 These Terms are an agreement between you and Anthony Riad, doing business as Project Hos Erof ("**Project Hos Erof**", "**we**", "**us**") about your use of hoserof.org and its services (the "**Service**"). By using the Service, and in particular by uploading a recording, you agree to them. Our [Privacy Policy](/privacy) explains how we handle personal information.
 

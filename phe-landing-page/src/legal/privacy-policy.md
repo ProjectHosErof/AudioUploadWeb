@@ -1,6 +1,6 @@
 # Privacy Policy
 
-**Effective date:** [EFFECTIVE DATE]
+**Effective date:** November 7, 2026
 
 Project Hos Erof ("**we**", "**us**") collects recordings of Coptic hymns so we can preserve them and build tools that recognize them. This policy explains what we collect on hoserof.org, why, who helps us run the service, and the choices you have. It's written to match how the site actually works. If that ever changes, we'll update this page first.
 
