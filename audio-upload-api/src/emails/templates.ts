@@ -1,5 +1,6 @@
 import type { EmailMessage } from '../lib/email';
 import { esc, greeting, paragraph, render } from './layout';
+import type { HelpInput } from '../lib/validation';
 
 /**
  * One function per message.
@@ -211,4 +212,57 @@ export function reviewDigest(
     }),
     text,
   };
+}
+
+/** What each "Get help" topic is called in the support inbox. */
+export const HELP_TOPIC_LABELS: Record<HelpInput['topic'], string> = {
+  upload: 'Problem uploading',
+  'sign-in': 'Sign-in trouble',
+  remove: 'Remove my recording or data',
+  hymn: 'Wrong or missing hymn',
+  feedback: 'Feedback or an idea',
+  other: 'Something else',
+};
+
+export interface SupportMeta {
+  /** Short reference shown to the person, e.g. "K7Q2XM". */
+  reference: string;
+  userAgent: string | null;
+  receivedAt: Date;
+}
+
+/**
+ * A "Get help" request, for the support inbox. Plain on purpose: it's read by
+ * us, not a contributor. Reply-To is the person, so answering is just Reply.
+ * Everything a person typed is escaped.
+ */
+export function supportRequest(input: HelpInput, meta: SupportMeta): Built {
+  const topic = HELP_TOPIC_LABELS[input.topic];
+  const firstWords = input.message.replace(/\s+/g, ' ').trim();
+  const snippet = firstWords.length > 50 ? `${firstWords.slice(0, 49).trimEnd()}…` : firstWords;
+  const subject = `[${topic}] #${meta.reference} — ${snippet}`;
+
+  const rows: [string, string][] = [
+    ['Topic', topic],
+    ['From', input.name ? `${input.name} <${input.email}>` : input.email],
+    ['Recording reference', input.recording_ref ?? '—'],
+    ['Page', input.page ?? '—'],
+    ['Signed in', input.signed_in ? 'yes' : 'no'],
+    ['Device', meta.userAgent ?? '—'],
+    ['Received', meta.receivedAt.toISOString().replace('T', ' ').slice(0, 16) + ' UTC'],
+    ['Support reference', `#${meta.reference}`],
+  ];
+
+  const cell = 'padding:4px 12px 4px 0;vertical-align:top;font:14px Helvetica,Arial,sans-serif;';
+  const html = [
+    `<div style="font:15px/1.6 Helvetica,Arial,sans-serif;color:#222;max-width:640px">`,
+    `<p style="white-space:pre-wrap;margin:0 0 16px">${esc(input.message)}</p>`,
+    `<table style="border-collapse:collapse;border-top:1px solid #ddd;padding-top:8px">`,
+    ...rows.map(([k, v]) => `<tr><td style="${cell}color:#777">${esc(k)}</td><td style="${cell}">${esc(v)}</td></tr>`),
+    `</table>`,
+    `<p style="font-size:13px;color:#777;margin-top:16px">Reply to this email to answer ${esc(input.email)}.</p>`,
+    `</div>`,
+  ].join('');
+  const text = [input.message, '', ...rows.map(([k, v]) => `${k}: ${v}`), '', `Reply to this email to answer ${input.email}.`].join('\n');
+  return { subject, html, text };
 }

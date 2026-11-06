@@ -111,3 +111,30 @@ export const subscribeSchema = z.object({
 });
 
 export type SubscribeInput = z.infer<typeof subscribeSchema>;
+
+/** What a "Get help" request is about; labels live with the email template. */
+export const HELP_TOPICS = ['upload', 'sign-in', 'remove', 'hymn', 'feedback', 'other'] as const;
+
+/**
+ * Body of POST /help. It becomes one email to the support inbox; nothing is
+ * stored. The person's address is required because the reply is the answer.
+ */
+export const helpSchema = z.object({
+  topic: z.enum(HELP_TOPICS),
+  message: z.string().trim().min(10).max(4000),
+  email: z.string().trim().email().max(254),
+  name: z.string().trim().max(100).optional(),
+  // The reference shown after an upload: the first 8 hex digits of its id.
+  recording_ref: z
+    .string()
+    .trim()
+    .regex(/^[0-9a-f]{8}$/i)
+    .transform((r) => r.toUpperCase())
+    .optional(),
+  page: z.string().trim().max(200).optional(),
+  signed_in: z.boolean().default(false),
+  // Bot check: without it the form could flood the inbox.
+  turnstile_token: z.string().min(1),
+});
+
+export type HelpInput = z.infer<typeof helpSchema>;

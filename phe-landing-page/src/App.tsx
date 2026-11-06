@@ -20,6 +20,7 @@ const LoginPage = lazy(() => import("./components/LoginPage").then((m) => ({ def
 const DashboardPage = lazy(() => import("./components/DashboardPage").then((m) => ({ default: m.DashboardPage })));
 const AdminPage = lazy(() => import("./components/AdminPage").then((m) => ({ default: m.AdminPage })));
 const LegalPage = lazy(() => import("./components/LegalPage"));
+const HelpPage = lazy(() => import("./components/HelpPage").then((m) => ({ default: m.HelpPage })));
 // The upload form brings react-select and the full hymn catalogue (~290 KB of
 // JSON). It sits at the bottom of the page, so load it after first paint.
 const UploadForm = lazy(() => import("./components/UploadForm").then((m) => ({ default: m.UploadForm })));
@@ -99,6 +100,7 @@ export default function App() {
       <Route path="/privacy" element={<Loading><LegalPage doc="privacy" /></Loading>} />
       <Route path="/terms" element={<Loading><LegalPage doc="terms" /></Loading>} />
       <Route path="/dmca" element={<Loading><LegalPage doc="dmca" /></Loading>} />
+      <Route path="/help" element={<Loading><HelpPage /></Loading>} />
       {/* Unknown paths: a real "page not found", marked noindex. */}
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

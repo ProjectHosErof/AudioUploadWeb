@@ -453,6 +453,10 @@ export function UploadForm() {
                   {session ? 'See my contributions' : 'Sign in to track it'}
                 </Link>
               </div>
+              <p style={{ fontFamily: 'var(--font-ui)', fontSize: '0.9375rem', color: 'var(--text-muted)', margin: '1.75rem 0 0' }}>
+                Something wrong with this upload?{' '}
+                <Link to={`/help?topic=upload&ref=${submitted.reference}&from=/`} style={{ color: 'var(--gold)', textDecoration: 'underline', textUnderlineOffset: '3px' }}>Get help</Link>
+              </p>
             </div>
           ) : (
           <form onSubmit={handleSubmit} noValidate aria-describedby={shownError ? 'upload-error' : undefined}>
@@ -850,6 +854,12 @@ export function UploadForm() {
                 margin: '0 0 1rem',
               }}>
                 {shownError}
+              </p>
+            )}
+            {/* A failed attempt (not a missing field): offer a person to ask. */}
+            {submitError && !failedCheck && (
+              <p style={{ fontFamily: 'var(--font-ui)', fontSize: '0.9375rem', color: 'var(--text-muted)', margin: '-0.5rem 0 1rem' }}>
+                Still stuck? <Link to="/help?topic=upload&from=/" style={{ color: 'var(--gold)', textDecoration: 'underline', textUnderlineOffset: '3px' }}>Get help</Link>
               </p>
             )}
 

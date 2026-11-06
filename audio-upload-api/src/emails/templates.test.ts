@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { reviewDigest, confirmSubscription, type DigestItem } from './templates';
+import { reviewDigest, confirmSubscription, supportRequest, type DigestItem } from './templates';
 
 const urls = { dashboard: 'https://hoserof.org/dashboard', upload: 'https://hoserof.org/#upload' };
 const ok = (hymnLabel: string): DigestItem => ({ hymnLabel, accepted: true, reason: null });
@@ -45,5 +45,38 @@ describe('confirmSubscription', () => {
     const built = confirmSubscription('https://api.hoserof.org/subscribe/confirm/abc');
     assert.match(built.html, /https:\/\/api\.hoserof\.org\/subscribe\/confirm\/abc/);
     assert.match(built.text, /https:\/\/api\.hoserof\.org\/subscribe\/confirm\/abc/);
+  });
+});
+
+describe('supportRequest', () => {
+  const input = {
+    topic: 'remove' as const,
+    message: 'Please remove my recording of <script>alert(1)</script> Tenen, my brother is in it and did not agree.',
+    email: 'mina@example.com',
+    name: '<b>Mina</b>',
+    recording_ref: '0F1E2D3C',
+    page: '/dashboard',
+    signed_in: true,
+    turnstile_token: 't',
+  };
+  const meta = { reference: 'K7Q2XM', userAgent: 'Mozilla/5.0 (iPhone)', receivedAt: new Date('2026-11-06T20:15:00Z') };
+  const built = supportRequest(input, meta);
+
+  it('names the topic, the reference and the first words in the subject', () => {
+    const [head, words] = built.subject.split(' — ');
+    assert.equal(head, '[Remove my recording or data] #K7Q2XM');
+    assert.ok(words.startsWith('Please remove my recording of'));
+    assert.ok(words.endsWith('…') && words.length <= 50, words);
+  });
+
+  it('escapes everything the person typed in the HTML', () => {
+    assert.doesNotMatch(built.html, /<script>|<b>Mina<\/b>/);
+    assert.match(built.html, /&lt;script&gt;/);
+  });
+
+  it('carries every field in the text version', () => {
+    for (const part of ['0F1E2D3C', '/dashboard', 'Signed in: yes', 'Mozilla/5.0 (iPhone)', '2026-11-06 20:15 UTC', '#K7Q2XM', 'mina@example.com']) {
+      assert.ok(built.text.includes(part), part);
+    }
   });
 });

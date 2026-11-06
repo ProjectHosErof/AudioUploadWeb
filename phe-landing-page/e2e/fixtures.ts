@@ -22,6 +22,7 @@ export interface MockOptions {
 export interface Captured {
   initiate: Record<string, unknown>[];
   subscribe: Record<string, unknown>[];
+  help: Record<string, unknown>[];
 }
 
 const TURNSTILE_STUB = `
@@ -128,6 +129,10 @@ async function mockNetwork(page: Page, opts: MockOptions, captured: Captured) {
       json: { readyRecordings: opts.readyRecordings, totalRecordings: opts.readyRecordings, readySeconds: 0, contributors: 1 },
     }),
   );
+  await page.route('http://api.test/help', async (route) => {
+    captured.help.push(route.request().postDataJSON());
+    await route.fulfill({ json: { reference: 'K7Q2XM' } });
+  });
   await page.route('http://api.test/subscribe', async (route) => {
     captured.subscribe.push(route.request().postDataJSON());
     await route.fulfill({ json: { ok: true, message: 'Check your email to confirm your subscription.' } });
@@ -153,14 +158,14 @@ async function mockNetwork(page: Page, opts: MockOptions, captured: Captured) {
 export const test = base.extend<{ mock: MockOptions; captured: Captured }>({
   mock: [{ readyRecordings: 1, signedIn: false }, { option: true }],
   captured: async ({ page, mock }, provide) => {
-    const captured: Captured = { initiate: [], subscribe: [] };
+    const captured: Captured = { initiate: [], subscribe: [], help: [] };
     await mockNetwork(page, mock, captured);
     await provide(captured);
   },
   // Make sure every test's page has the mocks installed, even if it never
   // asks for `captured`.
   page: async ({ page, mock }, provide) => {
-    await mockNetwork(page, mock, { initiate: [], subscribe: [] });
+    await mockNetwork(page, mock, { initiate: [], subscribe: [], help: [] });
     if (mock.signedIn) {
       await page.addInitScript(
         ([key, value]) => window.localStorage.setItem(key, value),

@@ -23,6 +23,8 @@ export interface EmailMessage {
    * not GET — see the route in src/routes/subscribe.ts.
    */
   unsubscribeUrl?: string;
+  /** Overrides EMAIL_REPLY_TO, e.g. so a support request is answered by replying. */
+  replyTo?: string;
 }
 
 const RESEND_ENDPOINT = 'https://api.resend.com/emails';
@@ -47,7 +49,7 @@ export async function sendEmail(env: Env, message: EmailMessage): Promise<boolea
         // Replies land in a real inbox rather than vanishing. The From address
         // stays on the sending subdomain (which protects the apex domain's
         // reputation); Reply-To needs no verification of its own.
-        ...(env.EMAIL_REPLY_TO ? { reply_to: env.EMAIL_REPLY_TO } : {}),
+        ...(message.replyTo ?? env.EMAIL_REPLY_TO ? { reply_to: message.replyTo ?? env.EMAIL_REPLY_TO } : {}),
         to: [message.to],
         subject: message.subject,
         html: message.html,

@@ -337,6 +337,9 @@ export function LoginPage() {
         <Link to="/terms" style={{ color: 'var(--gold)', textDecoration: 'underline', textUnderlineOffset: '3px' }}>Terms</Link>
         {' · '}
         <Link to="/privacy" style={{ color: 'var(--gold)', textDecoration: 'underline', textUnderlineOffset: '3px' }}>Privacy Policy</Link>
+        <br />
+        Trouble signing in?{' '}
+        <Link to="/help?topic=sign-in&from=/login" style={{ color: 'var(--gold)', textDecoration: 'underline', textUnderlineOffset: '3px' }}>Get help</Link>
       </p>
     </main>
   );

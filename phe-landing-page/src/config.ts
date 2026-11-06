@@ -18,3 +18,9 @@ export const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY ?? "";
 
 /** Auth is only usable once both Supabase values are configured. */
 export const AUTH_ENABLED = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+
+/**
+ * The beta badge in the header. On unless VITE_BETA is "false", so ending the
+ * beta is a Pages setting, not a code change.
+ */
+export const BETA = import.meta.env.VITE_BETA !== "false";
