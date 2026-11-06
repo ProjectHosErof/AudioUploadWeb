@@ -8,8 +8,8 @@ Project Hos Erof respects copyright. Recordings are contributed by members of th
 Send a written notice to our designated copyright agent:
 
 > **Copyright Agent, Project Hos Erof**
-> [OPERATOR LEGAL NAME]
-> [MAILING ADDRESS]
+> Anthony Riad, doing business as Project Hos Erof
+> Postal address: available on request — email legal@hoserof.org
 > Email: **legal@hoserof.org**
 
 Under 17 U.S.C. §512(c)(3), your notice must include:
